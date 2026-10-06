@@ -1,0 +1,36 @@
+.barre {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  width: 100%;
+  max-width: var(--largeur-max);
+  min-height: var(--hauteur-barre);
+  padding-bottom: env(safe-area-inset-bottom);
+  transform: translateX(-50%);
+  background: var(--couleur-surface);
+  border-top: 1px solid var(--couleur-bordure);
+}
+
+.onglet {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: var(--hauteur-tactile);
+  font-size: 0.75rem;
+  color: var(--couleur-texte-doux);
+}
+
+.actif {
+  color: var(--couleur-principale);
+  font-weight: 700;
+}
+
+.icone {
+  width: 24px;
+  height: 24px;
+}
