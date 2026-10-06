@@ -15,18 +15,43 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--espace-3);
-  padding: var(--espace-2) var(--espace-4);
-  background: var(--couleur-fond);
-  border-bottom: 1px solid var(--couleur-bordure);
+  padding: 20px 20px 8px;
+  background: var(--creme);
 }
 
 .marque {
+  display: flex;
+  min-height: var(--hauteur-tactile);
+  align-items: center;
+  gap: 10px;
+}
+
+.logo {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: var(--vert);
+  color: var(--creme);
+  place-items: center;
+}
+
+.logo svg {
+  width: 20px;
+  height: 20px;
+}
+
+.nom {
+  color: var(--vert-fonce);
+  font-family: var(--police-titre);
+  font-size: 19px;
   font-weight: 700;
-  color: var(--couleur-principale);
+  letter-spacing: -0.01em;
 }
 
 .contenu {
   flex: 1;
-  padding: var(--espace-4);
+  padding: var(--espace-5) 20px;
   padding-bottom: calc(var(--hauteur-barre) + var(--espace-6) + env(safe-area-inset-bottom));
 }
