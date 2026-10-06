@@ -1,0 +1,578 @@
+// Modèle de données de planif-repas (source de vérité, voir CLAUDE.md section 8).
+// Montants en FCFA : entiers. Dates de repas : dates sans heure.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASEURL")
+}
+
+// ---------------------------------------------------------------------------
+// Énumérations
+// ---------------------------------------------------------------------------
+
+enum Role {
+  user
+  admin
+}
+
+enum AgeGroup {
+  baby
+  child
+  teen
+  adult
+  senior
+}
+
+enum RestrictionType {
+  allergy
+  diet
+  dislike
+  healthGoal
+}
+
+enum Severity {
+  strict
+  preference
+}
+
+enum PlaceType {
+  market
+  supermarket
+  shop
+}
+
+enum RecipeSource {
+  team
+  ai
+}
+
+enum PriceSource {
+  team
+  user
+}
+
+enum PlanStatus {
+  draft
+  active
+  archived
+}
+
+enum MealSlot {
+  breakfast
+  lunch
+  dinner
+}
+
+enum MealStatus {
+  planned
+  cooked
+  skipped
+  replaced
+}
+
+enum StorageLocation {
+  fridge
+  freezer
+  pantry
+}
+
+enum StockStatus {
+  ok
+  useSoon
+  used
+  thrown
+}
+
+enum MovementType {
+  purchase
+  cooked
+  thrown
+  correction
+}
+
+enum ConversationMode {
+  chat
+  emergency
+  onboarding
+}
+
+enum MessageRole {
+  user
+  assistant
+  tool
+}
+
+enum ProposalType {
+  profileUpdate
+  weekPlan
+  mealChange
+  purchase
+  emergency
+}
+
+enum ProposalStatus {
+  pending
+  accepted
+  rejected
+  expired
+}
+
+// ---------------------------------------------------------------------------
+// Comptes et foyer
+// ---------------------------------------------------------------------------
+
+model User {
+  id                String    @id @default(uuid()) @db.Uuid
+  email             String    @unique
+  passwordHash      String
+  fullName          String
+  role              Role      @default(user)
+  consentHealthAt   DateTime?
+  consentLocationAt DateTime?
+  householdId       String?   @db.Uuid
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  household      Household?     @relation("HouseholdUsers", fields: [householdId], references: [id], onDelete: SetNull)
+  ownedHousehold Household?     @relation("HouseholdOwner")
+  reportedPrices Price[]
+  mealFeedbacks  MealFeedback[]
+  conversations  Conversation[]
+
+  @@index([householdId])
+}
+
+// Supprimer le compte propriétaire supprime le foyer et toutes ses données.
+model Household {
+  id                String   @id @default(uuid()) @db.Uuid
+  ownerId           String   @unique @db.Uuid
+  name              String
+  neighborhoodId    String?  @db.Uuid
+  weeklyBudgetFcfa  Int
+  cuisinesPreferred Json     @default("[]")
+  equipment         Json     @default("[]")
+  shoppingDay       Int?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  owner              User                @relation("HouseholdOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  neighborhood       Neighborhood?       @relation(fields: [neighborhoodId], references: [id], onDelete: SetNull)
+  users              User[]              @relation("HouseholdUsers")
+  members            HouseholdMember[]
+  dishRatings        DishRating[]
+  mealPlans          MealPlan[]
+  shoppingLists      ShoppingList[]
+  stockItems         StockItem[]
+  conversations      Conversation[]
+  learnedPreferences LearnedPreference[]
+
+  @@index([neighborhoodId])
+}
+
+model HouseholdMember {
+  id          String   @id @default(uuid()) @db.Uuid
+  householdId String   @db.Uuid
+  label       String
+  ageGroup    AgeGroup
+  schedule    Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  household    Household           @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  restrictions MemberRestriction[]
+
+  @@index([householdId])
+}
+
+model MemberRestriction {
+  id        String          @id @default(uuid()) @db.Uuid
+  memberId  String          @db.Uuid
+  type      RestrictionType
+  value     String
+  severity  Severity
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  member HouseholdMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@index([memberId])
+}
+
+// Note de départ : 1 n'aime pas, 2 bof, 3 aime.
+model DishRating {
+  id          String   @id @default(uuid()) @db.Uuid
+  householdId String   @db.Uuid
+  recipeId    String   @db.Uuid
+  rating      Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  recipe    Recipe    @relation(fields: [recipeId], references: [id], onDelete: Restrict)
+
+  @@unique([householdId, recipeId])
+  @@index([householdId])
+}
+
+// Centre du quartier, sert au calcul des distances.
+model Neighborhood {
+  id        String   @id @default(uuid()) @db.Uuid
+  commune   String
+  name      String
+  latitude  Float
+  longitude Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  households Household[]
+  stores     Store[]
+
+  @@unique([commune, name])
+}
+
+// ---------------------------------------------------------------------------
+// Catalogue et magasins (partagé, jamais supprimé par cascade)
+// ---------------------------------------------------------------------------
+
+model Ingredient {
+  id             String   @id @default(uuid()) @db.Uuid
+  name           String   @unique
+  category       String
+  allergens      String[]
+  defaultUnitId  String?  @db.Uuid
+  // Durée de conservation en jours : { ambiant, frigo, congelateur }
+  shelfLifeDays  Json
+  seasonalMonths Int[]
+  storageTip     String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  defaultUnit       MarketUnit?        @relation("IngredientDefaultUnit", fields: [defaultUnitId], references: [id], onDelete: SetNull)
+  units             MarketUnit[]       @relation("IngredientUnits")
+  recipeIngredients RecipeIngredient[]
+  prices            Price[]
+  shoppingItems     ShoppingListItem[]
+  stockItems        StockItem[]
+}
+
+// Sans ingrédient : unité générique (kg, pièce).
+model MarketUnit {
+  id              String   @id @default(uuid()) @db.Uuid
+  ingredientId    String?  @db.Uuid
+  label           String
+  gramsEquivalent Float
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  ingredient            Ingredient?        @relation("IngredientUnits", fields: [ingredientId], references: [id], onDelete: Restrict)
+  defaultForIngredients Ingredient[]       @relation("IngredientDefaultUnit")
+  recipeIngredients     RecipeIngredient[]
+  prices                Price[]
+  shoppingItems         ShoppingListItem[]
+  stockItems            StockItem[]
+
+  @@index([ingredientId])
+}
+
+// Seules les recettes validées sont proposées aux familles.
+model Recipe {
+  id            String       @id @default(uuid()) @db.Uuid
+  title         String
+  cuisine       String
+  mealTypes     MealSlot[]
+  prepMinutes   Int
+  cookMinutes   Int
+  needsCooking  Boolean
+  servings      Int
+  // Difficulté de 1 (facile) à 3 (difficile)
+  difficulty    Int
+  tags          String[]
+  steps         Json
+  leftoverIdeas Json         @default("[]")
+  source        RecipeSource @default(team)
+  validated     Boolean      @default(false)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  ingredients  RecipeIngredient[]
+  dishRatings  DishRating[]
+  plannedMeals PlannedMeal[]
+
+  @@index([validated])
+}
+
+model RecipeIngredient {
+  id           String   @id @default(uuid()) @db.Uuid
+  recipeId     String   @db.Uuid
+  ingredientId String   @db.Uuid
+  unitId       String   @db.Uuid
+  quantity     Float
+  optional     Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  recipe     Recipe     @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Restrict)
+  unit       MarketUnit @relation(fields: [unitId], references: [id], onDelete: Restrict)
+
+  @@index([recipeId])
+  @@index([ingredientId])
+}
+
+model Price {
+  id           String      @id @default(uuid()) @db.Uuid
+  ingredientId String      @db.Uuid
+  unitId       String      @db.Uuid
+  priceFcfa    Int
+  placeType    PlaceType
+  storeId      String?     @db.Uuid
+  city         String
+  source       PriceSource
+  reportedById String?     @db.Uuid
+  observedAt   DateTime
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Restrict)
+  unit       MarketUnit @relation(fields: [unitId], references: [id], onDelete: Restrict)
+  store      Store?     @relation(fields: [storeId], references: [id], onDelete: SetNull)
+  reportedBy User?      @relation(fields: [reportedById], references: [id], onDelete: SetNull)
+
+  @@index([ingredientId, city, placeType, observedAt])
+}
+
+model Store {
+  id             String    @id @default(uuid()) @db.Uuid
+  name           String
+  type           PlaceType
+  neighborhoodId String    @db.Uuid
+  address        String
+  latitude       Float
+  longitude      Float
+  openingHours   Json?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  neighborhood Neighborhood @relation(fields: [neighborhoodId], references: [id], onDelete: Restrict)
+  prices       Price[]
+
+  @@index([type])
+  @@index([neighborhoodId])
+}
+
+// ---------------------------------------------------------------------------
+// Planification
+// ---------------------------------------------------------------------------
+
+// Un seul menu actif par foyer et par semaine : garanti par le code à l'activation.
+model MealPlan {
+  id                String     @id @default(uuid()) @db.Uuid
+  householdId       String     @db.Uuid
+  weekStart         DateTime   @db.Date
+  status            PlanStatus @default(draft)
+  estimatedCostFcfa Int
+  generationNotes   String?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  household    Household     @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  meals        PlannedMeal[]
+  shoppingList ShoppingList?
+
+  @@index([householdId, weekStart])
+}
+
+model PlannedMeal {
+  id             String     @id @default(uuid()) @db.Uuid
+  mealPlanId     String     @db.Uuid
+  recipeId       String     @db.Uuid
+  date           DateTime   @db.Date
+  slot           MealSlot
+  servings       Int
+  status         MealStatus @default(planned)
+  leftoverFromId String?    @db.Uuid
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  mealPlan     MealPlan       @relation(fields: [mealPlanId], references: [id], onDelete: Cascade)
+  recipe       Recipe         @relation(fields: [recipeId], references: [id], onDelete: Restrict)
+  leftoverFrom PlannedMeal?   @relation("Leftovers", fields: [leftoverFromId], references: [id], onDelete: SetNull)
+  leftoverUses PlannedMeal[]  @relation("Leftovers")
+  feedbacks    MealFeedback[]
+
+  @@index([mealPlanId])
+  @@index([recipeId])
+}
+
+// liked : 1 n'a pas aimé, 2 bof, 3 a aimé.
+model MealFeedback {
+  id            String   @id @default(uuid()) @db.Uuid
+  plannedMealId String   @db.Uuid
+  userId        String   @db.Uuid
+  cooked        Boolean
+  liked         Int?
+  leftovers     Boolean  @default(false)
+  comment       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  plannedMeal PlannedMeal @relation(fields: [plannedMealId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([plannedMealId])
+  @@index([userId])
+}
+
+// ---------------------------------------------------------------------------
+// Courses et stock
+// ---------------------------------------------------------------------------
+
+model ShoppingList {
+  id                 String    @id @default(uuid()) @db.Uuid
+  householdId        String    @db.Uuid
+  mealPlanId         String    @unique @db.Uuid
+  estimatedTotalFcfa Int
+  sharedAt           DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  household Household          @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  mealPlan  MealPlan           @relation(fields: [mealPlanId], references: [id], onDelete: Cascade)
+  items     ShoppingListItem[]
+
+  @@index([householdId])
+}
+
+// estimatedPriceFcfa vide = prix inconnu, exclu du total.
+model ShoppingListItem {
+  id                 String    @id @default(uuid()) @db.Uuid
+  listId             String    @db.Uuid
+  ingredientId       String    @db.Uuid
+  unitId             String    @db.Uuid
+  quantity           Float
+  estimatedPriceFcfa Int?
+  placeType          PlaceType
+  checked            Boolean   @default(false)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  list       ShoppingList @relation(fields: [listId], references: [id], onDelete: Cascade)
+  ingredient Ingredient   @relation(fields: [ingredientId], references: [id], onDelete: Restrict)
+  unit       MarketUnit   @relation(fields: [unitId], references: [id], onDelete: Restrict)
+
+  @@index([listId])
+}
+
+// La quantité n'est jamais modifiée directement : chaque changement crée un StockMovement.
+model StockItem {
+  id           String          @id @default(uuid()) @db.Uuid
+  householdId  String          @db.Uuid
+  ingredientId String          @db.Uuid
+  unitId       String          @db.Uuid
+  quantity     Float
+  location     StorageLocation
+  addedAt      DateTime        @default(now())
+  expiresAt    DateTime?
+  status       StockStatus     @default(ok)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  household  Household       @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  ingredient Ingredient      @relation(fields: [ingredientId], references: [id], onDelete: Restrict)
+  unit       MarketUnit      @relation(fields: [unitId], references: [id], onDelete: Restrict)
+  movements  StockMovement[]
+
+  @@index([householdId, expiresAt])
+}
+
+// Journal du stock : positif en entrée, négatif en sortie ; jamais supprimé ni modifié.
+// reference : identifiant de l'objet à l'origine du mouvement (repas cuisiné, proposition d'achat…).
+model StockMovement {
+  id          String       @id @default(uuid()) @db.Uuid
+  stockItemId String       @db.Uuid
+  type        MovementType
+  quantity    Float
+  grams       Float
+  reference   String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  stockItem StockItem @relation(fields: [stockItemId], references: [id], onDelete: Cascade)
+
+  @@index([stockItemId])
+}
+
+// ---------------------------------------------------------------------------
+// Agent et apprentissage
+// ---------------------------------------------------------------------------
+
+model Conversation {
+  id          String           @id @default(uuid()) @db.Uuid
+  householdId String           @db.Uuid
+  userId      String           @db.Uuid
+  mode        ConversationMode @default(chat)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  household Household       @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages  Message[]
+  proposals AgentProposal[]
+
+  @@index([householdId])
+  @@index([userId])
+}
+
+model Message {
+  id             String      @id @default(uuid()) @db.Uuid
+  conversationId String      @db.Uuid
+  role           MessageRole
+  content        Json
+  model          String?
+  tokensIn       Int?
+  tokensOut      Int?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+}
+
+// Expire 24 h après sa création ; appliquée seulement après confirmation et revérification.
+model AgentProposal {
+  id             String         @id @default(uuid()) @db.Uuid
+  conversationId String         @db.Uuid
+  type           ProposalType
+  payload        Json
+  status         ProposalStatus @default(pending)
+  expiresAt      DateTime
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([status, expiresAt])
+}
+
+model LearnedPreference {
+  id          String   @id @default(uuid()) @db.Uuid
+  householdId String   @db.Uuid
+  key         String
+  value       String
+  confidence  Float
+  explanation String
+  source      String
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
+  @@index([householdId])
+}
