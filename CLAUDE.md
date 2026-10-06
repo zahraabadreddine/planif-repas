@@ -102,9 +102,9 @@ Aminata, 4 personnes, un enfant allergique à l'arachide, 25 000 FCFA par semain
 | EF-19 | Voir et corriger ce que l'agent a appris |
 | EF-20 | Consulter le catalogue et une recette étape par étape |
 | EF-21 | Administrer recettes, ingrédients, unités, prix et magasins |
-| EF-22 | Réinitialiser le mot de passe d'une utilisatrice depuis l'espace admin (pas d'emails au MVP) |
+| EF-28 | Réinitialiser le mot de passe d'une utilisatrice depuis l'espace admin (pas d'emails au MVP) |
 
-Les critères d'acceptation détaillés de chaque exigence sont dans le cahier des charges complet (section 6).
+Les critères d'acceptation détaillés de chaque exigence sont dans le cahier des charges complet (section 6). La numérotation EF-01 à EF-27 est celle du cahier des charges (EF-22 à EF-27 sont reportées après le MVP, voir section 19) ; EF-28 est ajoutée par ce fichier.
 
 ### Exigences non fonctionnelles
 
@@ -321,7 +321,7 @@ Chaque service externe est isolé derrière une interface dans `src/lib/`, pour 
 | Modèle | Champs principaux | Relations et règles |
 | --- | --- | --- |
 | `User` | email (unique), passwordHash, fullName, role, consentHealthAt, consentLocationAt | Appartient à un `Household` ; role : user ou admin |
-| `Household` | name, weeklyBudgetFcfa, cuisinesPreferred (Json), equipment (Json), shoppingDay, mealSlots | Propriétaire (`User`), quartier (`Neighborhood`, facultatif) ; peut être partagé par plusieurs comptes |
+| `Household` | name, weeklyBudgetFcfa, cuisinesPreferred (Json), equipment (Json), shoppingDay | Propriétaire (`User`), quartier (`Neighborhood`, facultatif) ; un seul compte par foyer au MVP |
 | `HouseholdMember` | label, ageGroup, schedule (Json) | Appartient à un foyer ; libellé plutôt que nom |
 | `MemberRestriction` | type, value, severity | Appartient à un membre ; severity strict = filtre dur |
 | `DishRating` | rating (1 à 3) | Foyer + recette, couple unique |
@@ -436,7 +436,7 @@ Routes Next.js sous `src/app/api/`. Toutes exigent une session sauf `register` e
 | CRUD | `/api/admin/ingredients` | Ingrédients et unités | EF-21 |
 | CRUD | `/api/admin/prices` | Relevés de prix | EF-21 |
 | CRUD | `/api/admin/stores` | Magasins | EF-21 |
-| POST | `/api/admin/users/:id/reset-password` | Réinitialiser le mot de passe d'une utilisatrice | EF-22 |
+| POST | `/api/admin/users/:id/reset-password` | Réinitialiser le mot de passe d'une utilisatrice | EF-28 |
 | GET | `/api/admin/stats` | Usage, coût de l'IA, indicateurs | ENF-18 |
 
 ---
@@ -452,6 +452,8 @@ Routes Next.js sous `src/app/api/`. Toutes exigent une session sauf `register` e
 | Menu de la semaine si la qualité l'exige après tests | `claude-opus-5-5` |
 
 Le modèle est choisi par **une constante par type de tâche** dans `src/lib/agent/client.ts`. Vérifier les identifiants et les tarifs sur la documentation officielle d'Anthropic au moment de l'implémentation.
+
+L'équipe n'a pas encore de clé d'API : l'agent est développé et testé avec Claude simulé. Une clé sera nécessaire pour la démonstration du scénario de référence.
 
 ### Contexte envoyé à chaque message
 
@@ -713,7 +715,7 @@ Résumé en quelques lignes
 | --- | --- | --- |
 | S0 | Cadrage | Cahier des charges, diagrammes, maquettes, dépôt, ce fichier |
 | S1 | Fondations | Projet Next.js, PostgreSQL et Prisma, schéma et migration, seed, connexion, mise en page mobile, questionnaire lancé |
-| S2 | Foyer et recettes | Foyer, membres, invitation, catalogue, notes de plats |
+| S2 | Foyer et recettes | Foyer, membres, catalogue, notes de plats |
 | S3 | Menu et courses | Menu, remplacement, liste, unités et FCFA, WhatsApp, où acheter |
 | S4 | Stock | Achats, déduction, péremption, vider le frigo, retours après repas |
 | S5 | Agent IA | Chat, accueil conversationnel, modification en parlant, mode urgence |
@@ -729,18 +731,19 @@ Ne pas implémenter sans demande explicite. Le code peut être préparé pour ce
 
 | Reporté après le MVP | Prévu dans |
 | --- | --- |
-| Messages vocaux et transcription | Interface `SpeechToTextProvider` |
-| Anglais et arabe | i18next, affichage de droite à gauche |
-| Application installable et notifications | PWA, Web Push |
+| Messages vocaux et transcription (EF-23) | Interface `SpeechToTextProvider` |
+| Anglais et arabe (EF-27) | i18next, affichage de droite à gauche |
+| Application installable et notifications (EF-27) | PWA, Web Push |
 | Emails (vérification, mot de passe oublié) | Interface `EmailSender` |
-| Bilan du mois | Calculé depuis `StockMovement` et les menus |
-| Autres urgences (invités, plus de gaz, fin de mois, malade) | Extension de `planEmergency` |
-| Mode événements | Nouveau modèle `Event` |
-| Carnet familial, suivi nutritionnel, recettes en audio | Fonctions premium |
+| Bilan du mois (EF-22) | Calculé depuis `StockMovement` et les menus |
+| Autres urgences (invités, plus de gaz, fin de mois, malade) (EF-24) | Extension de `planEmergency` |
+| Mode événements (EF-25) | Nouveau modèle `Event` |
+| Carnet familial, suivi nutritionnel, recettes en audio (EF-26) | Fonctions premium |
 | Offre premium et paiement mobile money | Interface `PaymentProvider` |
 | Brouillons de recettes rédigés par l'IA | Route admin dédiée, recettes `source = ai` à valider |
 | Recherche de magasins élargie | Google Places ou OpenStreetMap derrière `StoreLocator` |
 | Bot WhatsApp, applications mobiles | Après le pilote |
+| Second compte et invitation dans un foyer | Relation `User` → `Household` déjà prévue ; écran et route d'invitation à ajouter |
 
 ---
 
