@@ -1,0 +1,32 @@
+.cadre {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  width: 100%;
+  max-width: var(--largeur-max);
+  margin: 0 auto;
+}
+
+.entete {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espace-3);
+  padding: var(--espace-2) var(--espace-4);
+  background: var(--couleur-fond);
+  border-bottom: 1px solid var(--couleur-bordure);
+}
+
+.marque {
+  font-weight: 700;
+  color: var(--couleur-principale);
+}
+
+.contenu {
+  flex: 1;
+  padding: var(--espace-4);
+  padding-bottom: calc(var(--hauteur-barre) + var(--espace-6) + env(safe-area-inset-bottom));
+}

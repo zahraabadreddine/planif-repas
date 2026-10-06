@@ -1,0 +1,11 @@
+.bouton {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--hauteur-tactile);
+  padding: 0 var(--espace-4);
+  border-radius: 999px;
+  background: var(--couleur-urgence);
+  color: var(--couleur-urgence-texte);
+  font-weight: 700;
+  font-size: var(--taille-petit);
+}
