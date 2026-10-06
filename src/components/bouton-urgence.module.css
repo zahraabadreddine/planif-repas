@@ -1,11 +1,31 @@
 .bouton {
   display: inline-flex;
-  align-items: center;
   min-height: var(--hauteur-tactile);
-  padding: 0 var(--espace-4);
-  border-radius: 999px;
-  background: var(--couleur-urgence);
-  color: var(--couleur-urgence-texte);
+  align-items: center;
+  gap: 6px;
+  padding: 0 16px;
+  border-radius: var(--rayon-pilule);
+  background: var(--terre);
+  box-shadow: var(--ombre-urgence);
+  color: #fff;
+  font-size: 14px;
   font-weight: 700;
-  font-size: var(--taille-petit);
+  white-space: nowrap;
+  transition: transform 0.15s ease;
+}
+
+.bouton:active {
+  transform: scale(0.97);
+}
+
+.icone {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bouton {
+    transition: none;
+  }
 }

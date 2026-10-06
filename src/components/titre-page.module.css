@@ -1,5 +1,6 @@
 .titre {
-  margin-bottom: var(--espace-4);
-  font-size: var(--taille-titre);
-  line-height: 1.25;
+  margin-bottom: var(--espace-5);
+  color: var(--vert-fonce);
+  font-size: 30px;
+  line-height: 1.1;
 }

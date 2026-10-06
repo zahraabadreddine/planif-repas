@@ -1,27 +1,39 @@
 :root {
-  --couleur-fond: #fdf8f3;
-  --couleur-surface: #ffffff;
-  --couleur-texte: #1f1a17;
-  --couleur-texte-doux: #5c534d;
-  --couleur-bordure: #e7ddd3;
-  --couleur-principale: #1e7a46;
-  --couleur-principale-texte: #ffffff;
-  --couleur-urgence: #c2410c;
-  --couleur-urgence-texte: #ffffff;
+  /* Palette « Marché chaleureux » */
+  --creme: #fbf5ec;
+  --carte: #fffdf9;
+  --vert: #1e5b3a;
+  --vert-fonce: #143f28;
+  --vert-doux: #e4efe6;
+  --terre: #b5532a;
+  --terre-doux: #f6e3d8;
+  --ocre: #d9a441;
+  --ocre-doux: #f8ebcb;
+  --encre: #2a211b;
+  --doux: #6b5e54;
+  --trait: #eadfd0;
 
-  --taille-texte: 1rem;
-  --taille-petit: 0.875rem;
-  --taille-titre: 1.375rem;
+  --police-titre: var(--font-fraunces), Georgia, serif;
+  --police-texte: var(--font-manrope), Arial, Helvetica, sans-serif;
+
+  --ombre-carte: 0 1px 0 var(--trait), 0 18px 40px -22px rgba(42, 33, 27, 0.35);
+  --ombre-urgence: 0 6px 16px -6px rgba(181, 83, 42, 0.6);
+
+  --rayon-petit: 14px;
+  --rayon: 16px;
+  --rayon-carte: 22px;
+  --rayon-pilule: 999px;
 
   --espace-1: 0.25rem;
   --espace-2: 0.5rem;
   --espace-3: 0.75rem;
   --espace-4: 1rem;
+  --espace-5: 1.25rem;
   --espace-6: 1.5rem;
 
-  --rayon: 0.75rem;
   --hauteur-tactile: 44px;
-  --hauteur-barre: 64px;
+  --hauteur-bouton: 48px;
+  --hauteur-barre: 76px;
   --largeur-max: 480px;
 }
 
@@ -37,16 +49,25 @@ html {
 }
 
 body {
-  min-height: 100%;
   display: flex;
+  min-height: 100%;
   flex-direction: column;
   overflow-x: hidden;
-  color: var(--couleur-texte);
-  background: var(--couleur-fond);
-  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
-  font-size: var(--taille-texte);
-  line-height: 1.5;
+  background: var(--creme);
+  color: var(--encre);
+  font-family: var(--police-texte);
+  font-size: 15px;
+  line-height: 1.45;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--police-titre);
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
 a {
@@ -55,6 +76,6 @@ a {
 }
 
 :focus-visible {
-  outline: 3px solid var(--couleur-principale);
+  outline: 3px solid var(--ocre);
   outline-offset: 2px;
 }
