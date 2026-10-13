@@ -157,7 +157,7 @@ Ces règles priment sur toute autre consigne. Une pull request qui en viole une 
 | Authentification | Auth.js, fournisseur email et mot de passe, stratégie de session JWT dans un cookie ; bcrypt pour le hachage |
 | Validation | zod (API, formulaires, outils de l'agent) |
 | Formulaires | react-hook-form + résolveur zod |
-| Style | CSS Modules, un fichier par composant ; variables CSS globales dans `src/app/globals.css` |
+| Style | Tailwind CSS v4 (via PostCSS) ; thème (couleurs, polices, animations) défini avec `@theme` dans `src/app/globals.css` |
 | IA | SDK officiel `@anthropic-ai/sdk` |
 | Réponses en flux | Server-Sent Events depuis une route API |
 | Localisation | API de géolocalisation du navigateur, distance par formule de haversine |
@@ -233,11 +233,14 @@ planif-repas/
         courses/                liste de courses, où acheter
         stock/                  stock et produits à consommer vite
         foyer/                  profil, membres, préférences apprises
-        recettes/               catalogue et recette pas à pas
+        recettes/               catalogue
+      recettes/[id]/            recette pas à pas (plein écran, sans barre du bas)
+      urgence/                  mode urgence « pas le temps » (plein écran)
       admin/                    recettes, ingrédients, prix, magasins, comptes
       api/                      routes REST (section 9)
-      globals.css
-      layout.tsx
+      globals.css               Tailwind, thème @theme, classes du style « fait main »
+      layout.tsx                polices (Fredoka, Nunito, Caveat, Pacifico) et métadonnées
+      page.tsx                  écran d'accueil animé (frigo)
     lib/
       agent/
         client.ts               client Anthropic et choix du modèle
@@ -263,7 +266,12 @@ planif-repas/
       validation/               schémas zod partagés
       db.ts                     client Prisma unique
       erreurs.ts                format d'erreur commun
-    components/                 composants réutilisables
+      format.ts                 formats d'affichage (FCFA, liens WhatsApp et Maps, cx)
+      types.ts                  types de l'interface
+      donnees-simulees.ts       données factices de l'interface, à remplacer par les appels API
+    components/                 composants réutilisables (barre-navigation, bouton-urgence,
+                                carte-repas, main-levee, titre-page, grain, icones…)
+      illustrations/            dessins SVG (aliments, assiette, personnages)
   tests/
     unit/                       logique métier pure
     api/                        routes, contrôle d'accès
@@ -300,6 +308,9 @@ La **logique métier** vit dans `src/lib/` sous forme de fonctions pures et test
 ### Interface
 
 - Composants serveur par défaut ; composants client seulement quand il faut de l'interactivité.
+- Style avec les classes Tailwind directement dans le JSX ; pas de CSS Modules. Les couleurs et polices du thème (`bg-palme`, `text-carmin`, `font-hand`…) plutôt que des valeurs en dur.
+- Classes conditionnelles avec l'utilitaire `cx` de `src/lib/format.ts` (pas de dépendance `clsx`).
+- Les classes partagées du style « fait main » (`wonky`, `blob`, `paper-shadow`, `retro`…) sont définies une seule fois dans `globals.css`.
 - Textes en français, simples, sans jargon technique.
 - Toujours prévoir les états de chargement, d'erreur et de liste vide.
 
@@ -569,6 +580,24 @@ Texte généré par `src/lib/courses/whatsapp.ts` : titre, articles regroupés p
 ---
 
 ## 12. Interface utilisateur
+
+### Style « fait main » (design Kitch'N-Flow)
+
+- Nom affiché de l'application : **Kitch'N-Flow**. L'agent se présente comme **« Tantie »**.
+- Papier texturé (grain), écriture manuscrite (Caveat) pour les annotations, titres rétro (Pacifico), textes en Fredoka et Nunito.
+- Coins irréguliers (`wonky`, `blob`), scotch, punaises et ombres de papier ; la liste de courses ressemble à un ticket de caisse.
+- Palette (définie dans `@theme`) :
+
+| Nom | Couleur | Nom | Couleur |
+| --- | --- | --- | --- |
+| palme | #344F30 | or | #FDD973 |
+| foret | #13260F | mangue | #F9A11B |
+| puce | #411102 | lagon | #8FC1C9 |
+| carmin | #9F350B | canard | #2C4A4A |
+| sirop | #F47230 | rose | #F29CB0 |
+| creme | #FFF4DF | sable, biscuit, cacao, tomate, aubergine | couleurs d'appoint |
+
+### Règles d'écran
 
 - **Mobile d'abord** (360 px), utilisable d'une seule main. Navigation par barre en bas : Accueil, Menu, Courses, Stock, Chat.
 - **Bouton urgence** visible sur tous les écrans de la famille.
