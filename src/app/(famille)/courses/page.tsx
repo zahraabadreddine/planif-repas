@@ -20,10 +20,29 @@ const ZIGZAG = "M0 0h350v1" + "l-7 10-7-10".repeat(25) + "z";
 /** Case à cocher dessinée à la main ; la coche se trace quand on la coche */
 function HandCheckbox({ checked }: { checked: boolean }) {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" className="shrink-0 overflow-visible" aria-hidden="true">
-      <path d="M3 4c5-1.2 11-1 17 .2.8 5.2.6 10.4-.2 15.6-5.4.8-11 .9-16.4-.2C2.6 14.4 2.4 9.2 3 4z" fill="#fff" stroke="#13260F" strokeWidth={2} />
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      className="shrink-0 overflow-visible"
+      aria-hidden="true"
+    >
+      <path
+        d="M3 4c5-1.2 11-1 17 .2.8 5.2.6 10.4-.2 15.6-5.4.8-11 .9-16.4-.2C2.6 14.4 2.4 9.2 3 4z"
+        fill="#fff"
+        stroke="#13260F"
+        strokeWidth={2}
+      />
       {checked && (
-        <path className="drawn-sm animate-tick" d="M5 12l5 6L23 -1" fill="none" stroke="#9F350B" strokeWidth={3.2} strokeLinecap="round" strokeLinejoin="round" />
+        <path
+          className="drawn-sm animate-tick"
+          d="M5 12l5 6L23 -1"
+          fill="none"
+          stroke="#9F350B"
+          strokeWidth={3.2}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
       )}
     </svg>
   );
@@ -40,14 +59,20 @@ export default function ShoppingPage() {
   const shareText =
     `Liste de courses (${household.weekLabel}) · environ ${fcfa(total)}\n\n` +
     shoppingList
-      .map((b) => `${b.title.toUpperCase()} – ${b.store}\n` + b.items.map((it) => `• ${it.name} : ${it.quantity}`).join("\n"))
+      .map(
+        (b) =>
+          `${b.title.toUpperCase()} – ${b.store}\n` +
+          b.items.map((it) => `• ${it.name} : ${it.quantity}`).join("\n"),
+      )
       .join("\n\n");
 
   return (
     <div className="-mx-5 -mb-[190px] -mt-6 min-h-dvh bg-mangue px-5 pb-[190px] pt-[22px]">
       <header className="flex items-baseline gap-2.5">
         <h1 className="retro text-[30px] leading-[1.3]">Les courses</h1>
-        <HandNote className="text-xl text-puce" tilt={-4}>pour toute la semaine</HandNote>
+        <HandNote className="text-xl text-puce" tilt={-4}>
+          pour toute la semaine
+        </HandNote>
       </header>
 
       <div className="mt-3 flex items-center gap-3">
@@ -80,12 +105,21 @@ export default function ShoppingPage() {
           <section key={block.kind} className="mb-2 border-b-2 border-dashed border-biscuit pb-2">
             <div className="flex items-center gap-2">
               <div className="min-w-0 flex-1">
-                <h2 className={`font-hand text-[23px] font-bold leading-none ${TITLE_COLOR[block.kind]}`}>{block.title}</h2>
+                <h2
+                  className={`font-hand text-[23px] font-bold leading-none ${TITLE_COLOR[block.kind]}`}
+                >
+                  {block.title}
+                </h2>
                 <p className="text-xs font-bold text-cacao">
                   {block.store} · {block.distance}
                 </p>
               </div>
-              <a href={mapsLink(block.mapsQuery)} target="_blank" rel="noreferrer" className="flex h-9 items-center gap-1 text-[13px] font-extrabold">
+              <a
+                href={mapsLink(block.mapsQuery)}
+                target="_blank"
+                rel="noreferrer"
+                className="flex h-9 items-center gap-1 text-[13px] font-extrabold"
+              >
                 <PinIcon size={16} strokeWidth={2.6} className="text-carmin" /> y aller
               </a>
             </div>
@@ -101,12 +135,18 @@ export default function ShoppingPage() {
                       className="flex h-[34px] w-full items-center gap-2.5 text-left"
                     >
                       <HandCheckbox checked={checked} />
-                      <span className={`whitespace-nowrap text-[15px] font-extrabold transition-opacity ${checked ? "line-through opacity-45" : ""}`}>
+                      <span
+                        className={`whitespace-nowrap text-[15px] font-extrabold transition-opacity ${checked ? "line-through opacity-45" : ""}`}
+                      >
                         {it.name}
                       </span>
-                      <span className="whitespace-nowrap text-[13px] font-bold text-cacao">{it.quantity}</span>
+                      <span className="whitespace-nowrap text-[13px] font-bold text-cacao">
+                        {it.quantity}
+                      </span>
                       <span className="mt-2 h-0 flex-1 border-b-2 border-dotted border-biscuit" />
-                      <span className="text-sm font-extrabold text-puce">{fcfa(it.priceFcfa, false)}</span>
+                      <span className="text-sm font-extrabold text-puce">
+                        {fcfa(it.priceFcfa, false)}
+                      </span>
                     </button>
                   </li>
                 );
@@ -119,7 +159,12 @@ export default function ShoppingPage() {
           <span className="text-[13px] font-extrabold tracking-widest">TOTAL ESTIMÉ</span>
           <span className="font-display text-2xl font-semibold">≈ {fcfa(total, false)} F</span>
         </div>
-        <svg aria-hidden="true" className="absolute -bottom-2.5 left-0 h-[11px] w-full" viewBox="0 0 350 11" preserveAspectRatio="none">
+        <svg
+          aria-hidden="true"
+          className="absolute -bottom-2.5 left-0 h-[11px] w-full"
+          viewBox="0 0 350 11"
+          preserveAspectRatio="none"
+        >
           <path d={ZIGZAG} fill="#FFFDF7" />
         </svg>
       </div>

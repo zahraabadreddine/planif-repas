@@ -36,7 +36,11 @@ export function UrgencyButton({ variant = "pill", className }: Props) {
       <Link
         href="/urgence"
         aria-label="Mode urgence : pas le temps ?"
-        className={cx(floating, "press blob flex h-[56px] w-[56px] items-center justify-center", className)}
+        className={cx(
+          floating,
+          "press blob flex h-[56px] w-[56px] items-center justify-center",
+          className,
+        )}
       >
         <BoltIcon size={24} />
       </Link>

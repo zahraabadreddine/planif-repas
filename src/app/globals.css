@@ -44,75 +44,158 @@
   --animate-drop: kf-drop 0.6s cubic-bezier(0.2, 1.2, 0.4, 1) both;
 
   @keyframes kf-float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-8px); }
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-8px);
+    }
   }
   @keyframes kf-wobble {
-    0%, 100% { transform: rotate(-6deg); }
-    50% { transform: rotate(6deg); }
+    0%,
+    100% {
+      transform: rotate(-6deg);
+    }
+    50% {
+      transform: rotate(6deg);
+    }
   }
   @keyframes kf-steam {
-    0% { transform: translateY(6px); opacity: 0; }
-    40% { opacity: 1; }
-    100% { transform: translateY(-12px); opacity: 0; }
+    0% {
+      transform: translateY(6px);
+      opacity: 0;
+    }
+    40% {
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(-12px);
+      opacity: 0;
+    }
   }
   @keyframes kf-pop {
-    0% { transform: scale(0.6); opacity: 0; }
-    100% { transform: scale(1); opacity: 1; }
+    0% {
+      transform: scale(0.6);
+      opacity: 0;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
   }
   @keyframes kf-slide-up {
-    0% { transform: translateY(14px); opacity: 0; }
-    100% { transform: none; opacity: 1; }
+    0% {
+      transform: translateY(14px);
+      opacity: 0;
+    }
+    100% {
+      transform: none;
+      opacity: 1;
+    }
   }
   @keyframes kf-slide-in {
-    0% { transform: translateX(16px); opacity: 0; }
-    100% { transform: none; opacity: 1; }
+    0% {
+      transform: translateX(16px);
+      opacity: 0;
+    }
+    100% {
+      transform: none;
+      opacity: 1;
+    }
   }
   @keyframes kf-pulse-ring {
-    0%, 100% { box-shadow: 0 0 0 0 rgb(244 114 48 / 0.55); }
-    60% { box-shadow: 0 0 0 12px rgb(244 114 48 / 0); }
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 rgb(244 114 48 / 0.55);
+    }
+    60% {
+      box-shadow: 0 0 0 12px rgb(244 114 48 / 0);
+    }
   }
   @keyframes kf-shake {
-    0%, 80%, 100% { transform: rotate(0); }
-    85% { transform: rotate(-8deg); }
-    90% { transform: rotate(8deg); }
-    95% { transform: rotate(-4deg); }
+    0%,
+    80%,
+    100% {
+      transform: rotate(0);
+    }
+    85% {
+      transform: rotate(-8deg);
+    }
+    90% {
+      transform: rotate(8deg);
+    }
+    95% {
+      transform: rotate(-4deg);
+    }
   }
   @keyframes kf-dot {
-    0%, 100% { transform: translateY(0); opacity: 0.4; }
-    50% { transform: translateY(-4px); opacity: 1; }
+    0%,
+    100% {
+      transform: translateY(0);
+      opacity: 0.4;
+    }
+    50% {
+      transform: translateY(-4px);
+      opacity: 1;
+    }
   }
   /* petit coup de coude de temps en temps, au lieu d'un halo qui clignote */
   @keyframes kf-nudge {
-    0%, 86%, 100% { transform: rotate(-3deg); }
-    90% { transform: rotate(4deg); }
-    94% { transform: rotate(-7deg); }
-    97% { transform: rotate(1deg); }
+    0%,
+    86%,
+    100% {
+      transform: rotate(-3deg);
+    }
+    90% {
+      transform: rotate(4deg);
+    }
+    94% {
+      transform: rotate(-7deg);
+    }
+    97% {
+      transform: rotate(1deg);
+    }
   }
   /* trait qui se dessine (soulignés, coches) */
   @keyframes kf-draw {
-    to { stroke-dashoffset: 0; }
+    to {
+      stroke-dashoffset: 0;
+    }
   }
   /* le ticket de caisse qui tombe */
   @keyframes kf-drop {
-    0% { transform: translateY(-30px) rotate(-1deg); opacity: 0; }
-    100% { transform: rotate(-0.6deg); opacity: 1; }
+    0% {
+      transform: translateY(-30px) rotate(-1deg);
+      opacity: 0;
+    }
+    100% {
+      transform: rotate(-0.6deg);
+      opacity: 1;
+    }
   }
   @keyframes kf-grow {
-    from { width: 0; }
+    from {
+      width: 0;
+    }
   }
 }
 
 @layer base {
-  html, body {
+  html,
+  body {
     background: var(--color-creme);
     color: var(--color-foret);
     font-family: var(--font-sans);
   }
-  h1, h2, h3 {
+  h1,
+  h2,
+  h3 {
     font-family: var(--font-display);
   }
-  button { cursor: pointer; }
+  button {
+    cursor: pointer;
+  }
   :focus-visible {
     outline: 3px solid var(--color-sirop);
     outline-offset: 2px;
@@ -121,8 +204,12 @@
 
 /* Petit effet d'appui sur tous les boutons "pressables" */
 @utility press {
-  transition: transform 0.15s ease, background-color 0.2s ease;
-  &:active { transform: scale(0.96) rotate(-1deg); }
+  transition:
+    transform 0.15s ease,
+    background-color 0.2s ease;
+  &:active {
+    transform: scale(0.96) rotate(-1deg);
+  }
 }
 
 /* Titre rétro : seulement l'écriture, la couleur reste celle du texte */
@@ -133,23 +220,45 @@
 }
 
 /* Trait à dessiner : à combiner avec animate-draw / animate-tick */
-.drawn { stroke-dasharray: 220; stroke-dashoffset: 220; }
-.drawn-sm { stroke-dasharray: 30; stroke-dashoffset: 30; }
+.drawn {
+  stroke-dasharray: 220;
+  stroke-dashoffset: 220;
+}
+.drawn-sm {
+  stroke-dasharray: 30;
+  stroke-dashoffset: 30;
+}
 
 /* Bords « faits main » : jamais deux coins pareils */
-@utility wonky { border-radius: 18px 24px 20px 16px; }
-@utility wonky-lg { border-radius: 26px 32px 24px 30px; }
-@utility blob { border-radius: 46% 54% 50% 50% / 52% 46% 54% 48%; }
+@utility wonky {
+  border-radius: 18px 24px 20px 16px;
+}
+@utility wonky-lg {
+  border-radius: 26px 32px 24px 30px;
+}
+@utility blob {
+  border-radius: 46% 54% 50% 50% / 52% 46% 54% 48%;
+}
 
 /* Post-it et scotch */
-@utility paper-shadow { box-shadow: 0 9px 12px -9px rgb(65 17 2 / 0.55); }
+@utility paper-shadow {
+  box-shadow: 0 9px 12px -9px rgb(65 17 2 / 0.55);
+}
 
 /* Les animations SVG tournent autour d'un point précis */
-.origin-svg-center { transform-box: fill-box; transform-origin: center; }
+.origin-svg-center {
+  transform-box: fill-box;
+  transform-origin: center;
+}
 
 @media (prefers-reduced-motion: reduce) {
-  .drawn, .drawn-sm { stroke-dashoffset: 0; }
-  *, *::before, *::after {
+  .drawn,
+  .drawn-sm {
+    stroke-dashoffset: 0;
+  }
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
