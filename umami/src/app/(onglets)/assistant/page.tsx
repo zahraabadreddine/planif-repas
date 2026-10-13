@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { HandNote, Tape } from "@/components/Hand";
 import { ChevronLeft, SendIcon } from "@/components/Icons";
-import { PotMascot } from "@/components/illustrations/Characters";
 import { Plate } from "@/components/illustrations/Plate";
+import { UmiHead } from "@/components/Umi";
 import { UrgencyButton } from "@/components/UrgencyButton";
 import { cx } from "@/lib/format";
 import { chatSuggestions, getRecipe, initialChat } from "@/lib/mock-data";
@@ -40,7 +40,7 @@ export default function AssistantPage() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages, typing]);
 
-  /** Affiche la réponse de Tantie lettre par lettre, comme un flux */
+  /** Affiche la réponse de Umi lettre par lettre, comme un flux */
   function streamAgentReply(text: string) {
     setTyping(true);
     const id = newId();
@@ -86,11 +86,11 @@ export default function AssistantPage() {
           <ChevronLeft size={22} strokeWidth={2.8} />
         </Link>
         <span className="flex h-[54px] w-[54px] shrink-0 items-center justify-center rounded-full bg-mangue">
-          <PotMascot size={46} className="animate-float" />
+          <UmiHead size={40} className="animate-float" />
         </span>
         <div className="flex-1">
-          <h1 className="retro text-2xl leading-[1.2]">Tantie</h1>
-          <p className="font-hand text-lg font-bold leading-tight text-carmin">connaît ton frigo par cœur</p>
+          <h1 className="retro text-2xl leading-[1.2]">Umi</h1>
+          <p className="font-hand text-lg font-bold leading-tight text-carmin">ton assistante cuisine</p>
         </div>
         <UrgencyButton variant="square" />
       </header>
@@ -116,8 +116,9 @@ export default function AssistantPage() {
           ),
         )}
         {typing && (
-          <div aria-label="Tantie écrit" className="flex items-center gap-1 self-start px-1 font-hand text-lg font-bold text-carmin">
-            Tantie réfléchit
+          <div aria-label="Umi écrit" className="flex items-center gap-1 self-start px-1 font-hand text-lg font-bold text-carmin">
+            <UmiHead size={26} mood="reflechit" />
+            Umi réfléchit
             {[0, 150, 300].map((d) => (
               <span key={d} className="h-1.5 w-1.5 animate-dot rounded-full bg-carmin" style={{ animationDelay: `${d}ms` }} />
             ))}
@@ -165,7 +166,7 @@ export default function AssistantPage() {
   );
 }
 
-/** La proposition de Tantie, présentée comme une fiche recette scotchée */
+/** La proposition de Umi, présentée comme une fiche recette scotchée */
 function ProposalCard({
   proposal,
   onAnswer,

@@ -96,3 +96,24 @@ export type EmergencyOption = {
   minutes: number;
   uses: string;
 };
+
+/** Un magasin connu de l'app (saisi par l'équipe pour le pilote) */
+export type Store = {
+  id: string;
+  name: string;
+  kind: "marché" | "supermarché" | "boutique";
+  distanceM: number;
+  access: string; // « 2 min à pied », « 8 min en gbaka »…
+  mapsQuery: string;
+  /** position sur la petite carte dessinée (px) */
+  mapX: number;
+  mapY: number;
+};
+
+/** Prix relevés d'un ingrédient, magasin par magasin (null = pas disponible) */
+export type IngredientPrices = {
+  id: string;
+  label: string;
+  quantity: string;
+  prices: Record<string, number | null>;
+};

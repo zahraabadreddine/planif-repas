@@ -23,3 +23,8 @@ export function expiryLabel(days: number): string {
 export function cx(...classes: (string | false | null | undefined)[]): string {
   return classes.filter(Boolean).join(" ");
 }
+
+/** 150 → "150 m", 1200 → "1,2 km" */
+export function distance(m: number): string {
+  return m < 1000 ? `${m} m` : `${String(m / 1000).replace(".", ",")} km`;
+}

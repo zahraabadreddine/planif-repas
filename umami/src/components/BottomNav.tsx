@@ -6,11 +6,11 @@ import { CalendarIcon, CartIcon, ChatIcon, FridgeIcon, HomeIcon } from "./Icons"
 import { Squiggle } from "./Hand";
 import { cx } from "@/lib/format";
 
-const ITEMS = [
+const ITEMS: { href: string; label: string; Icon: typeof HomeIcon; also?: string[] }[] = [
   { href: "/accueil", label: "Accueil", Icon: HomeIcon },
   { href: "/menu", label: "Menu", Icon: CalendarIcon },
-  { href: "/assistant", label: "Tantie", Icon: ChatIcon },
-  { href: "/courses", label: "Courses", Icon: CartIcon },
+  { href: "/assistant", label: "Umi", Icon: ChatIcon },
+  { href: "/courses", label: "Courses", Icon: CartIcon, also: ["/ou-acheter"] },
   { href: "/frigo", label: "Frigo", Icon: FridgeIcon },
 ];
 
@@ -22,8 +22,8 @@ export function BottomNav() {
       aria-label="Navigation principale"
       className="fixed bottom-3.5 left-1/2 z-40 flex h-[72px] w-[calc(100%-24px)] max-w-[406px] -translate-x-1/2 items-center justify-around rounded-[26px_30px_24px_28px] bg-foret px-1.5"
     >
-      {ITEMS.map(({ href, label, Icon }) => {
-        const active = pathname.startsWith(href);
+      {ITEMS.map(({ href, label, Icon, also }) => {
+        const active = [href, ...(also ?? [])].some((h) => pathname.startsWith(h));
         return (
           <Link
             key={href}

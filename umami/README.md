@@ -1,4 +1,4 @@
-# Kitch'N-Flow — front de l'app (MVP)
+# Umami — front de l'app (MVP)
 
 Interface mobile de l'agent IA de planification des repas, en **Next.js (App Router) · React · TypeScript · Tailwind CSS**, comme prévu dans le cahier des charges.
 Ce dépôt contient **uniquement le front** : les données viennent de `src/lib/mock-data.ts`, et rien n'est encore branché au backend.
@@ -21,6 +21,7 @@ Puis ouvre http://localhost:3000. Le mieux est de passer le navigateur en vue t�
 | `/menu` | Menu de la semaine | choix du jour, cartes repas, partage WhatsApp |
 | `/assistant` | Chat avec l'agent | envoi de messages, réponse affichée au fil de l'eau (simulée), carte Confirmer / Refuser |
 | `/courses` | Liste de courses | blocs marché / supermarché / boutique, cases à cocher, total, WhatsApp, itinéraire Google Maps |
+| `/ou-acheter` | Où acheter | recherche d'un ingrédient, tri moins cher / plus proche, carte dessinée, itinéraire, conseil d'Umi (règle des 10 %) |
 | `/frigo` | Mon frigo | déclaration d'achats (simulée), produits à consommer vite, stock |
 | `/urgence` | Mode « Pas le temps ? » | choix du temps et du nombre de personnes, options classées par rapidité |
 | `/recettes/[id]` | Recette pas à pas | onglets Ingrédients / Étapes, progression |
@@ -37,7 +38,8 @@ Pour que l'app ne fasse pas « générée », on évite les grilles parfaites et
 - **coins irréguliers** : utilitaires `wonky`, `wonky-lg`, `blob` ;
 - **post-it, scotch et punaises** (`Tape`, `Pin`, `paper-shadow`) ;
 - la liste de courses est un **ticket de caisse**, le frigo a de **vraies étagères** ;
-- l'assistant s'appelle **Tantie** (facile à renommer : `BottomNav.tsx`, `assistant/page.tsx`, `accueil/page.tsx`).
+- **logo** : le « U » qui cuisine (`components/Logo.tsx`), icône d'app dans `app/icon.svg` ;
+- l'assistante s'appelle **Umi** : le « i » d'umami qui prend vie (`components/Umi.tsx`, humeurs `contente`, `reflechit`, `urgence`).
 
 ## Organisation
 

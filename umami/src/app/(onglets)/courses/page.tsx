@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { HandNote, Tape } from "@/components/Hand";
 import { PinIcon, WhatsAppIcon } from "@/components/Icons";
@@ -124,6 +125,12 @@ export default function ShoppingPage() {
         </svg>
       </div>
 
+      <Link
+        href="/ou-acheter"
+        className="press fixed bottom-[106px] left-[max(20px,calc(50%-195px))] z-40 flex h-[50px] items-center gap-2 rounded-[16px_20px_18px_14px] bg-foret px-4 text-sm font-extrabold text-or"
+      >
+        <PinIcon size={18} strokeWidth={2.6} /> Où c&apos;est moins cher&nbsp;?
+      </Link>
       <UrgencyButton variant="round" />
     </div>
   );

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { FridgeHero } from "@/components/FridgeHero";
 import { ArrowRight } from "@/components/Icons";
-import { Logo } from "@/components/illustrations/Characters";
+import { UmamiLogo } from "@/components/Logo";
 
 export default function WelcomePage() {
   return (
@@ -15,9 +15,7 @@ export default function WelcomePage() {
       </svg>
 
       <div className="flex w-full items-center justify-between">
-        <div className="retro flex items-center gap-2 text-[22px] leading-[1.2]">
-          <Logo /> Kitch&apos;N-Flow
-        </div>
+        <UmamiLogo className="-my-3.5 -ml-1.5" />
         <Link href="/accueil" className="px-1 py-3 text-sm font-extrabold">
           Passer
         </Link>

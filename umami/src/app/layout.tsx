@@ -33,7 +33,7 @@ const pacifico = Pacifico({
 });
 
 export const metadata: Metadata = {
-  title: "Kitch'N-Flow",
+  title: "Umami",
   description:
     "Ton assistant cuisine : le menu de la semaine selon ton temps, ton budget en FCFA et ce qu'il reste dans le frigo.",
 };

@@ -3,6 +3,8 @@
 
 import type {
   ChatMessage,
+  IngredientPrices,
+  Store,
   DayPlan,
   EmergencyOption,
   Recipe,
@@ -417,4 +419,25 @@ export const emergencyOptions: EmergencyOption[] = [
   { recipeId: "omelette-oignons", name: "Omelette aux oignons & pain", short: "l'omelette", minutes: 10, uses: "œufs, oignons, pain" },
   { recipeId: "spaghetti-sautes", name: "Spaghetti sautés à la tomate", short: "les spaghetti", minutes: 15, uses: "pâtes, tomates, oignons" },
   { recipeId: "riz-saute-aubergines", name: "Riz sauté œufs & aubergines", short: "le riz sauté", minutes: 15, uses: "riz de midi, œufs, aubergines" },
+];
+
+// ───── Où acheter (cahier des charges §14) ─────
+// Plus tard : GET /api/stores et GET /api/prices (prix relevés par l'équipe et les utilisatrices).
+
+/** Magasin où l'utilisatrice fait déjà la plus grande partie de sa liste */
+export const usualStoreId = "adj";
+
+export const stores: Store[] = [
+  { id: "bou", name: "Boutique du coin", kind: "boutique", distanceM: 150, access: "2 min à pied", mapsQuery: "boutique Cocody Abidjan", mapX: 140, mapY: 74 },
+  { id: "sup", name: "Supermarché du quartier", kind: "supermarché", distanceM: 800, access: "10 min à pied", mapsQuery: "supermarché Cocody Abidjan", mapX: 196, mapY: 124 },
+  { id: "adj", name: "Marché d'Adjamé", kind: "marché", distanceM: 1200, access: "8 min en gbaka", mapsQuery: "Marché d'Adjamé Abidjan", mapX: 262, mapY: 46 },
+  { id: "coc", name: "Marché de Cocody", kind: "marché", distanceM: 2400, access: "12 min en woro-woro", mapsQuery: "Marché de Cocody Abidjan", mapX: 322, mapY: 84 },
+];
+
+export const ingredientPrices: IngredientPrices[] = [
+  { id: "tom", label: "Tomates", quantity: "2 tas", prices: { bou: 700, sup: 900, adj: 500, coc: 450 } },
+  { id: "poi", label: "Poisson", quantity: "2 chinchards", prices: { bou: null, sup: 2600, adj: 2000, coc: 2200 } },
+  { id: "riz", label: "Riz", quantity: "5 kg", prices: { bou: 4800, sup: 4500, adj: 4300, coc: 4400 } },
+  { id: "ban", label: "Plantain", quantity: "6 doigts", prices: { bou: 1500, sup: 1800, adj: 1200, coc: 1300 } },
+  { id: "oeu", label: "Œufs", quantity: "1 plaquette", prices: { bou: 2700, sup: 2600, adj: 2650, coc: 2600 } },
 ];
