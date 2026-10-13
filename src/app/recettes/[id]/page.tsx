@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
-import { getRecipe, recipes } from "@/lib/mock-data";
-import { RecipeView } from "./RecipeView";
+import { getRecipe, recipes } from "@/lib/donnees-simulees";
+import { RecipeView } from "./vue-recette";
 
 export function generateStaticParams() {
   return recipes.map((r) => ({ id: r.id }));

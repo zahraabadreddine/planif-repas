@@ -2,53 +2,41 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import styles from "./barre-navigation.module.css";
+import { CalendarIcon, CartIcon, ChatIcon, FridgeIcon, HomeIcon } from "./icones";
+import { Squiggle } from "./main-levee";
+import { cx } from "@/lib/format";
 
-const onglets = [
-  { href: "/accueil", libelle: "Accueil", icone: "M3 11l9-7 9 7M5 10v10h14V10" },
-  {
-    href: "/menu",
-    libelle: "Menu",
-    icone: "M7 5h10a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V8a3 3 0 0 1 3-3zM4 10h16M9 3v4M15 3v4",
-  },
-  { href: "/courses", libelle: "Courses", icone: "M5 8h14l-1.5 11h-11zM9 8a3 3 0 0 1 6 0" },
-  {
-    href: "/stock",
-    libelle: "Stock",
-    icone: "M8 3h8a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zM6 10h12M9 6v2M9 13v3",
-  },
-  { href: "/chat", libelle: "Chat", icone: "M4 5h16v11H9l-5 4z" },
-] as const;
+const ITEMS = [
+  { href: "/accueil", label: "Accueil", Icon: HomeIcon },
+  { href: "/menu", label: "Menu", Icon: CalendarIcon },
+  { href: "/chat", label: "Chat", Icon: ChatIcon },
+  { href: "/courses", label: "Courses", Icon: CartIcon },
+  { href: "/stock", label: "Stock", Icon: FridgeIcon },
+];
 
-export default function BarreNavigation() {
-  const cheminActuel = usePathname();
+export function BottomNav() {
+  const pathname = usePathname();
 
   return (
-    <nav className={styles.barre} aria-label="Navigation principale">
-      {onglets.map((onglet) => {
-        const actif = cheminActuel.startsWith(onglet.href);
+    <nav
+      aria-label="Navigation principale"
+      className="fixed bottom-3.5 left-1/2 z-40 flex h-[72px] w-[calc(100%-24px)] max-w-[406px] -translate-x-1/2 items-center justify-around rounded-[26px_30px_24px_28px] bg-foret px-1.5"
+    >
+      {ITEMS.map(({ href, label, Icon }) => {
+        const active = pathname.startsWith(href);
         return (
           <Link
-            key={onglet.href}
-            href={onglet.href}
-            className={actif ? `${styles.onglet} ${styles.actif}` : styles.onglet}
-            aria-current={actif ? "page" : undefined}
+            key={href}
+            href={href}
+            aria-current={active ? "page" : undefined}
+            className={cx(
+              "press flex min-w-[58px] flex-col items-center px-1 pt-2 text-[11px] font-extrabold",
+              active ? "pb-0.5 text-or" : "pb-2.5 text-creme/75",
+            )}
           >
-            <span className={styles.pastille}>
-              <svg
-                className={styles.icone}
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <path d={onglet.icone} />
-              </svg>
-            </span>
-            {onglet.libelle}
+            <Icon size={22} strokeWidth={active ? 2.5 : 2.2} />
+            {label}
+            {active && <Squiggle animated />}
           </Link>
         );
       })}

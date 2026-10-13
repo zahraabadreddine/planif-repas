@@ -313,38 +313,38 @@ export function getRecipe(id: string): Recipe | undefined {
 
 export const weekPlan: DayPlan[] = [
   { date: "2026-10-12", short: "LUN", label: "Lundi", meals: [
-    { slot: "dejeuner", recipeId: "attieke-poisson" },
-    { slot: "diner", recipeId: "riz-sauce-tomate" },
+    { slot: "lunch", recipeId: "attieke-poisson" },
+    { slot: "dinner", recipeId: "riz-sauce-tomate" },
   ] },
   { date: "2026-10-13", short: "MAR", label: "Mardi, c'est aujourd'hui", meals: [
-    { slot: "dejeuner", recipeId: "alloco-oeufs", tag: "vite fait" },
-    { slot: "diner", recipeId: "sauce-graine" },
+    { slot: "lunch", recipeId: "alloco-oeufs", tag: "vite fait" },
+    { slot: "dinner", recipeId: "sauce-graine" },
   ] },
   { date: "2026-10-14", short: "MER", label: "Mercredi", meals: [
-    { slot: "dejeuner", recipeId: "riz-gras-poulet" },
-    { slot: "diner", recipeId: "spaghetti-sautes", tag: "vite fait" },
+    { slot: "lunch", recipeId: "riz-gras-poulet" },
+    { slot: "dinner", recipeId: "spaghetti-sautes", tag: "vite fait" },
   ] },
   { date: "2026-10-15", short: "JEU", label: "Jeudi", meals: [
-    { slot: "dejeuner", recipeId: "garba" },
-    { slot: "diner", recipeId: "riz-saute-aubergines", tag: "tes aubergines" },
+    { slot: "lunch", recipeId: "garba" },
+    { slot: "dinner", recipeId: "riz-saute-aubergines", tag: "tes aubergines" },
   ] },
   { date: "2026-10-16", short: "VEN", label: "Vendredi", meals: [
-    { slot: "dejeuner", recipeId: "kedjenou" },
-    { slot: "diner", recipeId: "pain-omelette", tag: "vite fait" },
+    { slot: "lunch", recipeId: "kedjenou" },
+    { slot: "dinner", recipeId: "pain-omelette", tag: "vite fait" },
   ] },
   { date: "2026-10-17", short: "SAM", label: "Samedi", meals: [
-    { slot: "dejeuner", recipeId: "foutou-sauce-claire" },
-    { slot: "diner", recipeId: "alloco-poisson" },
+    { slot: "lunch", recipeId: "foutou-sauce-claire" },
+    { slot: "dinner", recipeId: "alloco-poisson" },
   ] },
   { date: "2026-10-18", short: "DIM", label: "Dimanche", meals: [
-    { slot: "dejeuner", recipeId: "poulet-braise", tag: "en famille" },
-    { slot: "diner", recipeId: "soupe-legumes" },
+    { slot: "lunch", recipeId: "poulet-braise", tag: "en famille" },
+    { slot: "dinner", recipeId: "soupe-legumes" },
   ] },
 ];
 
 export const shoppingList: ShoppingBlock[] = [
   {
-    kind: "marche",
+    kind: "market",
     title: "au marché",
     store: "Marché d'Adjamé",
     distance: "1,2 km",
@@ -357,7 +357,7 @@ export const shoppingList: ShoppingBlock[] = [
     ],
   },
   {
-    kind: "supermarche",
+    kind: "supermarket",
     title: "au supermarché",
     store: "Supermarché du quartier",
     distance: "800 m",
@@ -368,7 +368,7 @@ export const shoppingList: ShoppingBlock[] = [
     ],
   },
   {
-    kind: "boutique",
+    kind: "shop",
     title: "chez le boutiquier",
     store: "Boutique du coin",
     distance: "150 m",

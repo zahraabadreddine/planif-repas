@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { HandArrow, HandNote, Squiggle } from "@/components/Hand";
-import { ChevronLeft, WhatsAppIcon } from "@/components/Icons";
-import { AttiekePlate, Plate } from "@/components/illustrations/Plate";
-import { UrgencyButton } from "@/components/UrgencyButton";
+import { HandArrow, HandNote, Squiggle } from "@/components/main-levee";
+import { ChevronLeft, WhatsAppIcon } from "@/components/icones";
+import { AttiekePlate, Plate } from "@/components/illustrations/assiette";
+import { UrgencyButton } from "@/components/bouton-urgence";
 import { cx, fcfa, whatsappLink } from "@/lib/format";
 import type { Recipe } from "@/lib/types";
 

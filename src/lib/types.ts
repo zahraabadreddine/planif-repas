@@ -2,7 +2,7 @@
 // Ils suivent le modèle du cahier des charges (Recipe, PlannedMeal, StockItem…)
 // pour que le branchement au backend soit simple plus tard.
 
-export type MealSlot = "dejeuner" | "diner";
+export type MealSlot = "lunch" | "dinner";
 
 /** Couleurs utilisées par l'illustration d'assiette */
 export type PlateColors = {
@@ -47,7 +47,7 @@ export type DayPlan = {
   meals: PlannedMeal[];
 };
 
-export type StoreKind = "marche" | "supermarche" | "boutique";
+export type StoreKind = "market" | "supermarket" | "shop";
 
 export type ShoppingItem = {
   id: string;
@@ -86,7 +86,7 @@ export type AgentProposal = {
   label: string; // ex : jeudi soir
   recipeId: string;
   summary: string;
-  status: "pending" | "accepted" | "refused";
+  status: "pending" | "accepted" | "rejected";
 };
 
 export type EmergencyOption = {

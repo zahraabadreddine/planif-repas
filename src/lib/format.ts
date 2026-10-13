@@ -9,7 +9,7 @@ export function whatsappLink(text: string): string {
   return `https://wa.me/?text=${encodeURIComponent(text)}`;
 }
 
-/** Lien Google Maps vers un lieu */
+/** Lien de recherche Google Maps (provisoire : avec la table Store, lien d'itinéraire par coordonnées, voir CLAUDE.md §11) */
 export function mapsLink(query: string): string {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
 }

@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { Plate } from "./illustrations/Plate";
-import { ArrowRight } from "./Icons";
+import { Plate } from "./illustrations/assiette";
+import { ArrowRight } from "./icones";
 import { fcfa } from "@/lib/format";
 import type { MealSlot, Recipe } from "@/lib/types";
 
-const SLOT_LABEL: Record<MealSlot, string> = { dejeuner: "à midi", diner: "le soir" };
+const SLOT_LABEL: Record<MealSlot, string> = { lunch: "à midi", dinner: "le soir" };
 
 type Props = {
   recipe: Recipe;
@@ -37,7 +37,7 @@ export function MealCard({ recipe, slot, tag, delay = 0 }: Props) {
           La recette <ArrowRight size={16} strokeWidth={2.8} />
         </Link>
         <Link
-          href="/assistant"
+          href="/chat"
           className="flex h-9 items-center text-[13px] font-extrabold text-carmin underline decoration-wavy underline-offset-4"
         >
           changer

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MagnetWord } from "@/components/FridgeHero";
+import { MagnetWord } from "@/components/frigo-anime";
 
 export default function NotFound() {
   return (

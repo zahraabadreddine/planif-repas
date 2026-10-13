@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { HandNote } from "@/components/Hand";
-import { CloseIcon, MinusIcon, PlusIcon } from "@/components/Icons";
-import { RunningClock } from "@/components/illustrations/Characters";
+import { HandNote } from "@/components/main-levee";
+import { CloseIcon, MinusIcon, PlusIcon } from "@/components/icones";
+import { RunningClock } from "@/components/illustrations/personnages";
 import { cx } from "@/lib/format";
-import { emergencyOptions, household } from "@/lib/mock-data";
+import { emergencyOptions, household } from "@/lib/donnees-simulees";
 
 const TIMES = [10, 15, 20, 30];
 const CHIP_RADII = ["14px 18px 16px 12px", "18px 12px 14px 16px", "12px 16px 18px 14px", "16px 14px 12px 18px"];
@@ -139,7 +139,7 @@ export default function EmergencyPage() {
           >
             On part sur {choice.short}
           </Link>
-          <Link href="/assistant" className="p-2.5 text-center text-sm font-extrabold text-foret">
+          <Link href="/chat" className="p-2.5 text-center text-sm font-extrabold text-foret">
             Rien ne te tente&nbsp;? Un garba ou un alloco à côté, ça marche aussi.
           </Link>
         </div>
