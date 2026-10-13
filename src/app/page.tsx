@@ -78,12 +78,12 @@ export default function WelcomePage() {
 
       <div className="mt-auto flex w-full flex-col gap-2.5 pt-8">
         <Link
-          href="/accueil"
+          href="/inscription"
           className="press flex h-[58px] items-center justify-center gap-2.5 rounded-[18px_22px_20px_16px] bg-foret font-display text-xl font-semibold text-or shadow-[0_6px_0_#411102]"
         >
           On commence <ArrowRight />
         </Link>
-        <Link href="/accueil" className="p-3 text-center text-[15px] font-extrabold">
+        <Link href="/connexion" className="p-3 text-center text-[15px] font-extrabold">
           J&apos;ai déjà un compte
         </Link>
       </div>
