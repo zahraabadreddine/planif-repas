@@ -30,7 +30,7 @@ export default function HomePage() {
           </h1>
         </div>
         <Link
-          href="/"
+          href="/foyer"
           aria-label="Mon foyer"
           className="press flex h-12 w-12 shrink-0 rotate-6 items-center justify-center rounded-full border-[2.5px] border-foret bg-rose"
         >
