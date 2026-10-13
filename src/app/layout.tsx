@@ -46,7 +46,10 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr" className={`${fredoka.variable} ${nunito.variable} ${caveat.variable} ${pacifico.variable}`}>
+    <html
+      lang="fr"
+      className={`${fredoka.variable} ${nunito.variable} ${caveat.variable} ${pacifico.variable}`}
+    >
       <body className="min-h-dvh bg-sable/60 antialiased">
         {/* L'app est pensée téléphone : sur grand écran on centre une colonne mobile */}
         <div className="relative mx-auto min-h-dvh w-full max-w-[430px] overflow-x-hidden bg-creme shadow-xl">

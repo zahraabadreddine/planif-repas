@@ -41,8 +41,14 @@ export const recipes: Recipe[] = [
     ],
     steps: [
       { text: "Nettoie le poisson et fais trois entailles de chaque côté.", minutes: 5 },
-      { text: "Écrase l'ail, le gingembre, le piment et un oignon. Frotte le poisson avec ce mélange.", minutes: 10 },
-      { text: "Laisse mariner pendant que tu coupes tomates et oignons pour la sauce.", minutes: 10 },
+      {
+        text: "Écrase l'ail, le gingembre, le piment et un oignon. Frotte le poisson avec ce mélange.",
+        minutes: 10,
+      },
+      {
+        text: "Laisse mariner pendant que tu coupes tomates et oignons pour la sauce.",
+        minutes: 10,
+      },
       { text: "Braise le poisson 8 à 10 minutes de chaque côté, sur feu moyen.", minutes: 20 },
       { text: "Réchauffe l'attiéké à la vapeur et sers avec la sauce et le piment.", minutes: 5 },
     ],
@@ -63,7 +69,10 @@ export const recipes: Recipe[] = [
     ],
     steps: [
       { text: "Lave le riz et mets-le à cuire.", minutes: 5 },
-      { text: "Fais revenir les oignons, ajoute les tomates écrasées et laisse mijoter.", minutes: 20 },
+      {
+        text: "Fais revenir les oignons, ajoute les tomates écrasées et laisse mijoter.",
+        minutes: 20,
+      },
       { text: "Sale, goûte et sers la sauce sur le riz.", minutes: 5 },
     ],
   },
@@ -197,7 +206,10 @@ export const recipes: Recipe[] = [
     ],
     steps: [
       { text: "Mets le poulet et les légumes dans la canari ou la marmite.", minutes: 10 },
-      { text: "Ferme bien et laisse cuire à l'étouffée en secouant de temps en temps.", minutes: 50 },
+      {
+        text: "Ferme bien et laisse cuire à l'étouffée en secouant de temps en temps.",
+        minutes: 50,
+      },
     ],
   },
   {
@@ -312,34 +324,69 @@ export function getRecipe(id: string): Recipe | undefined {
 }
 
 export const weekPlan: DayPlan[] = [
-  { date: "2026-10-12", short: "LUN", label: "Lundi", meals: [
-    { slot: "lunch", recipeId: "attieke-poisson" },
-    { slot: "dinner", recipeId: "riz-sauce-tomate" },
-  ] },
-  { date: "2026-10-13", short: "MAR", label: "Mardi, c'est aujourd'hui", meals: [
-    { slot: "lunch", recipeId: "alloco-oeufs", tag: "vite fait" },
-    { slot: "dinner", recipeId: "sauce-graine" },
-  ] },
-  { date: "2026-10-14", short: "MER", label: "Mercredi", meals: [
-    { slot: "lunch", recipeId: "riz-gras-poulet" },
-    { slot: "dinner", recipeId: "spaghetti-sautes", tag: "vite fait" },
-  ] },
-  { date: "2026-10-15", short: "JEU", label: "Jeudi", meals: [
-    { slot: "lunch", recipeId: "garba" },
-    { slot: "dinner", recipeId: "riz-saute-aubergines", tag: "tes aubergines" },
-  ] },
-  { date: "2026-10-16", short: "VEN", label: "Vendredi", meals: [
-    { slot: "lunch", recipeId: "kedjenou" },
-    { slot: "dinner", recipeId: "pain-omelette", tag: "vite fait" },
-  ] },
-  { date: "2026-10-17", short: "SAM", label: "Samedi", meals: [
-    { slot: "lunch", recipeId: "foutou-sauce-claire" },
-    { slot: "dinner", recipeId: "alloco-poisson" },
-  ] },
-  { date: "2026-10-18", short: "DIM", label: "Dimanche", meals: [
-    { slot: "lunch", recipeId: "poulet-braise", tag: "en famille" },
-    { slot: "dinner", recipeId: "soupe-legumes" },
-  ] },
+  {
+    date: "2026-10-12",
+    short: "LUN",
+    label: "Lundi",
+    meals: [
+      { slot: "lunch", recipeId: "attieke-poisson" },
+      { slot: "dinner", recipeId: "riz-sauce-tomate" },
+    ],
+  },
+  {
+    date: "2026-10-13",
+    short: "MAR",
+    label: "Mardi, c'est aujourd'hui",
+    meals: [
+      { slot: "lunch", recipeId: "alloco-oeufs", tag: "vite fait" },
+      { slot: "dinner", recipeId: "sauce-graine" },
+    ],
+  },
+  {
+    date: "2026-10-14",
+    short: "MER",
+    label: "Mercredi",
+    meals: [
+      { slot: "lunch", recipeId: "riz-gras-poulet" },
+      { slot: "dinner", recipeId: "spaghetti-sautes", tag: "vite fait" },
+    ],
+  },
+  {
+    date: "2026-10-15",
+    short: "JEU",
+    label: "Jeudi",
+    meals: [
+      { slot: "lunch", recipeId: "garba" },
+      { slot: "dinner", recipeId: "riz-saute-aubergines", tag: "tes aubergines" },
+    ],
+  },
+  {
+    date: "2026-10-16",
+    short: "VEN",
+    label: "Vendredi",
+    meals: [
+      { slot: "lunch", recipeId: "kedjenou" },
+      { slot: "dinner", recipeId: "pain-omelette", tag: "vite fait" },
+    ],
+  },
+  {
+    date: "2026-10-17",
+    short: "SAM",
+    label: "Samedi",
+    meals: [
+      { slot: "lunch", recipeId: "foutou-sauce-claire" },
+      { slot: "dinner", recipeId: "alloco-poisson" },
+    ],
+  },
+  {
+    date: "2026-10-18",
+    short: "DIM",
+    label: "Dimanche",
+    meals: [
+      { slot: "lunch", recipeId: "poulet-braise", tag: "en famille" },
+      { slot: "dinner", recipeId: "soupe-legumes" },
+    ],
+  },
 ];
 
 export const shoppingList: ShoppingBlock[] = [
@@ -393,9 +440,19 @@ export const stock: StockItem[] = [
 ];
 
 export const initialChat: ChatMessage[] = [
-  { id: "m1", from: "agent", kind: "text", text: "Bonsoir Aminata ! Ce soir c'est sauce graine. On regarde la suite de la semaine ?" },
+  {
+    id: "m1",
+    from: "agent",
+    kind: "text",
+    text: "Bonsoir Aminata ! Ce soir c'est sauce graine. On regarde la suite de la semaine ?",
+  },
   { id: "m2", from: "user", kind: "text", text: "Jeudi je rentre tard, j'aurai 20 minutes." },
-  { id: "m3", from: "agent", kind: "text", text: "Pas de souci. Le kédjénou passe à vendredi, et pour jeudi soir je te propose ça :" },
+  {
+    id: "m3",
+    from: "agent",
+    kind: "text",
+    text: "Pas de souci. Le kédjénou passe à vendredi, et pour jeudi soir je te propose ça :",
+  },
   {
     id: "m4",
     from: "agent",
@@ -414,7 +471,25 @@ export const initialChat: ChatMessage[] = [
 export const chatSuggestions = ["Vider le frigo", "Moins cher", "Une idée pour dimanche"];
 
 export const emergencyOptions: EmergencyOption[] = [
-  { recipeId: "omelette-oignons", name: "Omelette aux oignons & pain", short: "l'omelette", minutes: 10, uses: "œufs, oignons, pain" },
-  { recipeId: "spaghetti-sautes", name: "Spaghetti sautés à la tomate", short: "les spaghetti", minutes: 15, uses: "pâtes, tomates, oignons" },
-  { recipeId: "riz-saute-aubergines", name: "Riz sauté œufs & aubergines", short: "le riz sauté", minutes: 15, uses: "riz de midi, œufs, aubergines" },
+  {
+    recipeId: "omelette-oignons",
+    name: "Omelette aux oignons & pain",
+    short: "l'omelette",
+    minutes: 10,
+    uses: "œufs, oignons, pain",
+  },
+  {
+    recipeId: "spaghetti-sautes",
+    name: "Spaghetti sautés à la tomate",
+    short: "les spaghetti",
+    minutes: 15,
+    uses: "pâtes, tomates, oignons",
+  },
+  {
+    recipeId: "riz-saute-aubergines",
+    name: "Riz sauté œufs & aubergines",
+    short: "le riz sauté",
+    minutes: 15,
+    uses: "riz de midi, œufs, aubergines",
+  },
 ];

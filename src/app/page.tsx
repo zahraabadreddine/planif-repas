@@ -7,10 +7,30 @@ export default function WelcomePage() {
   return (
     <main className="relative flex min-h-dvh flex-col items-center overflow-hidden bg-mangue px-6 pb-8 pt-7 text-foret">
       {/* gribouillis décoratifs */}
-      <svg className="absolute left-[26px] top-[120px] animate-wobble" width="46" height="40" viewBox="0 0 46 40" fill="none" stroke="#FFF4DF" strokeWidth={3} strokeLinecap="round" aria-hidden="true">
+      <svg
+        className="absolute left-[26px] top-[120px] animate-wobble"
+        width="46"
+        height="40"
+        viewBox="0 0 46 40"
+        fill="none"
+        stroke="#FFF4DF"
+        strokeWidth={3}
+        strokeLinecap="round"
+        aria-hidden="true"
+      >
         <path d="M4 30c4-14 10-14 10-4s8 10 10-6 10-10 10 2" />
       </svg>
-      <svg className="absolute right-7 top-24 animate-wobble [animation-delay:.8s]" width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="#FFF4DF" strokeWidth={3} strokeLinecap="round" aria-hidden="true">
+      <svg
+        className="absolute right-7 top-24 animate-wobble [animation-delay:.8s]"
+        width="40"
+        height="40"
+        viewBox="0 0 40 40"
+        fill="none"
+        stroke="#FFF4DF"
+        strokeWidth={3}
+        strokeLinecap="round"
+        aria-hidden="true"
+      >
         <path d="M8 10l4 10M20 6v12M32 10l-4 10" />
       </svg>
 
@@ -30,7 +50,17 @@ export default function WelcomePage() {
           <br />
           tous les jours
         </p>
-        <svg className="absolute -right-4 top-[268px]" width="34" height="38" viewBox="0 0 34 38" fill="none" stroke="#411102" strokeWidth={2.4} strokeLinecap="round" aria-hidden="true">
+        <svg
+          className="absolute -right-4 top-[268px]"
+          width="34"
+          height="38"
+          viewBox="0 0 34 38"
+          fill="none"
+          stroke="#411102"
+          strokeWidth={2.4}
+          strokeLinecap="round"
+          aria-hidden="true"
+        >
           <path d="M22 36C30 24 26 10 8 6" />
           <path d="M14 2L7 6l5 6" />
         </svg>
@@ -42,7 +72,8 @@ export default function WelcomePage() {
         aujourd&apos;hui&nbsp;?
       </h1>
       <p className="mt-[18px] max-w-[300px] text-center text-base font-bold leading-snug text-puce">
-        On décide ensemble, avec le temps que tu as, ton budget en FCFA et ce qu&apos;il reste dans la cuisine.
+        On décide ensemble, avec le temps que tu as, ton budget en FCFA et ce qu&apos;il reste dans
+        la cuisine.
       </p>
 
       <div className="mt-auto flex w-full flex-col gap-2.5 pt-8">

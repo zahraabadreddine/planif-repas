@@ -25,7 +25,11 @@ export function RecipeView({ recipe }: { recipe: Recipe }) {
     <main className="relative min-h-dvh bg-palme text-foret">
       <section className="relative h-[300px] px-5 pt-[22px]">
         <div className="relative flex items-center justify-between">
-          <Link href="/menu" aria-label="Retour au menu" className="-ml-2.5 flex h-11 w-11 items-center justify-center text-creme">
+          <Link
+            href="/menu"
+            aria-label="Retour au menu"
+            className="-ml-2.5 flex h-11 w-11 items-center justify-center text-creme"
+          >
             <ChevronLeft size={24} strokeWidth={3} />
           </Link>
           <div className="flex items-center gap-2">
@@ -41,7 +45,11 @@ export function RecipeView({ recipe }: { recipe: Recipe }) {
           </div>
         </div>
         <div className="absolute left-1/2 top-11 -ml-[90px] animate-float">
-          {recipe.id === "attieke-poisson" ? <AttiekePlate /> : <Plate colors={recipe.colors} size={180} steam />}
+          {recipe.id === "attieke-poisson" ? (
+            <AttiekePlate />
+          ) : (
+            <Plate colors={recipe.colors} size={180} steam />
+          )}
         </div>
         <HandNote as="p" className="absolute left-[22px] top-[150px] text-[21px] text-or" tilt={-8}>
           ça sent bon
@@ -54,7 +62,8 @@ export function RecipeView({ recipe }: { recipe: Recipe }) {
       <section className="relative -mt-[30px] min-h-[calc(100dvh-270px)] rounded-[30px_36px_0_0] bg-creme px-5 pb-10 pt-[22px]">
         <h1 className="retro text-[27px] leading-[1.3]">{recipe.name}</h1>
         <p className="mt-1.5 text-sm font-bold text-cacao">
-          {recipe.minutes} min · pour {recipe.servings} · environ {fcfa(recipe.costFcfa, false)} F · {recipe.difficulty.toLowerCase()}
+          {recipe.minutes} min · pour {recipe.servings} · environ {fcfa(recipe.costFcfa, false)} F ·{" "}
+          {recipe.difficulty.toLowerCase()}
         </p>
 
         <div role="tablist" aria-label="Recette" className="mt-3.5 flex gap-[22px]">
@@ -70,26 +79,52 @@ export function RecipeView({ recipe }: { recipe: Recipe }) {
               role="tab"
               aria-selected={tab === key}
               onClick={() => setTab(key)}
-              className={cx("relative h-11 font-display text-lg font-semibold", tab === key ? "text-foret" : "text-cacao")}
+              className={cx(
+                "relative h-11 font-display text-lg font-semibold",
+                tab === key ? "text-foret" : "text-cacao",
+              )}
             >
               {label}
-              {tab === key && <Squiggle width={100} color="#F47230" animated className="absolute bottom-0.5 left-0 w-full" />}
+              {tab === key && (
+                <Squiggle
+                  width={100}
+                  color="#F47230"
+                  animated
+                  className="absolute bottom-0.5 left-0 w-full"
+                />
+              )}
             </button>
           ))}
         </div>
 
         {tab === "steps" ? (
           <div className="mt-2.5">
-            <div className="flex gap-1.5" aria-label={`Étape ${step + 1} sur ${recipe.steps.length}`}>
+            <div
+              className="flex gap-1.5"
+              aria-label={`Étape ${step + 1} sur ${recipe.steps.length}`}
+            >
               {recipe.steps.map((_, k) => (
-                <span key={k} className={cx("h-1.5 flex-1 rounded-[4px_6px_3px_5px] transition-colors", k <= step ? "bg-sirop" : "bg-sable")} />
+                <span
+                  key={k}
+                  className={cx(
+                    "h-1.5 flex-1 rounded-[4px_6px_3px_5px] transition-colors",
+                    k <= step ? "bg-sirop" : "bg-sable",
+                  )}
+                />
               ))}
             </div>
 
-            <div key={step} className="mt-4 min-h-[196px] animate-slide-in rounded-[22px_28px_24px_20px] bg-white px-[18px] pb-[18px] pt-4">
+            <div
+              key={step}
+              className="mt-4 min-h-[196px] animate-slide-in rounded-[22px_28px_24px_20px] bg-white px-[18px] pb-[18px] pt-4"
+            >
               <div className="flex items-baseline justify-between">
-                <span className="font-hand text-[54px] font-bold leading-[0.9] text-sirop">{step + 1}</span>
-                <span className="font-hand text-xl font-bold text-cacao">{current.minutes} min</span>
+                <span className="font-hand text-[54px] font-bold leading-[0.9] text-sirop">
+                  {step + 1}
+                </span>
+                <span className="font-hand text-xl font-bold text-cacao">
+                  {current.minutes} min
+                </span>
               </div>
               <p className="mt-2 text-lg font-bold leading-relaxed">{current.text}</p>
             </div>
@@ -132,7 +167,12 @@ export function RecipeView({ recipe }: { recipe: Recipe }) {
               >
                 <span className="flex-1 text-[15px] font-extrabold">{g.name}</span>
                 <span className="text-sm font-bold text-cacao">{g.quantity}</span>
-                <span className={cx("w-[84px] text-right font-hand text-[19px] font-bold", g.inStock ? "text-palme" : "text-carmin")}>
+                <span
+                  className={cx(
+                    "w-[84px] text-right font-hand text-[19px] font-bold",
+                    g.inStock ? "text-palme" : "text-carmin",
+                  )}
+                >
                   {g.inStock ? "dans le frigo" : "à acheter"}
                 </span>
               </li>

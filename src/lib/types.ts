@@ -65,7 +65,8 @@ export type ShoppingBlock = {
   items: ShoppingItem[];
 };
 
-export type StockIcon = "riz" | "huile" | "oignon" | "oeuf" | "tomate" | "piment" | "poisson" | "aubergine" | "gombo";
+export type StockIcon =
+  "riz" | "huile" | "oignon" | "oeuf" | "tomate" | "piment" | "poisson" | "aubergine" | "gombo";
 
 export type StockItem = {
   id: string;

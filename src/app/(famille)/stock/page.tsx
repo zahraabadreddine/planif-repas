@@ -40,7 +40,16 @@ export default function FridgePage() {
   function declare(e: React.FormEvent) {
     e.preventDefault();
     if (!sentence.trim()) return;
-    setItems((prev) => [...prev, { id: `n${Date.now()}`, name: "Tomates", quantity: "+2 tas", icon: "tomate", expiresInDays: 5 }]);
+    setItems((prev) => [
+      ...prev,
+      {
+        id: `n${Date.now()}`,
+        name: "Tomates",
+        quantity: "+2 tas",
+        icon: "tomate",
+        expiresInDays: 5,
+      },
+    ]);
     setToast("c'est rangé : 2 tas de tomates");
     setSentence("");
     setTimeout(() => setToast(null), 2600);
@@ -50,11 +59,16 @@ export default function FridgePage() {
     <div className="-mx-5 -mb-[190px] -mt-6 min-h-dvh bg-lagon px-5 pb-[190px] pt-[22px]">
       <header className="flex items-baseline gap-2.5">
         <h1 className="retro text-[30px] leading-[1.3]">Mon frigo</h1>
-        <HandNote className="text-xl" tilt={-4}>{items.length} choses dedans</HandNote>
+        <HandNote className="text-xl" tilt={-4}>
+          {items.length} choses dedans
+        </HandNote>
       </header>
 
       <form onSubmit={declare} className="wonky mt-3.5 bg-creme p-3">
-        <label htmlFor="achats" className="mb-1.5 block font-hand text-xl font-bold leading-none text-carmin">
+        <label
+          htmlFor="achats"
+          className="mb-1.5 block font-hand text-xl font-bold leading-none text-carmin"
+        >
           t&apos;as fait des courses&nbsp;? dis-moi tout
         </label>
         <div className="flex gap-2">
@@ -65,7 +79,10 @@ export default function FridgePage() {
             placeholder="2 tas de tomates et 1 kg de riz…"
             className="h-[46px] min-w-0 flex-1 rounded-[12px_16px_14px_12px] border-2 border-foret bg-white px-3 text-sm font-semibold placeholder:text-cacao/60"
           />
-          <button type="submit" className="press h-[46px] rounded-[14px_12px_16px_12px] bg-foret px-3.5 text-sm font-extrabold text-or">
+          <button
+            type="submit"
+            className="press h-[46px] rounded-[14px_12px_16px_12px] bg-foret px-3.5 text-sm font-extrabold text-or"
+          >
             Ajouter
           </button>
         </div>
@@ -77,7 +94,8 @@ export default function FridgePage() {
       </form>
 
       <h2 className="mt-[18px] font-display text-xl font-semibold">
-        Ça presse <span className="font-hand text-[17px] font-bold text-canard">(dates estimées)</span>
+        Ça presse{" "}
+        <span className="font-hand text-[17px] font-bold text-canard">(dates estimées)</span>
       </h2>
       <ul className="mt-3 grid grid-cols-3 gap-2.5">
         {soon.map((s, i) => {
@@ -85,7 +103,10 @@ export default function FridgePage() {
           return (
             <li
               key={s.id}
-              className={cx("paper-shadow relative flex animate-pop flex-col items-center gap-0.5 px-1.5 pb-2 pt-3", p.paper)}
+              className={cx(
+                "paper-shadow relative flex animate-pop flex-col items-center gap-0.5 px-1.5 pb-2 pt-3",
+                p.paper,
+              )}
               style={{ transform: `rotate(${p.tilt}deg)`, animationDelay: `${i * 100}ms` }}
             >
               <Pin color={p.pin} />
@@ -103,8 +124,14 @@ export default function FridgePage() {
       </ul>
 
       {/* L'intérieur du frigo : des étagères, pas une grille de cartes */}
-      <section aria-label="Dans le frigo" className="relative mt-5 rounded-[22px_26px_18px_24px] border-[3px] border-foret bg-creme px-3.5 pb-2.5 pt-3.5">
-        <span aria-hidden="true" className="absolute left-2.5 top-3.5 h-[60px] w-2 rounded border-2 border-foret bg-lagon" />
+      <section
+        aria-label="Dans le frigo"
+        className="relative mt-5 rounded-[22px_26px_18px_24px] border-[3px] border-foret bg-creme px-3.5 pb-2.5 pt-3.5"
+      >
+        <span
+          aria-hidden="true"
+          className="absolute left-2.5 top-3.5 h-[60px] w-2 rounded border-2 border-foret bg-lagon"
+        />
         {shelves(others).map((row, r) => (
           <div key={r} className="pl-3.5">
             <div className="flex h-[50px] items-end justify-around">
@@ -130,7 +157,9 @@ export default function FridgePage() {
       >
         <span className="flex flex-col leading-[1.05]">
           <span className="font-display text-lg font-bold">Vider le frigo</span>
-          <span className="font-hand text-lg font-bold text-carmin">3 plats possibles avec tout ça</span>
+          <span className="font-hand text-lg font-bold text-carmin">
+            3 plats possibles avec tout ça
+          </span>
         </span>
         <ArrowRight />
       </Link>

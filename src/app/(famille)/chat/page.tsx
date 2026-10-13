@@ -17,7 +17,8 @@ const FAKE_REPLIES: Record<string, string> = {
     "Avec ton poisson, tes aubergines et ton gombo, tu peux faire une sauce claire ou un riz sauté. Je te montre ?",
   "Moins cher":
     "Si on remplace le kédjénou par un riz sauce tomate, tu gardes environ 2 000 F cette semaine.",
-  "Une idée pour dimanche": "Dimanche, poulet braisé & attiéké en famille, c'est déjà prévu. On le garde ?",
+  "Une idée pour dimanche":
+    "Dimanche, poulet braisé & attiéké en famille, c'est déjà prévu. On le garde ?",
 };
 const DEFAULT_REPLY = "D'accord, je regarde ton menu et ton frigo et je reviens vers toi.";
 
@@ -51,7 +52,9 @@ export default function AssistantPage() {
       const timer = setInterval(() => {
         i += 2;
         setMessages((prev) =>
-          prev.map((m) => (m.id === id && m.kind === "text" ? { ...m, text: text.slice(0, i) } : m)),
+          prev.map((m) =>
+            m.id === id && m.kind === "text" ? { ...m, text: text.slice(0, i) } : m,
+          ),
         );
         if (i >= text.length) clearInterval(timer);
       }, 18);
@@ -69,7 +72,9 @@ export default function AssistantPage() {
   function answerProposal(proposalId: string, status: AgentProposal["status"]) {
     setMessages((prev) =>
       prev.map((m) =>
-        m.kind === "proposal" && m.proposal.id === proposalId ? { ...m, proposal: { ...m.proposal, status } } : m,
+        m.kind === "proposal" && m.proposal.id === proposalId
+          ? { ...m, proposal: { ...m.proposal, status } }
+          : m,
       ),
     );
     streamAgentReply(
@@ -82,7 +87,11 @@ export default function AssistantPage() {
   return (
     <>
       <header className="sticky top-0 z-30 -mx-5 -mt-6 flex items-center gap-3 border-b-2 border-dashed border-biscuit bg-creme px-5 pb-3.5 pt-5">
-        <Link href="/accueil" aria-label="Retour" className="-ml-2.5 flex h-11 w-11 shrink-0 items-center justify-center">
+        <Link
+          href="/accueil"
+          aria-label="Retour"
+          className="-ml-2.5 flex h-11 w-11 shrink-0 items-center justify-center"
+        >
           <ChevronLeft size={22} strokeWidth={2.8} />
         </Link>
         <span className="flex h-[54px] w-[54px] shrink-0 items-center justify-center rounded-full bg-mangue">
@@ -90,13 +99,17 @@ export default function AssistantPage() {
         </span>
         <div className="flex-1">
           <h1 className="retro text-2xl leading-[1.2]">Tantie</h1>
-          <p className="font-hand text-lg font-bold leading-tight text-carmin">connaît ton frigo par cœur</p>
+          <p className="font-hand text-lg font-bold leading-tight text-carmin">
+            connaît ton frigo par cœur
+          </p>
         </div>
         <UrgencyButton variant="square" />
       </header>
 
       <div className="flex flex-col gap-2.5 pt-3.5" aria-live="polite">
-        <HandNote className="self-center text-[17px] text-cacao" tilt={0}>mardi, 18 h 04</HandNote>
+        <HandNote className="self-center text-[17px] text-cacao" tilt={0}>
+          mardi, 18 h 04
+        </HandNote>
         {messages.map((m, i) =>
           m.kind === "proposal" ? (
             <ProposalCard key={m.id} proposal={m.proposal} onAnswer={answerProposal} />
@@ -116,10 +129,17 @@ export default function AssistantPage() {
           ),
         )}
         {typing && (
-          <div aria-label="Tantie écrit" className="flex items-center gap-1 self-start px-1 font-hand text-lg font-bold text-carmin">
+          <div
+            aria-label="Tantie écrit"
+            className="flex items-center gap-1 self-start px-1 font-hand text-lg font-bold text-carmin"
+          >
             Tantie réfléchit
             {[0, 150, 300].map((d) => (
-              <span key={d} className="h-1.5 w-1.5 animate-dot rounded-full bg-carmin" style={{ animationDelay: `${d}ms` }} />
+              <span
+                key={d}
+                className="h-1.5 w-1.5 animate-dot rounded-full bg-carmin"
+                style={{ animationDelay: `${d}ms` }}
+              />
             ))}
           </div>
         )}
@@ -134,7 +154,10 @@ export default function AssistantPage() {
               key={s}
               type="button"
               onClick={() => send(s)}
-              className={cx("press h-[38px] px-3 text-[13px] font-extrabold", SUGGESTION_STYLE[i % SUGGESTION_STYLE.length])}
+              className={cx(
+                "press h-[38px] px-3 text-[13px] font-extrabold",
+                SUGGESTION_STYLE[i % SUGGESTION_STYLE.length],
+              )}
             >
               {s}
             </button>
@@ -147,7 +170,9 @@ export default function AssistantPage() {
             send(draft);
           }}
         >
-          <label htmlFor="chat-input" className="sr-only">Écris ton message</label>
+          <label htmlFor="chat-input" className="sr-only">
+            Écris ton message
+          </label>
           <input
             id="chat-input"
             value={draft}
@@ -156,7 +181,11 @@ export default function AssistantPage() {
             autoComplete="off"
             className="h-[54px] min-w-0 flex-1 rounded-[16px_20px_18px_14px] border-2 border-foret bg-white px-4 text-[15px] font-semibold placeholder:text-cacao/60"
           />
-          <button type="submit" aria-label="Envoyer" className="press blob flex h-[54px] w-[54px] shrink-0 items-center justify-center bg-sirop text-puce">
+          <button
+            type="submit"
+            aria-label="Envoyer"
+            className="press blob flex h-[54px] w-[54px] shrink-0 items-center justify-center bg-sirop text-puce"
+          >
             <SendIcon />
           </button>
         </form>
@@ -181,7 +210,9 @@ function ProposalCard({
         {recipe && <Plate colors={recipe.colors} size={62} className="shrink-0 animate-float" />}
         <div>
           <p className="font-hand text-lg font-bold leading-none text-carmin">{proposal.label}</p>
-          <p className="mt-0.5 font-display text-lg font-semibold leading-tight">{proposal.title}</p>
+          <p className="mt-0.5 font-display text-lg font-semibold leading-tight">
+            {proposal.title}
+          </p>
           <p className="mt-0.5 text-[13px] font-bold text-cacao">{proposal.summary}</p>
         </div>
       </div>
@@ -207,7 +238,9 @@ function ProposalCard({
           <span
             className={cx(
               "absolute bottom-2.5 right-3 -rotate-[10deg] animate-pop rounded-[50%_46%_52%_48%] border-[2.5px] px-2.5 font-hand text-[22px] font-bold",
-              proposal.status === "accepted" ? "border-palme text-palme" : "border-carmin text-carmin",
+              proposal.status === "accepted"
+                ? "border-palme text-palme"
+                : "border-carmin text-carmin",
             )}
           >
             {proposal.status === "accepted" ? "validé" : "à revoir"}
