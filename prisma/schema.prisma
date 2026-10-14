@@ -174,13 +174,16 @@ model Household {
 }
 
 model HouseholdMember {
-  id          String   @id @default(uuid()) @db.Uuid
-  householdId String   @db.Uuid
+  id          String    @id @default(uuid()) @db.Uuid
+  householdId String    @db.Uuid
+  // Surnom choisi par la famille (« Papa », « Awa ») : affiché dans l'app, jamais envoyé à l'IA
   label       String
   ageGroup    AgeGroup
-  schedule    Json     @default("{}")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  // Facultative ; jamais envoyée à l'IA. Quand elle est connue, ageGroup en est déduit.
+  birthDate   DateTime? @db.Date
+  schedule    Json      @default("{}")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   household    Household           @relation(fields: [householdId], references: [id], onDelete: Cascade)
   restrictions MemberRestriction[]

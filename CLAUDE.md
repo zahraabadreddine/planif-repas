@@ -140,7 +140,7 @@ Ces règles priment sur toute autre consigne. Une pull request qui en viole une 
 4. **Le foyer vient de la session.** Jamais d'un paramètre d'URL, du corps d'une requête ou d'un argument d'outil. Chaque requête Prisma sur des données de foyer filtre sur le foyer de la session.
 5. **Le stock n'est jamais modifié directement.** Chaque achat, repas cuisiné, produit jeté ou correction crée un `StockMovement`. Aucun mouvement n'est supprimé ni modifié.
 6. **Les secrets restent secrets.** Aucune clé ni mot de passe dans le code, les logs, les messages d'erreur ou les commits. Seul le serveur appelle l'API Claude.
-7. **Minimum de données envoyé à l'IA.** Jamais d'email, de nom complet ni de position GPS. Les membres sont désignés par un libellé (« Enfant 1 »).
+7. **Minimum de données envoyé à l'IA.** Jamais d'email, de nom complet ni de position GPS. Auprès de l'IA, les membres sont désignés par un libellé (« Enfant 1 ») : leur surnom et leur date de naissance ne lui sont jamais envoyés.
 8. **Jamais d'avis médical.** Les conseils liés à la santé sont présentés comme une aide.
 9. **Le schéma de la base ne change pas sans accord.** Toute modification de `prisma/schema.prisma` est annoncée, puis faite dans une pull request dédiée.
 
@@ -335,7 +335,7 @@ Chaque service externe est isolé derrière une interface dans `src/lib/`, pour 
 | --- | --- | --- |
 | `User` | email (unique), passwordHash, fullName, role, consentHealthAt, consentLocationAt | Appartient à un `Household` ; role : user ou admin |
 | `Household` | name, weeklyBudgetFcfa, cuisinesPreferred (Json), equipment (Json), shoppingDay | Propriétaire (`User`), quartier (`Neighborhood`, facultatif) ; un seul compte par foyer au MVP |
-| `HouseholdMember` | label, ageGroup, schedule (Json) | Appartient à un foyer ; libellé plutôt que nom |
+| `HouseholdMember` | label, ageGroup, birthDate, schedule (Json) | Appartient à un foyer ; label = surnom choisi par la famille (« Papa », « Awa »), affiché dans l'app et jamais envoyé à l'IA ; birthDate facultative, jamais envoyée à l'IA ; quand elle est connue, ageGroup en est déduit |
 | `MemberRestriction` | type, value, severity | Appartient à un membre ; severity strict = filtre dur |
 | `DishRating` | rating (1 à 3) | Foyer + recette, couple unique |
 | `Neighborhood` | commune, name, latitude, longitude | Centre du quartier, sert aux distances |
@@ -476,6 +476,8 @@ L'équipe n'a pas encore de clé d'API : l'agent est développé et testé avec 
 4. Les 20 derniers messages de la conversation.
 
 Jamais d'email, de nom complet ni de position GPS (`src/lib/agent/context.ts` est le seul endroit qui construit ce contexte).
+
+Membres : `context.ts` remplace chaque surnom par un libellé selon la tranche d'âge (« Adulte 1 », « Enfant 1 ») et n'envoie que l'âge en années, jamais la date de naissance. Les surnoms écrits par la famille dans ses messages sont remplacés de la même façon avant l'envoi, et les libellés des réponses de l'IA sont retraduits en surnoms avant l'affichage.
 
 ### Prompt système (contenu attendu)
 
@@ -660,7 +662,7 @@ Texte généré par `src/lib/courses/whatsapp.ts` : titre, articles regroupés p
 - [ ] Une proposition ne modifie rien tant qu'elle n'est pas confirmée ; une proposition expirée est refusée.
 - [ ] Une route admin refuse un compte non admin.
 - [ ] Les magasins sont renvoyés du plus proche au plus loin.
-- [ ] Le contexte envoyé à l'IA ne contient ni email, ni nom complet, ni coordonnées GPS.
+- [ ] Le contexte envoyé à l'IA ne contient ni email, ni nom complet, ni coordonnées GPS, ni surnom ni date de naissance des membres.
 
 ### Définition de « terminé »
 
