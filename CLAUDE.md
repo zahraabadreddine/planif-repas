@@ -190,6 +190,8 @@ Les noms ci-dessous sont volontairement sans tiret bas. Le code les lit explicit
 | `AUTHSECRET` | Secret de signature des sessions | Configuration Auth.js : `secret: process.env.AUTHSECRET` |
 | `ANTHROPICAPIKEY` | Clé de l'API Claude | Client Anthropic : `new Anthropic({ apiKey: process.env.ANTHROPICAPIKEY })` |
 | `AIDAILYQUOTA` | Nombre maximum de messages à l'agent par foyer et par jour | Route du chat |
+| `SEEDADMINPASSWORD` | Mot de passe du compte admin créé par le seed | `prisma/seed.ts` (haché avec bcrypt) |
+| `SEEDDEMOPASSWORD` | Mot de passe des foyers de test et du foyer de démonstration | `prisma/seed.ts` et `npm run demo:reset` (haché avec bcrypt) |
 
 Aucune variable n'est exposée au navigateur. `.env` est dans `.gitignore` ; `.env.example` est commité, sans valeurs réelles.
 

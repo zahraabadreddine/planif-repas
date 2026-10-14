@@ -9,6 +9,7 @@ import {
   compteAdmin,
   compteAminata,
   comptesTest,
+  magasinsDepart,
   quartiersDepart,
   type CompteDepart,
 } from "../../prisma/donnees-foyers";
@@ -87,7 +88,7 @@ describe("données de départ du catalogue", () => {
 describe("validation des recettes", () => {
   it("ne valide aucune recette encore à relire par une cuisinière d'origine", () => {
     const aRelire = recettesDepart.filter((r) => r.reference.includes("à valider"));
-    expect(aRelire).toHaveLength(16);
+    expect(aRelire).toHaveLength(17);
     for (const recette of aRelire) {
       expect(recette.validated, recette.title).toBe(false);
     }
@@ -154,6 +155,38 @@ describe("comptes et foyers de départ", () => {
         expect(ingredient, ligne.ingredient).toBeDefined();
         expect(uniteConnue(ingredient!, ligne.unit), ligne.unit).toBe(true);
       }
+    }
+  });
+});
+
+describe("quartiers et magasins de départ", () => {
+  it("n'a pas deux quartiers identiques", () => {
+    const cles = quartiersDepart.map((q) => `${q.commune}/${q.name}`);
+    expect(new Set(cles).size).toBe(cles.length);
+  });
+
+  it("rattache chaque magasin à un quartier connu, sans doublon", () => {
+    for (const magasin of magasinsDepart) {
+      const connu = quartiersDepart.some(
+        (q) => q.commune === magasin.quartier.commune && q.name === magasin.quartier.name,
+      );
+      expect(connu, magasin.name).toBe(true);
+    }
+    const cles = magasinsDepart.map((m) => `${m.quartier.commune}/${m.name}`);
+    expect(new Set(cles).size).toBe(cles.length);
+  });
+
+  it("couvre les trois types de lieux d'achat", () => {
+    const types = new Set(magasinsDepart.map((m) => m.type));
+    expect(types).toEqual(new Set(["market", "supermarket", "shop"]));
+  });
+
+  it("place quartiers et magasins dans la région d'Abidjan", () => {
+    for (const lieu of [...quartiersDepart, ...magasinsDepart]) {
+      expect(lieu.latitude, lieu.name).toBeGreaterThan(5.2);
+      expect(lieu.latitude, lieu.name).toBeLessThan(5.6);
+      expect(lieu.longitude, lieu.name).toBeGreaterThan(-4.3);
+      expect(lieu.longitude, lieu.name).toBeLessThan(-3.8);
     }
   });
 });
