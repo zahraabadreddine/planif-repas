@@ -1409,6 +1409,35 @@ export const recettesDepart: RecetteDepart[] = [
     ],
     leftoverIdeas: [],
   },
+  {
+    title: "Aubergines sautées aux œufs",
+    validated: false,
+    cuisine: "ivoirienne",
+    mealTypes: ["lunch", "dinner"],
+    prepMinutes: 5,
+    cookMinutes: 15,
+    needsCooking: true,
+    servings: 4,
+    difficulty: 1,
+    tags: ["rapide", "végétarien"],
+    reference: aValider("ivoirienne"),
+    ingredients: [
+      { name: "Aubergine", quantity: 4, unit: "pièce" },
+      { name: "Œufs", quantity: 4, unit: "pièce" },
+      { name: "Oignon", quantity: 1, unit: "pièce" },
+      { name: "Tomate", quantity: 2, unit: "pièce" },
+      { name: "Piment frais", quantity: 1, unit: "pièce", optional: true },
+      { name: "Huile végétale", quantity: 3, unit: "c. à soupe" },
+      { name: "Sel", quantity: 0.5, unit: "c. à café" },
+    ],
+    steps: [
+      { text: "Coupe les aubergines en dés, émince l'oignon, la tomate et le piment.", minutes: 5 },
+      { text: "Fais revenir les aubergines et l'oignon dans l'huile chaude.", minutes: 8 },
+      { text: "Ajoute la tomate, le piment et le sel, puis laisse fondre.", minutes: 4 },
+      { text: "Casse les œufs dessus et remue jusqu'à ce qu'ils soient pris.", minutes: 3 },
+    ],
+    leftoverIdeas: ["Dans du pain le lendemain matin."],
+  },
 
   // ───────── Liban ─────────
   {
