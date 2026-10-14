@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarIcon, CartIcon, FridgeIcon, UserIcon } from "@/components/icones";
+import { ArrowRight, CalendarIcon, CartIcon, FridgeIcon, UserIcon } from "@/components/icones";
 import { HandNote, Tape } from "@/components/main-levee";
 import { Aubergine } from "@/components/illustrations/aliments";
 import { UmiHead } from "@/components/umi";
@@ -7,8 +7,23 @@ import { SauceBowl } from "@/components/illustrations/assiette";
 import { UrgencyButton } from "@/components/bouton-urgence";
 import { fcfa } from "@/lib/format";
 import { getRecipe, household, shoppingList, stock, weekPlan } from "@/lib/donnees-simulees";
+import { auth } from "@/lib/auth/config";
+import { exigerSession } from "@/lib/auth/garde";
 
-export default function HomePage() {
+export default async function HomePage() {
+  // Sans foyer décrit, on invite le parent à le faire (EF-03). La garde de session est dans le layout.
+  const session = await exigerSession().catch(() => null);
+  const sansFoyer = !session?.householdId;
+  // Le nom vient du compte connecté (enregistré à l'inscription) : on garde le premier mot.
+  const prenom = (await auth())?.user?.name?.trim().split(/\s+/)[0];
+  // Date du jour à Abidjan, quel que soit le pays du serveur : « mercredi 14 octobre ».
+  const aujourdhui = new Intl.DateTimeFormat("fr-FR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    timeZone: "Africa/Abidjan",
+  }).format(new Date());
+
   const today = weekPlan.find((d) => d.date === household.today)!;
   const dinner = getRecipe(today.meals.find((m) => m.slot === "dinner")!.recipeId)!;
   const urgent = stock.find((s) => s.icon === "aubergine");
@@ -22,12 +37,19 @@ export default function HomePage() {
       <header className="flex items-start justify-between gap-3">
         <div>
           <HandNote className="text-[21px] text-carmin" tilt={-2}>
-            {household.todayLabel.toLowerCase()}
+            {aujourdhui}
           </HandNote>
           <h1 className="retro mt-1 text-[26px] leading-[1.3]">
-            On mange quoi ce soir,
-            <br />
-            {household.firstName}&nbsp;?
+            On mange quoi ce soir
+            {prenom ? (
+              <>
+                ,
+                <br />
+                {prenom}&nbsp;?
+              </>
+            ) : (
+              <>&nbsp;?</>
+            )}
           </h1>
         </div>
         <Link
@@ -38,6 +60,22 @@ export default function HomePage() {
           <UserIcon size={26} />
         </Link>
       </header>
+
+      {sansFoyer && (
+        <Link
+          href="/foyer"
+          className="press paper-shadow relative mt-5 flex items-center gap-3 rounded-[20px_16px_22px_18px] border-[2.5px] border-foret bg-or p-4 text-foret"
+        >
+          <UmiHead size={44} />
+          <span className="flex-1">
+            <span className="block font-display text-lg font-semibold leading-tight">
+              Décris ton foyer
+            </span>
+            <span className="text-sm font-bold">pour recevoir ton premier menu de la semaine</span>
+          </span>
+          <ArrowRight size={22} strokeWidth={2.8} />
+        </Link>
+      )}
 
       {/* Repas de ce soir */}
       <section className="wonky-lg relative mt-5 h-[188px] animate-pop bg-palme p-5 text-creme">
