@@ -10,6 +10,11 @@ export const ERREURS = {
   INTROUVABLE: { status: 404, message: "Ce que tu cherches est introuvable." },
   EMAILDEJAPRIS: { status: 409, message: "Un compte existe déjà avec cet email." },
   MOTDEPASSEINCORRECT: { status: 400, message: "Le mot de passe actuel est incorrect." },
+  FOYERMANQUANT: { status: 409, message: "Décris d'abord ton foyer." },
+  CONSENTEMENTREQUIS: {
+    status: 403,
+    message: "Ton accord est nécessaire pour enregistrer des allergies ou des régimes.",
+  },
   TROPDEREQUETES: { status: 429, message: "Trop de tentatives. Réessaie dans quelques minutes." },
   ERREURSERVEUR: { status: 500, message: "Un problème est survenu. Réessaie plus tard." },
 } as const;
