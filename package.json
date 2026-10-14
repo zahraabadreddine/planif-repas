@@ -12,6 +12,9 @@
     "test": "vitest run",
     "postinstall": "prisma generate"
   },
+  "prisma": {
+    "seed": "node prisma/seed.ts"
+  },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
     "@prisma/client": "^6.19.3",
