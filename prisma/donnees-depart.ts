@@ -37,6 +37,8 @@ export type EtapeRecette = { text: string; minutes: number };
 
 export type RecetteDepart = {
   title: string;
+  // false tant qu'une cuisinière d'origine n'a pas relu la recette : elle n'est pas proposée
+  validated: boolean;
   cuisine: string;
   mealTypes: MealSlot[];
   prepMinutes: number;
@@ -981,6 +983,7 @@ export const recettesDepart: RecetteDepart[] = [
   // ───────── Côte d'Ivoire ─────────
   {
     title: "Garba",
+    validated: false,
     cuisine: "ivoirienne",
     mealTypes: ["lunch", "dinner"],
     prepMinutes: 15,
@@ -1024,6 +1027,7 @@ export const recettesDepart: RecetteDepart[] = [
   },
   {
     title: "Attiéké poisson braisé",
+    validated: false,
     cuisine: "ivoirienne",
     mealTypes: ["lunch", "dinner"],
     prepMinutes: 30,
@@ -1072,6 +1076,7 @@ export const recettesDepart: RecetteDepart[] = [
   },
   {
     title: "Alloco et œufs",
+    validated: false,
     cuisine: "ivoirienne",
     mealTypes: ["lunch", "dinner"],
     prepMinutes: 10,
@@ -1112,6 +1117,7 @@ export const recettesDepart: RecetteDepart[] = [
   },
   {
     title: "Sauce graine et riz",
+    validated: false,
     cuisine: "ivoirienne",
     mealTypes: ["lunch"],
     prepMinutes: 30,
@@ -1158,6 +1164,7 @@ export const recettesDepart: RecetteDepart[] = [
   },
   {
     title: "Sauce arachide au poulet",
+    validated: false,
     cuisine: "ivoirienne",
     mealTypes: ["lunch", "dinner"],
     prepMinutes: 20,
@@ -1201,6 +1208,7 @@ export const recettesDepart: RecetteDepart[] = [
   },
   {
     title: "Riz gras au poulet",
+    validated: false,
     cuisine: "ivoirienne",
     mealTypes: ["lunch", "dinner"],
     prepMinutes: 20,
@@ -1250,6 +1258,7 @@ export const recettesDepart: RecetteDepart[] = [
   },
   {
     title: "Kédjénou de poulet",
+    validated: false,
     cuisine: "ivoirienne",
     mealTypes: ["lunch", "dinner"],
     prepMinutes: 20,
@@ -1292,6 +1301,7 @@ export const recettesDepart: RecetteDepart[] = [
   },
   {
     title: "Placali sauce gombo",
+    validated: false,
     cuisine: "ivoirienne",
     mealTypes: ["lunch"],
     prepMinutes: 20,
@@ -1334,6 +1344,7 @@ export const recettesDepart: RecetteDepart[] = [
   },
   {
     title: "Spaghetti sautés",
+    validated: false,
     cuisine: "ivoirienne",
     mealTypes: ["dinner"],
     prepMinutes: 10,
@@ -1372,6 +1383,7 @@ export const recettesDepart: RecetteDepart[] = [
   },
   {
     title: "Pain omelette",
+    validated: false,
     cuisine: "ivoirienne",
     mealTypes: ["breakfast"],
     prepMinutes: 5,
@@ -1401,6 +1413,7 @@ export const recettesDepart: RecetteDepart[] = [
   // ───────── Liban ─────────
   {
     title: "Taboulé",
+    validated: true,
     cuisine: "libanaise",
     mealTypes: ["lunch", "dinner"],
     prepMinutes: 30,
@@ -1438,6 +1451,7 @@ export const recettesDepart: RecetteDepart[] = [
   },
   {
     title: "Houmous",
+    validated: false,
     cuisine: "libanaise",
     mealTypes: ["breakfast", "lunch", "dinner"],
     prepMinutes: 15,
@@ -1483,6 +1497,7 @@ export const recettesDepart: RecetteDepart[] = [
   },
   {
     title: "Moujaddara",
+    validated: false,
     cuisine: "libanaise",
     mealTypes: ["lunch", "dinner"],
     prepMinutes: 10,
@@ -1524,6 +1539,7 @@ export const recettesDepart: RecetteDepart[] = [
   // ───────── France ─────────
   {
     title: "Crêpes",
+    validated: true,
     cuisine: "française",
     mealTypes: ["breakfast"],
     prepMinutes: 10,
@@ -1559,6 +1575,7 @@ export const recettesDepart: RecetteDepart[] = [
   },
   {
     title: "Soupe de légumes",
+    validated: true,
     cuisine: "française",
     mealTypes: ["dinner"],
     prepMinutes: 20,
@@ -1592,6 +1609,7 @@ export const recettesDepart: RecetteDepart[] = [
   },
   {
     title: "Poulet rôti et pommes de terre",
+    validated: false,
     cuisine: "française",
     mealTypes: ["lunch"],
     prepMinutes: 15,
@@ -1636,6 +1654,7 @@ export const recettesDepart: RecetteDepart[] = [
   // ───────── Maghreb ─────────
   {
     title: "Chakchouka",
+    validated: false,
     cuisine: "tunisienne",
     mealTypes: ["breakfast", "dinner"],
     prepMinutes: 10,
@@ -1681,6 +1700,7 @@ export const recettesDepart: RecetteDepart[] = [
   },
   {
     title: "Couscous aux légumes",
+    validated: true,
     cuisine: "marocaine",
     mealTypes: ["lunch"],
     prepMinutes: 30,
@@ -1737,6 +1757,7 @@ export const recettesDepart: RecetteDepart[] = [
   },
   {
     title: "Lentilles à la marocaine",
+    validated: false,
     cuisine: "marocaine",
     mealTypes: ["lunch", "dinner"],
     prepMinutes: 10,
@@ -1782,6 +1803,7 @@ export const recettesDepart: RecetteDepart[] = [
   // ───────── Italie ─────────
   {
     title: "Spaghetti sauce tomate",
+    validated: true,
     cuisine: "italienne",
     mealTypes: ["lunch", "dinner"],
     prepMinutes: 10,
@@ -1817,6 +1839,7 @@ export const recettesDepart: RecetteDepart[] = [
   },
   {
     title: "Spaghetti bolognaise",
+    validated: true,
     cuisine: "italienne",
     mealTypes: ["lunch", "dinner"],
     prepMinutes: 20,
@@ -1873,6 +1896,7 @@ export const recettesDepart: RecetteDepart[] = [
   },
   {
     title: "Pâtes au thon",
+    validated: false,
     cuisine: "italienne",
     mealTypes: ["lunch", "dinner"],
     prepMinutes: 5,
@@ -1904,6 +1928,7 @@ export const recettesDepart: RecetteDepart[] = [
   // ───────── Chine ─────────
   {
     title: "Riz cantonais",
+    validated: true,
     cuisine: "chinoise",
     mealTypes: ["lunch", "dinner"],
     prepMinutes: 15,
@@ -1956,6 +1981,7 @@ export const recettesDepart: RecetteDepart[] = [
   // ───────── Inde ─────────
   {
     title: "Dal tadka",
+    validated: true,
     cuisine: "indienne",
     mealTypes: ["lunch", "dinner"],
     prepMinutes: 10,
