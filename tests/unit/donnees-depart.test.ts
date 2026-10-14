@@ -230,3 +230,15 @@ describe("mots de passe des comptes de départ", () => {
     expect(() => lireMotDePasse("SEEDDEMOPASSWORD")).toThrow();
   });
 });
+
+describe("allergènes du catalogue", () => {
+  it("n'utilise que les 14 allergènes proposés au parent, sinon le filtre ne les verrait pas", async () => {
+    const { ALLERGENES } = await import("@/lib/validation/membre");
+    const connus = new Set<string>(ALLERGENES.map((a) => a.valeur));
+    for (const ingredient of ingredientsDepart) {
+      for (const allergene of ingredient.allergens) {
+        expect(connus.has(allergene), `${ingredient.name} : ${allergene}`).toBe(true);
+      }
+    }
+  });
+});
