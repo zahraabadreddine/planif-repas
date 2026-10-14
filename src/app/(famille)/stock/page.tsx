@@ -36,7 +36,7 @@ export default function FridgePage() {
   const others = items.filter((s) => !soon.includes(s));
 
   // Simulation : plus tard, la phrase part vers POST /api/stock/purchases
-  // et Tantie propose les produits reconnus avant confirmation.
+  // et Umi propose les produits reconnus avant confirmation.
   function declare(e: React.FormEvent) {
     e.preventDefault();
     if (!sentence.trim()) return;

@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/titre-page";
 export default function AdminPage() {
   return (
     <>
-      <PageHeader overline="Administration" title="Kitch'N-Flow" />
+      <PageHeader overline="Administration" title="Umami" />
       <p className="mt-6 font-semibold text-cacao">
         La gestion des recettes, ingrédients, prix et magasins arrive bientôt.
       </p>

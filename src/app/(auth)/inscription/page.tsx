@@ -102,7 +102,7 @@ export default function InscriptionPage() {
   return (
     <>
       <h1 className="retro mt-8 text-4xl leading-[1.2]">Bienvenue&nbsp;!</h1>
-      <HandNote className="mt-2 text-xl text-carmin">Tantie t&apos;attend en cuisine</HandNote>
+      <HandNote className="mt-2 text-xl text-carmin">Umi t&apos;attend en cuisine</HandNote>
 
       <form onSubmit={handleSubmit(envoyer)} noValidate className="mt-7 flex flex-col gap-4">
         <ChampFormulaire
@@ -140,7 +140,7 @@ export default function InscriptionPage() {
           </legend>
           <CaseConsentement
             titre="J'accepte de partager les allergies et régimes"
-            detail="Pour que Tantie ne propose jamais un plat dangereux. Ce n'est pas un avis médical."
+            detail="Pour qu'Umi ne propose jamais un plat dangereux. Ce n'est pas un avis médical."
             enregistrement={register("consentHealth")}
           />
           <CaseConsentement

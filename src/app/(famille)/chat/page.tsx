@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { HandNote, Tape } from "@/components/main-levee";
 import { ChevronLeft, SendIcon } from "@/components/icones";
-import { PotMascot } from "@/components/illustrations/personnages";
+import { UmiHead } from "@/components/umi";
 import { Plate } from "@/components/illustrations/assiette";
 import { UrgencyButton } from "@/components/bouton-urgence";
 import { cx } from "@/lib/format";
@@ -41,7 +41,7 @@ export default function AssistantPage() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages, typing]);
 
-  /** Affiche la réponse de Tantie lettre par lettre, comme un flux */
+  /** Affiche la réponse d'Umi lettre par lettre, comme un flux */
   function streamAgentReply(text: string) {
     setTyping(true);
     const id = newId();
@@ -95,12 +95,12 @@ export default function AssistantPage() {
           <ChevronLeft size={22} strokeWidth={2.8} />
         </Link>
         <span className="flex h-[54px] w-[54px] shrink-0 items-center justify-center rounded-full bg-mangue">
-          <PotMascot size={46} className="animate-float" />
+          <UmiHead size={40} className="animate-float" />
         </span>
         <div className="flex-1">
-          <h1 className="retro text-2xl leading-[1.2]">Tantie</h1>
+          <h1 className="retro text-2xl leading-[1.2]">Umi</h1>
           <p className="font-hand text-lg font-bold leading-tight text-carmin">
-            connaît ton frigo par cœur
+            ton assistante cuisine
           </p>
         </div>
         <UrgencyButton variant="square" />
@@ -130,10 +130,11 @@ export default function AssistantPage() {
         )}
         {typing && (
           <div
-            aria-label="Tantie écrit"
+            aria-label="Umi écrit"
             className="flex items-center gap-1 self-start px-1 font-hand text-lg font-bold text-carmin"
           >
-            Tantie réfléchit
+            <UmiHead size={26} mood="reflechit" />
+            Umi réfléchit
             {[0, 150, 300].map((d) => (
               <span
                 key={d}
@@ -194,7 +195,7 @@ export default function AssistantPage() {
   );
 }
 
-/** La proposition de Tantie, présentée comme une fiche recette scotchée */
+/** La proposition d'Umi, présentée comme une fiche recette scotchée */
 function ProposalCard({
   proposal,
   onAnswer,
