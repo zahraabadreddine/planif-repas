@@ -5,6 +5,7 @@ import { useState } from "react";
 import { HandNote } from "@/components/main-levee";
 import { CloseIcon, MinusIcon, PlusIcon } from "@/components/icones";
 import { RunningClock } from "@/components/illustrations/personnages";
+import { UmiHead } from "@/components/umi";
 import { cx } from "@/lib/format";
 import { emergencyOptions, household } from "@/lib/donnees-simulees";
 
@@ -43,7 +44,7 @@ export default function EmergencyPage() {
   const [people, setPeople] = useState(household.members);
   const [picked, setPicked] = useState(0);
 
-  // Plus tard : POST /api/emergency → Tantie renvoie 2 ou 3 options classées par rapidité
+  // Plus tard : POST /api/emergency → Umi renvoie 2 ou 3 options classées par rapidité
   const options = emergencyOptions
     .filter((o) => o.minutes <= minutes)
     .sort((a, b) => a.minutes - b.minutes);
@@ -60,9 +61,12 @@ export default function EmergencyPage() {
           >
             <CloseIcon size={24} strokeWidth={3} />
           </Link>
-          <HandNote className="text-[21px] text-puce" tilt={3}>
-            mode urgence
-          </HandNote>
+          <span className="flex items-center gap-1">
+            <HandNote className="text-[21px] text-puce" tilt={3}>
+              Umi s&apos;en occupe
+            </HandNote>
+            <UmiHead size={40} mood="urgence" />
+          </span>
         </div>
 
         <RunningClock className="absolute right-[18px] top-[74px] animate-wobble" />

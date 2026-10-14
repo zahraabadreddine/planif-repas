@@ -2,6 +2,7 @@ import Link from "next/link";
 import { CalendarIcon, CartIcon, FridgeIcon, UserIcon } from "@/components/icones";
 import { HandNote, Tape } from "@/components/main-levee";
 import { Aubergine } from "@/components/illustrations/aliments";
+import { UmiHead } from "@/components/umi";
 import { SauceBowl } from "@/components/illustrations/assiette";
 import { UrgencyButton } from "@/components/bouton-urgence";
 import { fcfa } from "@/lib/format";
@@ -129,22 +130,10 @@ export default function HomePage() {
             href="/chat"
             className="press flex h-[120px] flex-col justify-between rounded-[26px_22px_28px_20px] bg-foret p-3.5 text-or"
           >
-            <svg width="40" height="40" viewBox="0 0 60 60" aria-hidden="true">
-              <rect x="8" y="20" width="44" height="32" rx="14" fill="#FDD973" />
-              <rect x="4" y="18" width="52" height="8" rx="4" fill="#F47230" />
-              <circle cx="23" cy="36" r="3" fill="#13260F" />
-              <circle cx="37" cy="36" r="3" fill="#13260F" />
-              <path
-                d="M25 43q5 4 10 0"
-                stroke="#13260F"
-                strokeWidth={2.5}
-                fill="none"
-                strokeLinecap="round"
-              />
-            </svg>
+            <UmiHead size={36} />
             <span>
               <span className="block font-display text-lg font-semibold leading-tight">
-                Demande à Tantie
+                Demande à Umi
               </span>
               <span className="font-hand text-[17px] font-bold text-creme">elle a une idée</span>
             </span>

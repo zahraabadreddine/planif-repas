@@ -270,7 +270,7 @@ planif-repas/
       types.ts                  types de l'interface
       donnees-simulees.ts       données factices de l'interface, à remplacer par les appels API
     components/                 composants réutilisables (barre-navigation, bouton-urgence,
-                                carte-repas, main-levee, titre-page, grain, icones…)
+                                carte-repas, main-levee, titre-page, grain, icones, logo, umi…)
       illustrations/            dessins SVG (aliments, assiette, personnages)
   tests/
     unit/                       logique métier pure
@@ -581,9 +581,11 @@ Texte généré par `src/lib/courses/whatsapp.ts` : titre, articles regroupés p
 
 ## 12. Interface utilisateur
 
-### Style « fait main » (design Kitch'N-Flow)
+### Style « fait main » (design Umami)
 
-- Nom affiché de l'application : **Kitch'N-Flow**. L'agent se présente comme **« Tantie »**.
+- Nom affiché de l'application : **Umami**. L'agent se présente comme **« Umi »**, le « i » d'umami qui prend vie.
+- Logo : le « U » dessiné qui cuisine (`src/components/logo.tsx`) ; icône d'onglet dans `src/app/icon.svg`.
+- Mascotte Umi (`src/components/umi.tsx`) avec trois humeurs : `contente`, `reflechit` (l'agent écrit), `urgence` (mode « pas le temps »).
 - Papier texturé (grain), écriture manuscrite (Caveat) pour les annotations, titres rétro (Pacifico), textes en Fredoka et Nunito.
 - Coins irréguliers (`wonky`, `blob`), scotch, punaises et ombres de papier ; la liste de courses ressemble à un ticket de caisse.
 - Palette (définie dans `@theme`) :

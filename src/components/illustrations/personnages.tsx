@@ -1,43 +1,4 @@
-// Logo, mascotte (la marmite) et horloge du mode urgence.
-
-export function Logo({ size = 30 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 30 30" aria-hidden="true">
-      <circle cx="15" cy="17" r="11" fill="#13260F" />
-      <rect x="4" y="11" width="22" height="4" rx="2" fill="#344F30" />
-      <path
-        d="M11 7c0-3 2-3 2-5M17 7c0-3 2-3 2-5"
-        stroke="#13260F"
-        strokeWidth={2}
-        fill="none"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
-/** La marmite souriante : avatar de l'assistant */
-export function PotMascot({ size = 50, className }: { size?: number; className?: string }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 60 60" className={className} aria-hidden="true">
-      <g stroke="#FFF4DF" strokeWidth={2.5} fill="none" strokeLinecap="round">
-        <path className="animate-steam" d="M24 12c-3-4 3-5 0-9" />
-        <path className="animate-steam" style={{ animationDelay: ".7s" }} d="M36 12c-3-4 3-5 0-9" />
-      </g>
-      <rect x="8" y="20" width="44" height="32" rx="14" fill="#13260F" />
-      <rect x="4" y="18" width="52" height="8" rx="4" fill="#344F30" />
-      <circle cx="23" cy="36" r="3" fill="#FDD973" />
-      <circle cx="37" cy="36" r="3" fill="#FDD973" />
-      <path
-        d="M25 43q5 4 10 0"
-        stroke="#FDD973"
-        strokeWidth={2.5}
-        fill="none"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
+// Horloge du mode urgence, sac de courses et mini frigo.
 
 /** Horloge qui court : aiguilles animées */
 export function RunningClock({ size = 130, className }: { size?: number; className?: string }) {

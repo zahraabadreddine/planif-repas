@@ -6,9 +6,9 @@ Projet de Licence 3 Informatique (USJ-CI) · Zahraa Badreddine, Fatima Zreik.
 
 Les règles de développement sont dans [CLAUDE.md](CLAUDE.md), les documents de référence dans [docs/](docs/).
 
-## Le design : Kitch'N-Flow
+## Le design : Umami
 
-Interface mobile d'abord (360 px) au style « fait main » : papier texturé, écriture manuscrite, coins irréguliers, scotch et punaises. L'agent s'appelle **Tantie**. Le style est écrit avec **Tailwind CSS v4** ; le thème (palette, polices, animations) est dans [src/app/globals.css](src/app/globals.css).
+Interface mobile d'abord (360 px) au style « fait main » : papier texturé, écriture manuscrite, coins irréguliers, scotch et punaises. L'agent s'appelle **Umi**. Le style est écrit avec **Tailwind CSS v4** ; le thème (palette, polices, animations) est dans [src/app/globals.css](src/app/globals.css).
 
 | Écran           | Route            | Contenu                                                               |
 | --------------- | ---------------- | --------------------------------------------------------------------- |
@@ -17,7 +17,7 @@ Interface mobile d'abord (360 px) au style « fait main » : papier texturé, é
 | Menu            | `/menu`          | Menu de la semaine, midi et soir                                      |
 | Courses         | `/courses`       | Liste en ticket de caisse, coût en FCFA, où acheter, partage WhatsApp |
 | Stock           | `/stock`         | Produits du frigo et du placard, péremption                           |
-| Chat            | `/chat`          | Conversation avec Tantie, cartes de proposition Confirmer / Modifier  |
+| Chat            | `/chat`          | Conversation avec Umi, cartes de proposition Confirmer / Modifier     |
 | Urgence         | `/urgence`       | Mode « pas le temps » (plein écran)                                   |
 | Recette         | `/recettes/[id]` | Recette pas à pas (plein écran)                                       |
 
