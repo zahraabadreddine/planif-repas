@@ -10,7 +10,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "demo:reset": "node --env-file=.env prisma/reinitialiser-demo.ts"
   },
   "prisma": {
     "seed": "node prisma/seed.ts"
