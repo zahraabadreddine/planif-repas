@@ -1,0 +1,6 @@
+# Fins de ligne LF partout (attendu par Prettier), quel que soit le système
+* text=auto eol=lf
+*.ico binary
+*.png binary
+*.jpg binary
+*.pdf binary
