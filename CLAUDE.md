@@ -414,6 +414,7 @@ Routes Next.js sous `src/app/api/`. Toutes exigent une session sauf `register` e
 | POST | `/api/register` | Créer un compte (email, mot de passe, nom, consentements) | EF-01 |
 | — | `/api/auth/…` | Connexion, déconnexion, session (Auth.js) | EF-01 |
 | PUT | `/api/account/password` | Changer son mot de passe | EF-01 |
+| PUT | `/api/account/consent` | Donner après l'inscription son consentement aux données de santé | ENF-15 |
 | DELETE | `/api/account` | Supprimer son compte et son foyer | ENF-16 |
 | GET, PUT | `/api/household` | Lire ou modifier le foyer | EF-03 |
 | POST | `/api/household/members` | Ajouter un membre | EF-03 |

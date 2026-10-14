@@ -4,7 +4,9 @@
 // Prix : estimations de l'équipe pour Abidjan (octobre 2026), en FCFA entiers,
 // à confirmer avec les relevés du questionnaire.
 // Saisons : toute l'année par défaut, à affiner avec le questionnaire.
-// Allergènes : arachide, poisson, crustaces, oeuf, lait, gluten, sesame, celeri.
+// Allergènes : les 14 allergènes majeurs, mêmes valeurs que ALLERGENES dans
+// src/lib/validation/membre.ts (arachide, fruits-a-coque, lait, oeuf, poisson, crustaces,
+// mollusques, gluten, soja, sesame, celeri, moutarde, sulfites, lupin).
 // Catégorie « porc » : permet d'écarter ces ingrédients pour un régime sans porc.
 
 import type { MealSlot, PlaceType } from "@prisma/client";
@@ -930,7 +932,7 @@ export const ingredientsDepart: IngredientDepart[] = [
   {
     name: "Vin rouge ou blanc sec",
     category: "épicerie",
-    allergens: [],
+    allergens: ["sulfites"],
     shelfLifeDays: conservation(365, 5, null),
     seasonalMonths: toutLAnnee,
     units: [{ label: "bouteille de 75 cl", grams: 750 }],
@@ -955,7 +957,8 @@ export const ingredientsDepart: IngredientDepart[] = [
   ].map(({ name, ...parLieu }): IngredientDepart => ({
     name,
     category: "épice",
-    allergens: [],
+    // L'asa-fœtida du commerce est presque toujours mélangée à de la farine de blé
+    allergens: name === "Asa-fœtida" ? ["gluten"] : [],
     shelfLifeDays: conservation(730, null, null),
     seasonalMonths: toutLAnnee,
     units: [{ label: "sachet de 50 g", grams: 50 }],
