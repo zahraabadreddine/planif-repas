@@ -1,5 +1,7 @@
-// Remplit le catalogue avec les données de départ (npx prisma db seed).
-// Peut être relancé sans erreur : chaque élément est retrouvé puis mis à jour, ou créé.
+// Remplit la base avec les données de départ (npx prisma db seed) : catalogue, quartiers,
+// magasins, comptes et foyers de test.
+// Peut être relancé sans erreur : chaque élément est retrouvé puis mis à jour, ou créé ;
+// un compte déjà présent n'est pas modifié.
 
 import { PrismaClient } from "@prisma/client";
 import {
@@ -9,6 +11,8 @@ import {
   type IngredientDepart,
   type RecetteDepart,
 } from "./donnees-depart.ts";
+import { compteAdmin, compteAminata, comptesTest } from "./donnees-foyers.ts";
+import { afficherResultat, enregistrerCompte, enregistrerQuartiersEtMagasins } from "./foyers.ts";
 
 const ville = "Abidjan";
 
@@ -136,10 +140,19 @@ async function main() {
     await enregistrerRecette(recette, catalogue);
   }
 
+  const validees = recettesDepart.filter((recette) => recette.validated).length;
   console.log(
     `Catalogue prêt : ${unitesGeneriques.length} unités génériques, ` +
-      `${ingredientsDepart.length} ingrédients, ${recettesDepart.length} recettes.`,
+      `${ingredientsDepart.length} ingrédients, ${recettesDepart.length} recettes ` +
+      `(${validees} validées).`,
   );
+
+  const quartiers = await enregistrerQuartiersEtMagasins(prisma);
+  console.log("Comptes de départ :");
+  const maintenant = new Date();
+  for (const compte of [compteAdmin, ...comptesTest, compteAminata]) {
+    afficherResultat(compte.email, await enregistrerCompte(prisma, compte, quartiers, maintenant));
+  }
 }
 
 main()

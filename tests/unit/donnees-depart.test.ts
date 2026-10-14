@@ -1,10 +1,18 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   ingredientsDepart,
   recettesDepart,
   unitesGeneriques,
   type IngredientDepart,
 } from "../../prisma/donnees-depart";
+import {
+  compteAdmin,
+  compteAminata,
+  comptesTest,
+  quartiersDepart,
+  type CompteDepart,
+} from "../../prisma/donnees-foyers";
+import { datesDuStock, lireMotDePasse } from "../../prisma/foyers";
 
 const parNom = new Map(ingredientsDepart.map((ingredient) => [ingredient.name, ingredient]));
 const generiques = new Set(unitesGeneriques.map((unite) => unite.label));
@@ -73,5 +81,119 @@ describe("données de départ du catalogue", () => {
   it("marque les recettes au four, pour le filtre d'équipement", () => {
     const auFour = recettesDepart.filter((r) => r.tags.includes("four")).map((r) => r.title);
     expect(auFour).toContain("Poulet rôti et pommes de terre");
+  });
+});
+
+describe("validation des recettes", () => {
+  it("ne valide aucune recette encore à relire par une cuisinière d'origine", () => {
+    const aRelire = recettesDepart.filter((r) => r.reference.includes("à valider"));
+    expect(aRelire).toHaveLength(16);
+    for (const recette of aRelire) {
+      expect(recette.validated, recette.title).toBe(false);
+    }
+  });
+
+  it("garde des recettes validées pour chaque créneau de repas", () => {
+    const validees = recettesDepart.filter((r) => r.validated);
+    for (const creneau of ["breakfast", "lunch", "dinner"] as const) {
+      expect(
+        validees.some((r) => r.mealTypes.includes(creneau)),
+        creneau,
+      ).toBe(true);
+    }
+  });
+});
+
+const tousLesComptes: CompteDepart[] = [compteAdmin, ...comptesTest, compteAminata];
+
+const aAllergieStricte = (compte: CompteDepart, valeur: string) =>
+  compte.foyer!.members.some((membre) =>
+    membre.restrictions.some(
+      (r) => r.type === "allergy" && r.value === valeur && r.severity === "strict",
+    ),
+  );
+
+describe("comptes et foyers de départ", () => {
+  it("n'utilise que des emails fictifs et aucun mot de passe écrit dans le code", () => {
+    for (const compte of tousLesComptes) {
+      expect(compte.email.endsWith("@umami.test"), compte.email).toBe(true);
+      expect(compte.motDePasse).toMatch(/^SEED[A-Z]+PASSWORD$/);
+      expect(Object.keys(compte)).not.toContain("passwordHash");
+    }
+    expect(new Set(tousLesComptes.map((c) => c.email)).size).toBe(tousLesComptes.length);
+  });
+
+  it("prévoit un seul compte admin, sans foyer", () => {
+    expect(tousLesComptes.filter((c) => c.role === "admin")).toEqual([compteAdmin]);
+    expect(compteAdmin.foyer).toBeNull();
+  });
+
+  it("a un foyer de test avec une allergie stricte à l'arachide", () => {
+    expect(comptesTest.some((compte) => aAllergieStricte(compte, "arachide"))).toBe(true);
+  });
+
+  it("demande le consentement santé dès qu'un foyer déclare une allergie", () => {
+    for (const compte of tousLesComptes.filter((c) => c.foyer)) {
+      const restrictions = compte.foyer!.members.flatMap((m) => m.restrictions);
+      if (restrictions.length > 0) expect(compte.consentHealth, compte.email).toBe(true);
+    }
+  });
+
+  it("désigne les membres par un libellé, jamais par un nom", () => {
+    for (const compte of tousLesComptes.filter((c) => c.foyer)) {
+      for (const membre of compte.foyer!.members) {
+        expect(membre.label).toMatch(/^(Adulte|Enfant|Ado|Bébé|Senior) \d+$/);
+      }
+    }
+  });
+
+  it("ne met en stock que des ingrédients et des unités du catalogue", () => {
+    for (const compte of tousLesComptes.filter((c) => c.foyer)) {
+      for (const ligne of compte.foyer!.stock) {
+        const ingredient = parNom.get(ligne.ingredient);
+        expect(ingredient, ligne.ingredient).toBeDefined();
+        expect(uniteConnue(ingredient!, ligne.unit), ligne.unit).toBe(true);
+      }
+    }
+  });
+});
+
+describe("foyer de démonstration d'Aminata", () => {
+  const foyer = compteAminata.foyer!;
+
+  it("correspond au scénario de référence", () => {
+    expect(foyer.members).toHaveLength(4);
+    expect(foyer.weeklyBudgetFcfa).toBe(25000);
+    expect(foyer.quartier).toEqual({ commune: "Yopougon", name: "Yopougon" });
+    expect(quartiersDepart.some((q) => q.commune === "Yopougon")).toBe(true);
+  });
+
+  it("a un enfant allergique à l'arachide (allergie stricte)", () => {
+    const enfants = foyer.members.filter((m) => m.ageGroup === "child");
+    expect(enfants.some((m) => m.restrictions.some((r) => r.value === "arachide"))).toBe(true);
+    expect(aAllergieStricte(compteAminata, "arachide")).toBe(true);
+  });
+
+  it("a des aubergines à consommer dans moins de 2 jours, pas encore périmées", () => {
+    const maintenant = new Date("2026-10-14T08:00:00Z");
+    const aubergines = foyer.stock.find((ligne) => ligne.ingredient === "Aubergine")!;
+    const { expiresAt } = datesDuStock(aubergines, maintenant);
+    const reste = expiresAt!.getTime() - maintenant.getTime();
+    expect(reste).toBeGreaterThan(0);
+    expect(reste).toBeLessThan(2 * 24 * 60 * 60 * 1000);
+  });
+});
+
+describe("mots de passe des comptes de départ", () => {
+  afterEach(() => vi.unstubAllEnvs());
+
+  it("renvoie null quand la variable est absente du .env", () => {
+    vi.stubEnv("SEEDDEMOPASSWORD", "");
+    expect(lireMotDePasse("SEEDDEMOPASSWORD")).toBeNull();
+  });
+
+  it("refuse un mot de passe trop court, comme à l'inscription", () => {
+    vi.stubEnv("SEEDDEMOPASSWORD", "court");
+    expect(() => lireMotDePasse("SEEDDEMOPASSWORD")).toThrow();
   });
 });
