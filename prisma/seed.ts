@@ -99,7 +99,7 @@ async function enregistrerRecette(recette: RecetteDepart, catalogue: Catalogue) 
       optional: ligne.optional ?? false,
     };
   });
-  const data = { ...champs, source: "team" as const, validated: true };
+  const data = { ...champs, source: "team" as const };
 
   const existante = await prisma.recipe.findFirst({
     where: { title: recette.title, source: "team" },
