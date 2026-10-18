@@ -184,7 +184,7 @@ export default function EmergencyPage() {
             La sauce graine de ce soir passe à demain.
           </p>
           <Link
-            href={`/recettes/${choice.recipeId}`}
+            href="/recettes"
             className="press flex h-[58px] items-center justify-center rounded-[18px_22px_20px_16px] bg-foret font-display text-lg font-semibold text-or shadow-[0_5px_0_#9F350B]"
           >
             On part sur {choice.short}

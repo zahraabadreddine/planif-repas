@@ -1,12 +1,13 @@
 // Remplit la base avec les données de départ (npx prisma db seed) : catalogue, quartiers,
 // magasins, comptes et foyers de test.
 // Peut être relancé sans erreur : chaque élément est retrouvé puis mis à jour, ou créé ;
-// un compte déjà présent n'est pas modifié.
+// les prix de l'équipe sont remplacés à chaque passage ; un compte déjà présent n'est pas modifié.
 
 import { PrismaClient } from "@prisma/client";
 import {
   ingredientsDepart,
   recettesDepart,
+  relevesDepart,
   unitesGeneriques,
   type IngredientDepart,
   type RecetteDepart,
@@ -58,35 +59,32 @@ async function enregistrerIngredient(ingredient: IngredientDepart, generiques: U
     data: { defaultUnitId: unites.get(ingredient.defaultUnit) },
   });
 
-  for (const prix of ingredient.prices) {
-    await enregistrerPrix(id, unites.get(prix.unit)!, prix.placeType, prix.priceFcfa);
-  }
+  // Estimations et relevés réels ; les anciens prix de l'équipe ont été retirés avant.
+  const prix = [...ingredient.prices, ...(relevesDepart[ingredient.name] ?? [])];
+  await prisma.price.createMany({
+    data: prix.map((p) => ({
+      ingredientId: id,
+      unitId: unites.get(p.unit)!,
+      priceFcfa: p.priceFcfa,
+      placeType: p.placeType,
+      city: ville,
+      source: p.source,
+      observedAt: new Date(`${p.observedAt}T12:00:00Z`),
+    })),
+  });
 
   return { id, unites };
 }
 
-/** Un seul relevé de l'équipe par ingrédient, unité et type de lieu ; sa date est remise à jour. */
-async function enregistrerPrix(
-  ingredientId: string,
-  unitId: string,
-  placeType: IngredientDepart["prices"][number]["placeType"],
-  priceFcfa: number,
-) {
-  const where = {
-    ingredientId,
-    unitId,
-    placeType,
-    city: ville,
-    source: "team" as const,
-    storeId: null,
-  };
-  const existant = await prisma.price.findFirst({ where });
-  const data = { priceFcfa, observedAt: new Date() };
-  if (existant) {
-    await prisma.price.update({ where: { id: existant.id }, data });
-  } else {
-    await prisma.price.create({ data: { ...where, ...data } });
-  }
+/**
+ * Retire les prix de l'équipe (relevés et estimations, sans magasin) pour les réécrire depuis
+ * donnees-depart.ts. Les prix déclarés par les familles (source user) ne sont jamais touchés.
+ */
+async function retirerPrixDeLEquipe() {
+  const { count } = await prisma.price.deleteMany({
+    where: { city: ville, storeId: null, source: { in: ["team", "estimate"] } },
+  });
+  return count;
 }
 
 type Catalogue = Map<string, { id: string; unites: UnitesParLabel }>;
@@ -125,6 +123,7 @@ async function enregistrerRecette(recette: RecetteDepart, catalogue: Catalogue) 
 }
 
 async function main() {
+  const retires = await retirerPrixDeLEquipe();
   const generiques: UnitesParLabel = new Map();
   for (const unite of unitesGeneriques) {
     const enregistree = await enregistrerUnite(null, unite.label, unite.grams);
@@ -145,6 +144,11 @@ async function main() {
     `Catalogue prêt : ${unitesGeneriques.length} unités génériques, ` +
       `${ingredientsDepart.length} ingrédients, ${recettesDepart.length} recettes ` +
       `(${validees} validées).`,
+  );
+  const nbReleves = Object.values(relevesDepart).flat().length;
+  console.log(
+    `Prix : ${retires} anciens prix de l'équipe remplacés, ${nbReleves} relevés réels ` +
+      `pour ${Object.keys(relevesDepart).length} ingrédients, le reste en estimations.`,
   );
 
   const quartiers = await enregistrerQuartiersEtMagasins(prisma);

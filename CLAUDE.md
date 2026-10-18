@@ -348,7 +348,7 @@ Chaque service externe est isolé derrière une interface dans `src/lib/`, pour 
 | `MarketUnit` | label, gramsEquivalent | Ingrédient facultatif (vide = unité générique : kg, pièce) |
 | `Recipe` | title, cuisine, mealTypes, prepMinutes, cookMinutes, needsCooking, servings, difficulty, tags, steps (Json), leftoverIdeas (Json), source, validated | source : team ou ai ; seules les recettes validées sont proposées |
 | `RecipeIngredient` | quantity, optional | Recette + ingrédient + unité |
-| `Price` | priceFcfa, placeType, city, source, observedAt | Ingrédient + unité ; magasin et déclarant facultatifs ; source : team ou user |
+| `Price` | priceFcfa, placeType, city, source, observedAt | Ingrédient + unité ; magasin et déclarant facultatifs ; source : team (relevé de l'équipe), user (déclaré par une famille) ou estimate (estimation, à défaut de relevé) |
 | `Store` | name, type, address, latitude, longitude, openingHours (Json) | Quartier ; type : market, supermarket, shop |
 
 ### Planification

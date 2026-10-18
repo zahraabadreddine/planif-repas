@@ -90,7 +90,7 @@ export default async function HomePage() {
         </p>
         <div className="relative mt-3.5 flex gap-2">
           <Link
-            href={`/recettes/${dinner.id}`}
+            href="/recettes"
             className="press wonky flex h-11 items-center bg-or px-4 text-sm font-extrabold text-foret"
           >
             Voir la recette
@@ -178,6 +178,20 @@ export default async function HomePage() {
           </Link>
         </div>
       </div>
+
+      {/* Catalogue des recettes */}
+      <Link
+        href="/recettes"
+        className="press mt-2.5 flex min-h-[60px] items-center justify-between gap-3 rounded-[18px_24px_20px_22px] border-[2.5px] border-foret bg-creme px-4 py-3"
+      >
+        <span>
+          <span className="block font-display text-[17px] font-semibold leading-tight">
+            Toutes les recettes
+          </span>
+          <span className="font-hand text-[17px] font-bold text-carmin">garba, taboulé, dal…</span>
+        </span>
+        <ArrowRight size={22} strokeWidth={2.8} />
+      </Link>
 
       {/* Budget, en simple ligne */}
       <section className="mt-4 w-[220px]" aria-label="Budget de la semaine">

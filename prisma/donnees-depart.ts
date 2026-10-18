@@ -13,7 +13,23 @@ import type { MealSlot, PlaceType } from "@prisma/client";
 
 export type UniteDepart = { label: string; grams: number };
 
-export type PrixDepart = { unit: string; priceFcfa: number; placeType: PlaceType };
+export type PrixDepart = {
+  unit: string;
+  priceFcfa: number;
+  placeType: PlaceType;
+  // team : prix réellement relevé (source publiée) ; estimate : estimation de l'équipe
+  source: "team" | "estimate";
+  // Date du relevé ou de l'estimation (AAAA-MM-JJ)
+  observedAt: string;
+  reference: string;
+};
+
+/** Estimations de l'équipe : utilisées seulement à défaut de relevé récent (CLAUDE.md §11). */
+const estime = {
+  source: "estimate",
+  observedAt: "2026-10-14",
+  reference: "Estimation de l'équipe (octobre 2026), à remplacer par des relevés",
+} as const;
 
 export type Conservation = {
   ambiant: number | null;
@@ -89,9 +105,9 @@ export const ingredientsDepart: IngredientDepart[] = [
     units: [{ label: "boule", grams: 200 }],
     defaultUnit: "boule",
     prices: [
-      { unit: "boule", priceFcfa: 100, placeType: "market" },
-      { unit: "boule", priceFcfa: 150, placeType: "shop" },
-      { unit: "kg", priceFcfa: 1000, placeType: "supermarket" },
+      { unit: "boule", priceFcfa: 100, placeType: "market", ...estime },
+      { unit: "boule", priceFcfa: 150, placeType: "shop", ...estime },
+      { unit: "kg", priceFcfa: 1000, placeType: "supermarket", ...estime },
     ],
   },
   {
@@ -102,7 +118,7 @@ export const ingredientsDepart: IngredientDepart[] = [
     seasonalMonths: toutLAnnee,
     units: [{ label: "boule", grams: 500 }],
     defaultUnit: "boule",
-    prices: [{ unit: "boule", priceFcfa: 200, placeType: "market" }],
+    prices: [{ unit: "boule", priceFcfa: 200, placeType: "market", ...estime }],
   },
   {
     name: "Banane plantain",
@@ -114,8 +130,8 @@ export const ingredientsDepart: IngredientDepart[] = [
     units: [{ label: "doigt", grams: 250 }],
     defaultUnit: "doigt",
     prices: [
-      { unit: "doigt", priceFcfa: 150, placeType: "market" },
-      { unit: "kg", priceFcfa: 800, placeType: "supermarket" },
+      { unit: "doigt", priceFcfa: 150, placeType: "market", ...estime },
+      { unit: "kg", priceFcfa: 800, placeType: "supermarket", ...estime },
     ],
   },
   {
@@ -127,9 +143,9 @@ export const ingredientsDepart: IngredientDepart[] = [
     units: [{ label: "sac de 5 kg", grams: 5000 }],
     defaultUnit: "kg",
     prices: [
-      { unit: "kg", priceFcfa: 600, placeType: "market" },
-      { unit: "kg", priceFcfa: 650, placeType: "shop" },
-      { unit: "sac de 5 kg", priceFcfa: 3500, placeType: "supermarket" },
+      { unit: "kg", priceFcfa: 600, placeType: "market", ...estime },
+      { unit: "kg", priceFcfa: 650, placeType: "shop", ...estime },
+      { unit: "sac de 5 kg", priceFcfa: 3500, placeType: "supermarket", ...estime },
     ],
   },
   {
@@ -141,9 +157,9 @@ export const ingredientsDepart: IngredientDepart[] = [
     units: [{ label: "paquet de 500 g", grams: 500 }],
     defaultUnit: "paquet de 500 g",
     prices: [
-      { unit: "paquet de 500 g", priceFcfa: 400, placeType: "market" },
-      { unit: "paquet de 500 g", priceFcfa: 400, placeType: "shop" },
-      { unit: "paquet de 500 g", priceFcfa: 500, placeType: "supermarket" },
+      { unit: "paquet de 500 g", priceFcfa: 400, placeType: "market", ...estime },
+      { unit: "paquet de 500 g", priceFcfa: 400, placeType: "shop", ...estime },
+      { unit: "paquet de 500 g", priceFcfa: 500, placeType: "supermarket", ...estime },
     ],
   },
   {
@@ -155,9 +171,9 @@ export const ingredientsDepart: IngredientDepart[] = [
     units: [{ label: "sachet de 1 kg", grams: 1000 }],
     defaultUnit: "sachet de 1 kg",
     prices: [
-      { unit: "kg", priceFcfa: 600, placeType: "market" },
-      { unit: "sachet de 1 kg", priceFcfa: 700, placeType: "shop" },
-      { unit: "sachet de 1 kg", priceFcfa: 800, placeType: "supermarket" },
+      { unit: "kg", priceFcfa: 600, placeType: "market", ...estime },
+      { unit: "sachet de 1 kg", priceFcfa: 700, placeType: "shop", ...estime },
+      { unit: "sachet de 1 kg", priceFcfa: 800, placeType: "supermarket", ...estime },
     ],
   },
   {
@@ -169,8 +185,8 @@ export const ingredientsDepart: IngredientDepart[] = [
     units: [{ label: "pièce", grams: 200 }],
     defaultUnit: "pièce",
     prices: [
-      { unit: "pièce", priceFcfa: 200, placeType: "shop" },
-      { unit: "pièce", priceFcfa: 200, placeType: "supermarket" },
+      { unit: "pièce", priceFcfa: 200, placeType: "shop", ...estime },
+      { unit: "pièce", priceFcfa: 200, placeType: "supermarket", ...estime },
     ],
   },
   {
@@ -182,8 +198,8 @@ export const ingredientsDepart: IngredientDepart[] = [
     units: [{ label: "paquet de 5", grams: 400 }],
     defaultUnit: "paquet de 5",
     prices: [
-      { unit: "paquet de 5", priceFcfa: 750, placeType: "shop" },
-      { unit: "paquet de 5", priceFcfa: 800, placeType: "supermarket" },
+      { unit: "paquet de 5", priceFcfa: 750, placeType: "shop", ...estime },
+      { unit: "paquet de 5", priceFcfa: 800, placeType: "supermarket", ...estime },
     ],
   },
   {
@@ -194,7 +210,7 @@ export const ingredientsDepart: IngredientDepart[] = [
     seasonalMonths: toutLAnnee,
     units: [{ label: "sachet de 500 g", grams: 500 }],
     defaultUnit: "sachet de 500 g",
-    prices: [{ unit: "sachet de 500 g", priceFcfa: 1500, placeType: "supermarket" }],
+    prices: [{ unit: "sachet de 500 g", priceFcfa: 1500, placeType: "supermarket", ...estime }],
   },
   {
     name: "Semoule de couscous",
@@ -205,8 +221,8 @@ export const ingredientsDepart: IngredientDepart[] = [
     units: [{ label: "sachet de 1 kg", grams: 1000 }],
     defaultUnit: "sachet de 1 kg",
     prices: [
-      { unit: "sachet de 1 kg", priceFcfa: 1500, placeType: "shop" },
-      { unit: "sachet de 1 kg", priceFcfa: 1500, placeType: "supermarket" },
+      { unit: "sachet de 1 kg", priceFcfa: 1500, placeType: "shop", ...estime },
+      { unit: "sachet de 1 kg", priceFcfa: 1500, placeType: "supermarket", ...estime },
     ],
   },
 
@@ -220,7 +236,7 @@ export const ingredientsDepart: IngredientDepart[] = [
     storageTip: "Les faire tremper la veille dans beaucoup d'eau.",
     units: [{ label: "sachet de 500 g", grams: 500 }],
     defaultUnit: "sachet de 500 g",
-    prices: [{ unit: "sachet de 500 g", priceFcfa: 1200, placeType: "supermarket" }],
+    prices: [{ unit: "sachet de 500 g", priceFcfa: 1200, placeType: "supermarket", ...estime }],
   },
   {
     name: "Lentilles vertes",
@@ -231,8 +247,8 @@ export const ingredientsDepart: IngredientDepart[] = [
     units: [{ label: "sachet de 500 g", grams: 500 }],
     defaultUnit: "sachet de 500 g",
     prices: [
-      { unit: "kg", priceFcfa: 1800, placeType: "market" },
-      { unit: "sachet de 500 g", priceFcfa: 1000, placeType: "supermarket" },
+      { unit: "kg", priceFcfa: 1800, placeType: "market", ...estime },
+      { unit: "sachet de 500 g", priceFcfa: 1000, placeType: "supermarket", ...estime },
     ],
   },
   {
@@ -243,7 +259,7 @@ export const ingredientsDepart: IngredientDepart[] = [
     seasonalMonths: toutLAnnee,
     units: [{ label: "sachet de 500 g", grams: 500 }],
     defaultUnit: "sachet de 500 g",
-    prices: [{ unit: "sachet de 500 g", priceFcfa: 1500, placeType: "supermarket" }],
+    prices: [{ unit: "sachet de 500 g", priceFcfa: 1500, placeType: "supermarket", ...estime }],
   },
   {
     name: "Haricots urad cassés (urad dal)",
@@ -253,7 +269,7 @@ export const ingredientsDepart: IngredientDepart[] = [
     seasonalMonths: toutLAnnee,
     units: [{ label: "sachet de 500 g", grams: 500 }],
     defaultUnit: "sachet de 500 g",
-    prices: [{ unit: "sachet de 500 g", priceFcfa: 1500, placeType: "supermarket" }],
+    prices: [{ unit: "sachet de 500 g", priceFcfa: 1500, placeType: "supermarket", ...estime }],
   },
   {
     name: "Petits pois en boîte",
@@ -265,8 +281,8 @@ export const ingredientsDepart: IngredientDepart[] = [
     units: [{ label: "boîte de 400 g", grams: 400 }],
     defaultUnit: "boîte de 400 g",
     prices: [
-      { unit: "boîte de 400 g", priceFcfa: 850, placeType: "shop" },
-      { unit: "boîte de 400 g", priceFcfa: 800, placeType: "supermarket" },
+      { unit: "boîte de 400 g", priceFcfa: 850, placeType: "shop", ...estime },
+      { unit: "boîte de 400 g", priceFcfa: 800, placeType: "supermarket", ...estime },
     ],
   },
 
@@ -280,8 +296,8 @@ export const ingredientsDepart: IngredientDepart[] = [
     units: [{ label: "tranche", grams: 200 }],
     defaultUnit: "tranche",
     prices: [
-      { unit: "kg", priceFcfa: 3000, placeType: "market" },
-      { unit: "kg", priceFcfa: 4500, placeType: "supermarket" },
+      { unit: "kg", priceFcfa: 3000, placeType: "market", ...estime },
+      { unit: "kg", priceFcfa: 4500, placeType: "supermarket", ...estime },
     ],
   },
   {
@@ -293,8 +309,8 @@ export const ingredientsDepart: IngredientDepart[] = [
     units: [{ label: "pièce", grams: 500 }],
     defaultUnit: "pièce",
     prices: [
-      { unit: "pièce", priceFcfa: 1500, placeType: "market" },
-      { unit: "kg", priceFcfa: 3500, placeType: "supermarket" },
+      { unit: "pièce", priceFcfa: 1500, placeType: "market", ...estime },
+      { unit: "kg", priceFcfa: 3500, placeType: "supermarket", ...estime },
     ],
   },
   {
@@ -305,7 +321,7 @@ export const ingredientsDepart: IngredientDepart[] = [
     seasonalMonths: toutLAnnee,
     units: [{ label: "morceau", grams: 150 }],
     defaultUnit: "morceau",
-    prices: [{ unit: "morceau", priceFcfa: 500, placeType: "market" }],
+    prices: [{ unit: "morceau", priceFcfa: 500, placeType: "market", ...estime }],
   },
   {
     name: "Thon en boîte",
@@ -316,9 +332,9 @@ export const ingredientsDepart: IngredientDepart[] = [
     units: [{ label: "boîte de 160 g", grams: 160 }],
     defaultUnit: "boîte de 160 g",
     prices: [
-      { unit: "boîte de 160 g", priceFcfa: 650, placeType: "market" },
-      { unit: "boîte de 160 g", priceFcfa: 700, placeType: "shop" },
-      { unit: "boîte de 160 g", priceFcfa: 800, placeType: "supermarket" },
+      { unit: "boîte de 160 g", priceFcfa: 650, placeType: "market", ...estime },
+      { unit: "boîte de 160 g", priceFcfa: 700, placeType: "shop", ...estime },
+      { unit: "boîte de 160 g", priceFcfa: 800, placeType: "supermarket", ...estime },
     ],
   },
   {
@@ -330,8 +346,8 @@ export const ingredientsDepart: IngredientDepart[] = [
     units: [{ label: "tas", grams: 250 }],
     defaultUnit: "tas",
     prices: [
-      { unit: "tas", priceFcfa: 1500, placeType: "market" },
-      { unit: "kg", priceFcfa: 7000, placeType: "supermarket" },
+      { unit: "tas", priceFcfa: 1500, placeType: "market", ...estime },
+      { unit: "kg", priceFcfa: 7000, placeType: "supermarket", ...estime },
     ],
   },
   {
@@ -343,8 +359,8 @@ export const ingredientsDepart: IngredientDepart[] = [
     units: [{ label: "poulet entier", grams: 1500 }],
     defaultUnit: "poulet entier",
     prices: [
-      { unit: "poulet entier", priceFcfa: 3500, placeType: "market" },
-      { unit: "kg", priceFcfa: 2800, placeType: "supermarket" },
+      { unit: "poulet entier", priceFcfa: 3500, placeType: "market", ...estime },
+      { unit: "kg", priceFcfa: 2800, placeType: "supermarket", ...estime },
     ],
   },
   {
@@ -356,8 +372,8 @@ export const ingredientsDepart: IngredientDepart[] = [
     units: [{ label: "barquette de 500 g", grams: 500 }],
     defaultUnit: "barquette de 500 g",
     prices: [
-      { unit: "kg", priceFcfa: 3500, placeType: "market" },
-      { unit: "barquette de 500 g", priceFcfa: 2800, placeType: "supermarket" },
+      { unit: "kg", priceFcfa: 3500, placeType: "market", ...estime },
+      { unit: "barquette de 500 g", priceFcfa: 2800, placeType: "supermarket", ...estime },
     ],
   },
   {
@@ -368,7 +384,7 @@ export const ingredientsDepart: IngredientDepart[] = [
     seasonalMonths: toutLAnnee,
     units: [{ label: "morceau", grams: 250 }],
     defaultUnit: "morceau",
-    prices: [{ unit: "kg", priceFcfa: 4500, placeType: "supermarket" }],
+    prices: [{ unit: "kg", priceFcfa: 4500, placeType: "supermarket", ...estime }],
   },
   {
     name: "Jambon cuit",
@@ -378,7 +394,9 @@ export const ingredientsDepart: IngredientDepart[] = [
     seasonalMonths: toutLAnnee,
     units: [{ label: "paquet de 4 tranches", grams: 160 }],
     defaultUnit: "paquet de 4 tranches",
-    prices: [{ unit: "paquet de 4 tranches", priceFcfa: 1800, placeType: "supermarket" }],
+    prices: [
+      { unit: "paquet de 4 tranches", priceFcfa: 1800, placeType: "supermarket", ...estime },
+    ],
   },
   {
     name: "Œufs",
@@ -392,10 +410,10 @@ export const ingredientsDepart: IngredientDepart[] = [
     ],
     defaultUnit: "pièce",
     prices: [
-      { unit: "pièce", priceFcfa: 90, placeType: "market" },
-      { unit: "pièce", priceFcfa: 100, placeType: "shop" },
-      { unit: "plateau de 30", priceFcfa: 2500, placeType: "market" },
-      { unit: "plateau de 30", priceFcfa: 2700, placeType: "supermarket" },
+      { unit: "pièce", priceFcfa: 90, placeType: "market", ...estime },
+      { unit: "pièce", priceFcfa: 100, placeType: "shop", ...estime },
+      { unit: "plateau de 30", priceFcfa: 2500, placeType: "market", ...estime },
+      { unit: "plateau de 30", priceFcfa: 2700, placeType: "supermarket", ...estime },
     ],
   },
 
@@ -410,8 +428,8 @@ export const ingredientsDepart: IngredientDepart[] = [
     units: [{ label: "brique de 1 l", grams: 1000 }],
     defaultUnit: "brique de 1 l",
     prices: [
-      { unit: "brique de 1 l", priceFcfa: 950, placeType: "shop" },
-      { unit: "brique de 1 l", priceFcfa: 1000, placeType: "supermarket" },
+      { unit: "brique de 1 l", priceFcfa: 950, placeType: "shop", ...estime },
+      { unit: "brique de 1 l", priceFcfa: 1000, placeType: "supermarket", ...estime },
     ],
   },
   {
@@ -423,8 +441,8 @@ export const ingredientsDepart: IngredientDepart[] = [
     units: [{ label: "plaquette de 250 g", grams: 250 }],
     defaultUnit: "plaquette de 250 g",
     prices: [
-      { unit: "plaquette de 250 g", priceFcfa: 2300, placeType: "shop" },
-      { unit: "plaquette de 250 g", priceFcfa: 2200, placeType: "supermarket" },
+      { unit: "plaquette de 250 g", priceFcfa: 2300, placeType: "shop", ...estime },
+      { unit: "plaquette de 250 g", priceFcfa: 2200, placeType: "supermarket", ...estime },
     ],
   },
   {
@@ -435,7 +453,7 @@ export const ingredientsDepart: IngredientDepart[] = [
     seasonalMonths: toutLAnnee,
     units: [{ label: "pot de 500 g", grams: 500 }],
     defaultUnit: "pot de 500 g",
-    prices: [{ unit: "pot de 500 g", priceFcfa: 5000, placeType: "supermarket" }],
+    prices: [{ unit: "pot de 500 g", priceFcfa: 5000, placeType: "supermarket", ...estime }],
   },
 
   // Légumes
@@ -452,8 +470,8 @@ export const ingredientsDepart: IngredientDepart[] = [
     ],
     defaultUnit: "tas",
     prices: [
-      { unit: "tas", priceFcfa: 500, placeType: "market" },
-      { unit: "kg", priceFcfa: 1200, placeType: "supermarket" },
+      { unit: "tas", priceFcfa: 500, placeType: "market", ...estime },
+      { unit: "kg", priceFcfa: 1200, placeType: "supermarket", ...estime },
     ],
   },
   {
@@ -465,8 +483,8 @@ export const ingredientsDepart: IngredientDepart[] = [
     units: [{ label: "boîte de 400 g", grams: 400 }],
     defaultUnit: "boîte de 400 g",
     prices: [
-      { unit: "boîte de 400 g", priceFcfa: 800, placeType: "shop" },
-      { unit: "boîte de 400 g", priceFcfa: 750, placeType: "supermarket" },
+      { unit: "boîte de 400 g", priceFcfa: 800, placeType: "shop", ...estime },
+      { unit: "boîte de 400 g", priceFcfa: 750, placeType: "supermarket", ...estime },
     ],
   },
   {
@@ -481,9 +499,9 @@ export const ingredientsDepart: IngredientDepart[] = [
     ],
     defaultUnit: "boîte de 70 g",
     prices: [
-      { unit: "boîte de 70 g", priceFcfa: 100, placeType: "market" },
-      { unit: "boîte de 70 g", priceFcfa: 100, placeType: "shop" },
-      { unit: "boîte de 400 g", priceFcfa: 900, placeType: "supermarket" },
+      { unit: "boîte de 70 g", priceFcfa: 100, placeType: "market", ...estime },
+      { unit: "boîte de 70 g", priceFcfa: 100, placeType: "shop", ...estime },
+      { unit: "boîte de 400 g", priceFcfa: 900, placeType: "supermarket", ...estime },
     ],
   },
   {
@@ -498,9 +516,9 @@ export const ingredientsDepart: IngredientDepart[] = [
     ],
     defaultUnit: "tas",
     prices: [
-      { unit: "tas", priceFcfa: 400, placeType: "market" },
-      { unit: "pièce", priceFcfa: 100, placeType: "shop" },
-      { unit: "kg", priceFcfa: 1000, placeType: "supermarket" },
+      { unit: "tas", priceFcfa: 400, placeType: "market", ...estime },
+      { unit: "pièce", priceFcfa: 100, placeType: "shop", ...estime },
+      { unit: "kg", priceFcfa: 1000, placeType: "supermarket", ...estime },
     ],
   },
   {
@@ -512,8 +530,8 @@ export const ingredientsDepart: IngredientDepart[] = [
     units: [{ label: "botte", grams: 100 }],
     defaultUnit: "botte",
     prices: [
-      { unit: "botte", priceFcfa: 100, placeType: "market" },
-      { unit: "botte", priceFcfa: 500, placeType: "supermarket" },
+      { unit: "botte", priceFcfa: 100, placeType: "market", ...estime },
+      { unit: "botte", priceFcfa: 500, placeType: "supermarket", ...estime },
     ],
   },
   {
@@ -528,9 +546,9 @@ export const ingredientsDepart: IngredientDepart[] = [
     ],
     defaultUnit: "tête",
     prices: [
-      { unit: "tête", priceFcfa: 150, placeType: "market" },
-      { unit: "tête", priceFcfa: 150, placeType: "shop" },
-      { unit: "tête", priceFcfa: 200, placeType: "supermarket" },
+      { unit: "tête", priceFcfa: 150, placeType: "market", ...estime },
+      { unit: "tête", priceFcfa: 150, placeType: "shop", ...estime },
+      { unit: "tête", priceFcfa: 200, placeType: "supermarket", ...estime },
     ],
   },
   {
@@ -542,8 +560,8 @@ export const ingredientsDepart: IngredientDepart[] = [
     units: [{ label: "morceau", grams: 50 }],
     defaultUnit: "morceau",
     prices: [
-      { unit: "morceau", priceFcfa: 100, placeType: "market" },
-      { unit: "kg", priceFcfa: 2000, placeType: "supermarket" },
+      { unit: "morceau", priceFcfa: 100, placeType: "market", ...estime },
+      { unit: "kg", priceFcfa: 2000, placeType: "supermarket", ...estime },
     ],
   },
   {
@@ -557,7 +575,7 @@ export const ingredientsDepart: IngredientDepart[] = [
       { label: "pièce", grams: 5 },
     ],
     defaultUnit: "tas",
-    prices: [{ unit: "tas", priceFcfa: 100, placeType: "market" }],
+    prices: [{ unit: "tas", priceFcfa: 100, placeType: "market", ...estime }],
   },
   {
     name: "Poivron",
@@ -568,8 +586,8 @@ export const ingredientsDepart: IngredientDepart[] = [
     units: [{ label: "pièce", grams: 150 }],
     defaultUnit: "pièce",
     prices: [
-      { unit: "pièce", priceFcfa: 200, placeType: "market" },
-      { unit: "kg", priceFcfa: 1800, placeType: "supermarket" },
+      { unit: "pièce", priceFcfa: 200, placeType: "market", ...estime },
+      { unit: "kg", priceFcfa: 1800, placeType: "supermarket", ...estime },
     ],
   },
   {
@@ -584,8 +602,8 @@ export const ingredientsDepart: IngredientDepart[] = [
     ],
     defaultUnit: "tas",
     prices: [
-      { unit: "tas", priceFcfa: 300, placeType: "market" },
-      { unit: "kg", priceFcfa: 1200, placeType: "supermarket" },
+      { unit: "tas", priceFcfa: 300, placeType: "market", ...estime },
+      { unit: "kg", priceFcfa: 1200, placeType: "supermarket", ...estime },
     ],
   },
   {
@@ -596,7 +614,7 @@ export const ingredientsDepart: IngredientDepart[] = [
     seasonalMonths: toutLAnnee,
     units: [{ label: "tas", grams: 250 }],
     defaultUnit: "tas",
-    prices: [{ unit: "tas", priceFcfa: 250, placeType: "market" }],
+    prices: [{ unit: "tas", priceFcfa: 250, placeType: "market", ...estime }],
   },
   {
     name: "Graine de palme",
@@ -611,9 +629,9 @@ export const ingredientsDepart: IngredientDepart[] = [
     ],
     defaultUnit: "tas",
     prices: [
-      { unit: "tas", priceFcfa: 500, placeType: "market" },
-      { unit: "boîte de 800 g", priceFcfa: 1400, placeType: "shop" },
-      { unit: "boîte de 800 g", priceFcfa: 1300, placeType: "supermarket" },
+      { unit: "tas", priceFcfa: 500, placeType: "market", ...estime },
+      { unit: "boîte de 800 g", priceFcfa: 1400, placeType: "shop", ...estime },
+      { unit: "boîte de 800 g", priceFcfa: 1300, placeType: "supermarket", ...estime },
     ],
   },
   {
@@ -625,8 +643,8 @@ export const ingredientsDepart: IngredientDepart[] = [
     units: [{ label: "tas", grams: 500 }],
     defaultUnit: "tas",
     prices: [
-      { unit: "tas", priceFcfa: 500, placeType: "market" },
-      { unit: "kg", priceFcfa: 1200, placeType: "supermarket" },
+      { unit: "tas", priceFcfa: 500, placeType: "market", ...estime },
+      { unit: "kg", priceFcfa: 1200, placeType: "supermarket", ...estime },
     ],
   },
   {
@@ -638,8 +656,8 @@ export const ingredientsDepart: IngredientDepart[] = [
     units: [{ label: "pièce", grams: 1000 }],
     defaultUnit: "pièce",
     prices: [
-      { unit: "pièce", priceFcfa: 500, placeType: "market" },
-      { unit: "kg", priceFcfa: 900, placeType: "supermarket" },
+      { unit: "pièce", priceFcfa: 500, placeType: "market", ...estime },
+      { unit: "kg", priceFcfa: 900, placeType: "supermarket", ...estime },
     ],
   },
   {
@@ -652,8 +670,8 @@ export const ingredientsDepart: IngredientDepart[] = [
     units: [{ label: "tas", grams: 1000 }],
     defaultUnit: "tas",
     prices: [
-      { unit: "tas", priceFcfa: 800, placeType: "market" },
-      { unit: "kg", priceFcfa: 1000, placeType: "supermarket" },
+      { unit: "tas", priceFcfa: 800, placeType: "market", ...estime },
+      { unit: "kg", priceFcfa: 1000, placeType: "supermarket", ...estime },
     ],
   },
   {
@@ -664,7 +682,7 @@ export const ingredientsDepart: IngredientDepart[] = [
     seasonalMonths: toutLAnnee,
     units: [{ label: "pièce", grams: 150 }],
     defaultUnit: "pièce",
-    prices: [{ unit: "kg", priceFcfa: 2500, placeType: "supermarket" }],
+    prices: [{ unit: "kg", priceFcfa: 2500, placeType: "supermarket", ...estime }],
   },
   {
     name: "Poireau",
@@ -674,7 +692,7 @@ export const ingredientsDepart: IngredientDepart[] = [
     seasonalMonths: toutLAnnee,
     units: [{ label: "pièce", grams: 200 }],
     defaultUnit: "pièce",
-    prices: [{ unit: "pièce", priceFcfa: 800, placeType: "supermarket" }],
+    prices: [{ unit: "pièce", priceFcfa: 800, placeType: "supermarket", ...estime }],
   },
   {
     name: "Céleri branche",
@@ -687,7 +705,7 @@ export const ingredientsDepart: IngredientDepart[] = [
       { label: "branche", grams: 60 },
     ],
     defaultUnit: "botte",
-    prices: [{ unit: "botte", priceFcfa: 1500, placeType: "supermarket" }],
+    prices: [{ unit: "botte", priceFcfa: 1500, placeType: "supermarket", ...estime }],
   },
   {
     name: "Courgette",
@@ -698,8 +716,8 @@ export const ingredientsDepart: IngredientDepart[] = [
     units: [{ label: "pièce", grams: 250 }],
     defaultUnit: "pièce",
     prices: [
-      { unit: "pièce", priceFcfa: 300, placeType: "market" },
-      { unit: "pièce", priceFcfa: 450, placeType: "supermarket" },
+      { unit: "pièce", priceFcfa: 300, placeType: "market", ...estime },
+      { unit: "pièce", priceFcfa: 450, placeType: "supermarket", ...estime },
     ],
   },
   {
@@ -712,8 +730,8 @@ export const ingredientsDepart: IngredientDepart[] = [
     units: [{ label: "morceau", grams: 500 }],
     defaultUnit: "morceau",
     prices: [
-      { unit: "morceau", priceFcfa: 300, placeType: "market" },
-      { unit: "kg", priceFcfa: 900, placeType: "supermarket" },
+      { unit: "morceau", priceFcfa: 300, placeType: "market", ...estime },
+      { unit: "kg", priceFcfa: 900, placeType: "supermarket", ...estime },
     ],
   },
   {
@@ -725,8 +743,8 @@ export const ingredientsDepart: IngredientDepart[] = [
     units: [{ label: "pièce", grams: 300 }],
     defaultUnit: "pièce",
     prices: [
-      { unit: "pièce", priceFcfa: 300, placeType: "market" },
-      { unit: "pièce", priceFcfa: 700, placeType: "supermarket" },
+      { unit: "pièce", priceFcfa: 300, placeType: "market", ...estime },
+      { unit: "pièce", priceFcfa: 700, placeType: "supermarket", ...estime },
     ],
   },
   {
@@ -741,8 +759,8 @@ export const ingredientsDepart: IngredientDepart[] = [
     ],
     defaultUnit: "pièce",
     prices: [
-      { unit: "tas", priceFcfa: 200, placeType: "market" },
-      { unit: "kg", priceFcfa: 1200, placeType: "supermarket" },
+      { unit: "tas", priceFcfa: 200, placeType: "market", ...estime },
+      { unit: "kg", priceFcfa: 1200, placeType: "supermarket", ...estime },
     ],
   },
 
@@ -757,8 +775,8 @@ export const ingredientsDepart: IngredientDepart[] = [
     units: [{ label: "botte", grams: 100 }],
     defaultUnit: "botte",
     prices: [
-      { unit: "botte", priceFcfa: 200, placeType: "market" },
-      { unit: "botte", priceFcfa: 600, placeType: "supermarket" },
+      { unit: "botte", priceFcfa: 200, placeType: "market", ...estime },
+      { unit: "botte", priceFcfa: 600, placeType: "supermarket", ...estime },
     ],
   },
   {
@@ -770,8 +788,8 @@ export const ingredientsDepart: IngredientDepart[] = [
     units: [{ label: "botte", grams: 30 }],
     defaultUnit: "botte",
     prices: [
-      { unit: "botte", priceFcfa: 100, placeType: "market" },
-      { unit: "botte", priceFcfa: 500, placeType: "supermarket" },
+      { unit: "botte", priceFcfa: 100, placeType: "market", ...estime },
+      { unit: "botte", priceFcfa: 500, placeType: "supermarket", ...estime },
     ],
   },
   {
@@ -783,8 +801,8 @@ export const ingredientsDepart: IngredientDepart[] = [
     units: [{ label: "botte", grams: 50 }],
     defaultUnit: "botte",
     prices: [
-      { unit: "botte", priceFcfa: 100, placeType: "market" },
-      { unit: "botte", priceFcfa: 500, placeType: "supermarket" },
+      { unit: "botte", priceFcfa: 100, placeType: "market", ...estime },
+      { unit: "botte", priceFcfa: 500, placeType: "supermarket", ...estime },
     ],
   },
   {
@@ -795,7 +813,7 @@ export const ingredientsDepart: IngredientDepart[] = [
     seasonalMonths: toutLAnnee,
     units: [{ label: "botte", grams: 20 }],
     defaultUnit: "botte",
-    prices: [{ unit: "botte", priceFcfa: 800, placeType: "supermarket" }],
+    prices: [{ unit: "botte", priceFcfa: 800, placeType: "supermarket", ...estime }],
   },
   {
     name: "Feuilles de curry",
@@ -803,13 +821,17 @@ export const ingredientsDepart: IngredientDepart[] = [
     allergens: [],
     shelfLifeDays: conservation(2, 14, 90),
     seasonalMonths: toutLAnnee,
-    units: [{ label: "sachet de 20 g", grams: 20 }],
+    units: [
+      { label: "sachet de 20 g", grams: 20 },
+      { label: "brin", grams: 2.5 },
+    ],
     defaultUnit: "sachet de 20 g",
-    prices: [{ unit: "sachet de 20 g", priceFcfa: 700, placeType: "supermarket" }],
+    prices: [{ unit: "sachet de 20 g", priceFcfa: 700, placeType: "supermarket", ...estime }],
   },
 
   // Huiles et matières grasses
   {
+    // Estimations sous le prix maximum officiel : 1 200 FCFA les 90 cl d'huile raffinée (CNLVC, 2026)
     name: "Huile végétale",
     category: "huile",
     allergens: [],
@@ -818,9 +840,9 @@ export const ingredientsDepart: IngredientDepart[] = [
     units: [{ label: "bouteille de 1 l", grams: 1000 }],
     defaultUnit: "bouteille de 1 l",
     prices: [
-      { unit: "bouteille de 1 l", priceFcfa: 1200, placeType: "market" },
-      { unit: "bouteille de 1 l", priceFcfa: 1300, placeType: "shop" },
-      { unit: "bouteille de 1 l", priceFcfa: 1400, placeType: "supermarket" },
+      { unit: "bouteille de 1 l", priceFcfa: 1200, placeType: "market", ...estime },
+      { unit: "bouteille de 1 l", priceFcfa: 1300, placeType: "shop", ...estime },
+      { unit: "bouteille de 1 l", priceFcfa: 1300, placeType: "supermarket", ...estime },
     ],
   },
   {
@@ -832,8 +854,8 @@ export const ingredientsDepart: IngredientDepart[] = [
     units: [{ label: "bouteille de 1 l", grams: 1000 }],
     defaultUnit: "bouteille de 1 l",
     prices: [
-      { unit: "bouteille de 1 l", priceFcfa: 1300, placeType: "market" },
-      { unit: "bouteille de 1 l", priceFcfa: 1400, placeType: "shop" },
+      { unit: "bouteille de 1 l", priceFcfa: 1300, placeType: "market", ...estime },
+      { unit: "bouteille de 1 l", priceFcfa: 1400, placeType: "shop", ...estime },
     ],
   },
   {
@@ -845,8 +867,8 @@ export const ingredientsDepart: IngredientDepart[] = [
     units: [{ label: "bouteille de 500 ml", grams: 500 }],
     defaultUnit: "bouteille de 500 ml",
     prices: [
-      { unit: "bouteille de 500 ml", priceFcfa: 4800, placeType: "shop" },
-      { unit: "bouteille de 500 ml", priceFcfa: 4500, placeType: "supermarket" },
+      { unit: "bouteille de 500 ml", priceFcfa: 4800, placeType: "shop", ...estime },
+      { unit: "bouteille de 500 ml", priceFcfa: 4500, placeType: "supermarket", ...estime },
     ],
   },
 
@@ -863,9 +885,9 @@ export const ingredientsDepart: IngredientDepart[] = [
     ],
     defaultUnit: "boule",
     prices: [
-      { unit: "boule", priceFcfa: 500, placeType: "market" },
-      { unit: "pot de 500 g", priceFcfa: 1700, placeType: "shop" },
-      { unit: "pot de 500 g", priceFcfa: 1800, placeType: "supermarket" },
+      { unit: "boule", priceFcfa: 500, placeType: "market", ...estime },
+      { unit: "pot de 500 g", priceFcfa: 1700, placeType: "shop", ...estime },
+      { unit: "pot de 500 g", priceFcfa: 1800, placeType: "supermarket", ...estime },
     ],
   },
   {
@@ -876,7 +898,7 @@ export const ingredientsDepart: IngredientDepart[] = [
     seasonalMonths: toutLAnnee,
     units: [{ label: "pot de 450 g", grams: 450 }],
     defaultUnit: "pot de 450 g",
-    prices: [{ unit: "pot de 450 g", priceFcfa: 3500, placeType: "supermarket" }],
+    prices: [{ unit: "pot de 450 g", priceFcfa: 3500, placeType: "supermarket", ...estime }],
   },
   {
     name: "Cube de bouillon",
@@ -887,8 +909,8 @@ export const ingredientsDepart: IngredientDepart[] = [
     units: [{ label: "cube", grams: 10 }],
     defaultUnit: "cube",
     prices: [
-      { unit: "cube", priceFcfa: 25, placeType: "market" },
-      { unit: "cube", priceFcfa: 25, placeType: "shop" },
+      { unit: "cube", priceFcfa: 25, placeType: "market", ...estime },
+      { unit: "cube", priceFcfa: 25, placeType: "shop", ...estime },
     ],
   },
   {
@@ -900,12 +922,13 @@ export const ingredientsDepart: IngredientDepart[] = [
     units: [{ label: "sachet de 500 g", grams: 500 }],
     defaultUnit: "sachet de 500 g",
     prices: [
-      { unit: "sachet de 500 g", priceFcfa: 100, placeType: "market" },
-      { unit: "sachet de 500 g", priceFcfa: 150, placeType: "shop" },
-      { unit: "sachet de 500 g", priceFcfa: 250, placeType: "supermarket" },
+      { unit: "sachet de 500 g", priceFcfa: 100, placeType: "market", ...estime },
+      { unit: "sachet de 500 g", priceFcfa: 150, placeType: "shop", ...estime },
+      { unit: "sachet de 500 g", priceFcfa: 250, placeType: "supermarket", ...estime },
     ],
   },
   {
+    // Estimations plafonnées au prix maximum officiel : 875 FCFA le kg de sucre blanc (CNLVC, 2026)
     name: "Sucre en poudre",
     category: "épicerie",
     allergens: [],
@@ -914,9 +937,9 @@ export const ingredientsDepart: IngredientDepart[] = [
     units: [{ label: "sachet de 1 kg", grams: 1000 }],
     defaultUnit: "sachet de 1 kg",
     prices: [
-      { unit: "sachet de 1 kg", priceFcfa: 850, placeType: "market" },
-      { unit: "sachet de 1 kg", priceFcfa: 900, placeType: "shop" },
-      { unit: "sachet de 1 kg", priceFcfa: 1000, placeType: "supermarket" },
+      { unit: "sachet de 1 kg", priceFcfa: 850, placeType: "market", ...estime },
+      { unit: "sachet de 1 kg", priceFcfa: 875, placeType: "shop", ...estime },
+      { unit: "sachet de 1 kg", priceFcfa: 875, placeType: "supermarket", ...estime },
     ],
   },
   {
@@ -927,7 +950,7 @@ export const ingredientsDepart: IngredientDepart[] = [
     seasonalMonths: toutLAnnee,
     units: [{ label: "bouteille de 70 cl", grams: 700 }],
     defaultUnit: "bouteille de 70 cl",
-    prices: [{ unit: "bouteille de 70 cl", priceFcfa: 6000, placeType: "supermarket" }],
+    prices: [{ unit: "bouteille de 70 cl", priceFcfa: 6000, placeType: "supermarket", ...estime }],
   },
   {
     name: "Vin rouge ou blanc sec",
@@ -937,7 +960,7 @@ export const ingredientsDepart: IngredientDepart[] = [
     seasonalMonths: toutLAnnee,
     units: [{ label: "bouteille de 75 cl", grams: 750 }],
     defaultUnit: "bouteille de 75 cl",
-    prices: [{ unit: "bouteille de 75 cl", priceFcfa: 4000, placeType: "supermarket" }],
+    prices: [{ unit: "bouteille de 75 cl", priceFcfa: 4000, placeType: "supermarket", ...estime }],
   },
 
   // Épices (sachets de 50 g)
@@ -961,11 +984,23 @@ export const ingredientsDepart: IngredientDepart[] = [
     allergens: name === "Asa-fœtida" ? ["gluten"] : [],
     shelfLifeDays: conservation(730, null, null),
     seasonalMonths: toutLAnnee,
-    units: [{ label: "sachet de 50 g", grams: 50 }],
+    // Le piment sec se compte aussi à la pièce (piment entier séché)
+    units:
+      name === "Piment sec"
+        ? [
+            { label: "sachet de 50 g", grams: 50 },
+            { label: "pièce", grams: 0.5 },
+          ]
+        : [{ label: "sachet de 50 g", grams: 50 }],
     defaultUnit: "sachet de 50 g",
     prices: (Object.entries(parLieu) as [PlaceType, number | null][])
       .filter((entree): entree is [PlaceType, number] => entree[1] !== null)
-      .map(([placeType, priceFcfa]) => ({ unit: "sachet de 50 g", priceFcfa, placeType })),
+      .map(([placeType, priceFcfa]) => ({
+        unit: "sachet de 50 g",
+        priceFcfa,
+        placeType,
+        ...estime,
+      })),
   })),
   {
     name: "Harissa",
@@ -975,7 +1010,7 @@ export const ingredientsDepart: IngredientDepart[] = [
     seasonalMonths: toutLAnnee,
     units: [{ label: "tube de 70 g", grams: 70 }],
     defaultUnit: "tube de 70 g",
-    prices: [{ unit: "tube de 70 g", priceFcfa: 900, placeType: "supermarket" }],
+    prices: [{ unit: "tube de 70 g", priceFcfa: 900, placeType: "supermarket", ...estime }],
   },
 ];
 
@@ -1009,22 +1044,33 @@ export const recettesDepart: RecetteDepart[] = [
     ],
     steps: [
       {
-        text: "Coupe le thon en gros morceaux, sale-les et frotte-les avec le cube écrasé.",
+        text: "Coupe les 800 g de thon en gros morceaux d'environ 5 cm. Sale-les avec la cuillère à café de sel et, si tu veux, frotte-les avec le cube écrasé.",
         minutes: 5,
       },
       {
-        text: "Fais frire le thon dans l'huile bien chaude jusqu'à ce qu'il soit doré et croustillant.",
+        text: "Fais chauffer les 300 ml d'huile dans une poêle profonde ou une marmite, à feu moyen à vif. L'huile est prête quand un petit morceau de pain y grésille aussitôt.",
+        minutes: 5,
+      },
+      {
+        text: "Fais frire le thon par petites quantités, 5 à 6 minutes en le retournant, jusqu'à ce qu'il soit bien doré et croustillant dehors. Égoutte-le sur du papier ou une passoire.",
         minutes: 12,
       },
       {
-        text: "Émince l'oignon et la tomate, écrase le piment avec une pincée de sel.",
+        text: "Émince finement les 2 oignons et coupe les 2 tomates en rondelles. Écrase les 4 piments avec une pincée de sel (et une cuillère d'huile de friture si tu l'aimes doux).",
         minutes: 5,
       },
       {
-        text: "Réchauffe l'attiéké à la vapeur ou avec un peu d'eau, puis arrose-le d'un filet d'huile de friture.",
+        text: "Émiette les 4 boules d'attiéké avec les doigts, arrose-les d'un peu d'eau et réchauffe-les à la vapeur ou au micro-ondes, en remuant, jusqu'à ce qu'elles soient chaudes et souples.",
         minutes: 5,
       },
-      { text: "Sers l'attiéké avec le thon, l'oignon, la tomate et le piment écrasé.", minutes: 2 },
+      {
+        text: "Arrose l'attiéké chaud de 2 ou 3 cuillères d'huile de friture et mélange.",
+        minutes: 1,
+      },
+      {
+        text: "Sers l'attiéké dans chaque assiette avec les morceaux de thon, l'oignon, la tomate et le piment écrasé à côté.",
+        minutes: 2,
+      },
     ],
     leftoverIdeas: ["Le thon frit restant se mange froid dans du pain le lendemain."],
   },
@@ -1055,23 +1101,31 @@ export const recettesDepart: RecetteDepart[] = [
     ],
     steps: [
       {
-        text: "Écaille et vide les poissons, puis fais deux ou trois entailles sur chaque face.",
+        text: "Écaille les 2 carpes, vide-les et rince-les à l'eau froide. Fais 2 ou 3 entailles profondes sur chaque face pour que la marinade pénètre.",
         minutes: 10,
       },
       {
-        text: "Écrase l'ail, le gingembre, un piment, un demi-oignon, le cube et le sel, et frotte les poissons avec cette pâte. Laisse mariner 15 minutes.",
-        minutes: 20,
-      },
-      {
-        text: "Fais braiser les poissons sur le charbon ou au gril, 10 à 12 minutes de chaque côté, en les badigeonnant d'huile.",
-        minutes: 25,
-      },
-      {
-        text: "Pendant ce temps, coupe en petits dés les tomates, le reste de l'oignon et du piment, puis arrose de jus de citron et sale.",
+        text: "Écrase ou mixe les 2 gousses d'ail, le morceau de gingembre, 1 piment, un demi-oignon, le sel et le cube : tu obtiens une pâte épaisse.",
         minutes: 5,
       },
       {
-        text: "Réchauffe l'attiéké à la vapeur et sers-le avec le poisson et la sauce crue.",
+        text: "Frotte les poissons avec cette pâte, dedans comme dehors et dans les entailles. Laisse mariner au moins 15 minutes, au frais.",
+        minutes: 15,
+      },
+      {
+        text: "Allume le charbon et attends les braises bien rouges, sans flammes (ou fais chauffer le gril du four).",
+        minutes: 10,
+      },
+      {
+        text: "Fais braiser les poissons 10 à 12 minutes de chaque côté, en les badigeonnant des 4 cuillères d'huile. Ils sont cuits quand la chair se détache facilement de l'arête.",
+        minutes: 25,
+      },
+      {
+        text: "Pendant ce temps, coupe en petits dés les 3 tomates, le reste de l'oignon et les 2 piments restants. Arrose du jus du citron et sale légèrement.",
+        minutes: 5,
+      },
+      {
+        text: "Réchauffe les 4 boules d'attiéké à la vapeur avec un peu d'eau, puis sers-les avec le poisson et la sauce crue.",
         minutes: 5,
       },
     ],
@@ -1100,19 +1154,31 @@ export const recettesDepart: RecetteDepart[] = [
     ],
     steps: [
       {
-        text: "Épluche les bananes bien mûres, coupe-les en rondelles ou en biais, et sale-les légèrement.",
+        text: "Choisis des bananes plantain bien mûres, à la peau jaune tachée de noir. Coupe les deux bouts, fends la peau sur la longueur et retire-la.",
+        minutes: 3,
+      },
+      {
+        text: "Coupe les 4 bananes en rondelles d'environ 1 cm ou en biais, puis sale-les légèrement.",
+        minutes: 3,
+      },
+      {
+        text: "Fais chauffer les 500 ml d'huile dans une poêle profonde à feu moyen à vif.",
         minutes: 5,
       },
       {
-        text: "Fais-les frire dans l'huile chaude jusqu'à ce qu'elles soient bien dorées, puis égoutte-les.",
+        text: "Fais frire les rondelles en une seule couche, 3 à 4 minutes de chaque côté, jusqu'à ce qu'elles soient bien dorées et caramélisées. Égoutte-les.",
         minutes: 10,
       },
       {
-        text: "Bats les œufs avec l'oignon émincé, le piment et le sel, puis cuis une omelette dans un peu d'huile.",
-        minutes: 6,
+        text: "Émince l'oignon et les 2 piments (et la tomate si tu en mets). Bats les 4 œufs avec le sel, l'oignon et le piment.",
+        minutes: 3,
       },
       {
-        text: "Sers l'alloco chaud avec l'omelette et un peu de piment écrasé à côté.",
+        text: "Retire presque toute l'huile de la poêle, n'en garde qu'une cuillère, et cuis l'omelette 3 à 4 minutes à feu moyen jusqu'à ce qu'elle soit prise.",
+        minutes: 4,
+      },
+      {
+        text: "Sers l'alloco chaud avec l'omelette, et un peu de piment écrasé à côté pour ceux qui aiment.",
         minutes: 2,
       },
     ],
@@ -1143,24 +1209,36 @@ export const recettesDepart: RecetteDepart[] = [
     ],
     steps: [
       {
-        text: "Lave les graines et fais-les bouillir jusqu'à ce que la chair se détache facilement.",
+        text: "Lave le tas de graines de palme, mets-le dans une marmite, couvre largement d'eau et fais bouillir jusqu'à ce que la chair se détache facilement du noyau.",
         minutes: 30,
       },
       {
-        text: "Pile les graines chaudes, ajoute de l'eau chaude et presse-les à la main pour extraire le jus rouge. Recommence deux fois, puis filtre.",
+        text: "Égoutte les graines et pile-les encore chaudes dans un mortier, sans casser les noyaux, jusqu'à ce que la chair se détache des fibres.",
+        minutes: 10,
+      },
+      {
+        text: "Ajoute un grand bol d'eau chaude sur la pulpe, presse-la fort entre tes mains et récupère le jus rouge. Recommence 2 fois, puis filtre le jus pour retirer fibres et noyaux.",
+        minutes: 15,
+      },
+      {
+        text: "Verse le jus dans une marmite, ajoute l'oignon coupé en deux, les 2 tomates entières, les 4 aubergines et les 3 piments entiers. Fais cuire à feu moyen.",
         minutes: 20,
       },
       {
-        text: "Fais cuire le jus à feu moyen avec l'oignon, les tomates entières, les aubergines et le piment.",
-        minutes: 20,
-      },
-      {
-        text: "Retire les tomates et les aubergines, écrase-les et remets-les dans la sauce. Ajoute le poisson fumé nettoyé, le cube et le sel.",
+        text: "Retire les tomates, les aubergines et les piments quand ils sont tendres, écrase-les et remets-les dans la sauce (garde les piments à part si on n'aime pas fort).",
         minutes: 5,
       },
       {
-        text: "Laisse mijoter à feu doux jusqu'à ce que l'huile remonte à la surface. Pendant ce temps, cuis le riz.",
+        text: "Nettoie les 2 morceaux de poisson fumé, retire les arêtes, et ajoute-les à la sauce avec le cube et le sel.",
+        minutes: 5,
+      },
+      {
+        text: "Laisse mijoter à feu doux en remuant de temps en temps : la sauce est prête quand elle a épaissi et qu'une couche d'huile rouge remonte à la surface.",
         minutes: 30,
+      },
+      {
+        text: "Pendant ce temps, lave les 500 g de riz et cuis-les dans deux fois leur volume d'eau salée, à couvert et à feu doux, jusqu'à ce que l'eau soit absorbée.",
+        minutes: 20,
       },
     ],
     leftoverIdeas: ["La sauce se garde 2 jours au frigo et se mange aussi avec du foutou."],
@@ -1191,20 +1269,32 @@ export const recettesDepart: RecetteDepart[] = [
     ],
     steps: [
       {
-        text: "Découpe le poulet et fais-le cuire avec un oignon, l'ail, le sel et un fond d'eau.",
-        minutes: 15,
-      },
-      {
-        text: "Ajoute les tomates mixées, le concentré et le deuxième oignon émincé.",
+        text: "Découpe le poulet en morceaux, lave-les et mets-les dans une marmite avec 1 oignon émincé, les 2 gousses d'ail écrasées, le sel et un fond d'eau.",
         minutes: 10,
       },
       {
-        text: "Délaye la pâte d'arachide dans un peu de bouillon tiède, puis verse-la dans la marmite.",
+        text: "Fais cuire à couvert et à feu moyen jusqu'à ce que le poulet commence à rendre son jus.",
+        minutes: 15,
+      },
+      {
+        text: "Mixe ou écrase les 3 tomates. Ajoute-les dans la marmite avec la boîte de concentré de tomate et le deuxième oignon émincé, puis mélange.",
+        minutes: 10,
+      },
+      {
+        text: "Dans un bol, délaye la boule de pâte d'arachide avec une louche de bouillon tiède, en écrasant à la fourchette jusqu'à obtenir une crème sans grumeaux.",
         minutes: 5,
       },
       {
-        text: "Laisse mijoter à feu doux en remuant souvent, avec le piment entier, jusqu'à ce que l'huile remonte. Cuis le riz à côté.",
+        text: "Verse la crème d'arachide dans la marmite, ajoute de l'eau à hauteur du poulet, le cube et les 2 piments entiers.",
+        minutes: 3,
+      },
+      {
+        text: "Laisse mijoter à feu doux en remuant souvent, car la sauce attache facilement. Elle est prête quand elle est épaisse et qu'une fine couche d'huile remonte en surface.",
         minutes: 35,
+      },
+      {
+        text: "Pendant ce temps, cuis les 500 g de riz lavé dans deux fois leur volume d'eau salée, à couvert, jusqu'à ce que l'eau soit absorbée.",
+        minutes: 20,
       },
     ],
     leftoverIdeas: ["La sauce réchauffée est encore meilleure le lendemain."],
@@ -1237,23 +1327,32 @@ export const recettesDepart: RecetteDepart[] = [
     ],
     steps: [
       {
-        text: "Découpe et assaisonne le poulet, puis fais-le dorer dans l'huile. Réserve-le.",
+        text: "Découpe le poulet en morceaux, assaisonne-les avec un peu de sel et l'ail écrasé, puis fais-les dorer dans les 6 cuillères d'huile, à feu moyen, sur toutes les faces. Réserve-les.",
         minutes: 15,
       },
       {
-        text: "Dans la même huile, fais revenir l'oignon, l'ail, les tomates mixées et le concentré.",
-        minutes: 10,
+        text: "Dans la même huile, fais revenir les 2 oignons émincés jusqu'à ce qu'ils soient transparents.",
+        minutes: 5,
       },
       {
-        text: "Ajoute les légumes coupés, le cube et de l'eau, et laisse cuire 10 minutes. Retire les légumes.",
-        minutes: 10,
+        text: "Ajoute les 3 tomates mixées et la boîte de concentré, et laisse cuire en remuant jusqu'à ce que la sauce fonce et que l'huile se sépare.",
+        minutes: 8,
       },
       {
-        text: "Verse le riz lavé dans la sauce, couvre et laisse cuire à feu doux jusqu'à ce que le riz ait tout absorbé.",
+        text: "Coupe les 200 g de carottes en rondelles, les 300 g de chou en gros morceaux et le poivron en lanières. Ajoute-les avec les 2 cubes, le reste du sel et environ 1 litre d'eau. Laisse cuire 10 minutes.",
+        minutes: 12,
+      },
+      { text: "Retire les légumes avec une écumoire et garde-les au chaud.", minutes: 2 },
+      {
+        text: "Lave les 500 g de riz, verse-les dans la sauce : le liquide doit dépasser le riz d'un doigt, ajoute de l'eau si besoin.",
+        minutes: 3,
+      },
+      {
+        text: "Couvre et cuis à feu très doux, sans remuer, jusqu'à ce que le riz ait tout absorbé et soit tendre. Ajoute un peu d'eau s'il sèche avant d'être cuit.",
         minutes: 25,
       },
       {
-        text: "Remets le poulet et les légumes sur le riz pour les réchauffer, puis sers.",
+        text: "Pose le poulet et les légumes sur le riz, couvre 5 minutes pour les réchauffer, puis sers.",
         minutes: 5,
       },
     ],
@@ -1287,18 +1386,30 @@ export const recettesDepart: RecetteDepart[] = [
     ],
     steps: [
       {
-        text: "Découpe le poulet en morceaux et coupe tous les légumes en gros morceaux.",
+        text: "Découpe le poulet en morceaux et lave-les. Coupe les 4 tomates, les 2 oignons, les 2 aubergines et les 2 poivrons en gros morceaux.",
         minutes: 15,
       },
+      { text: "Écrase les 3 gousses d'ail et le morceau de gingembre.", minutes: 3 },
       {
-        text: "Mets tout dans le canari ou une cocotte, cru, avec l'ail et le gingembre écrasés et le sel. N'ajoute ni eau ni huile.",
-        minutes: 5,
+        text: "Mets tout dans le canari ou une cocotte à couvercle lourd : poulet, légumes, ail, gingembre, les 2 piments entiers, le sel, et le gombo si tu en mets. Mélange avec les mains. N'ajoute ni eau ni huile.",
+        minutes: 3,
       },
       {
-        text: "Ferme hermétiquement et cuis à feu doux. Toutes les 10 minutes, secoue la marmite sans l'ouvrir.",
+        text: "Ferme bien (avec une feuille de bananier sous le couvercle si tu en as) et pose sur feu doux.",
+        minutes: 2,
+      },
+      {
+        text: "Laisse cuire à l'étouffée. Toutes les 10 minutes, soulève la marmite et secoue-la sans l'ouvrir pour que rien n'attache : les légumes rendent leur jus et cuisent le poulet.",
         minutes: 50,
       },
-      { text: "Sers le poulet et sa sauce avec l'attiéké réchauffé.", minutes: 5 },
+      {
+        text: "Le kédjénou est prêt quand le poulet est tendre et nappé d'une sauce épaisse. Goûte et rectifie le sel.",
+        minutes: 2,
+      },
+      {
+        text: "Réchauffe les 4 boules d'attiéké à la vapeur et sers-les avec le poulet et sa sauce.",
+        minutes: 5,
+      },
     ],
     leftoverIdeas: ["Les restes de sauce parfument très bien un riz blanc."],
   },
@@ -1326,20 +1437,31 @@ export const recettesDepart: RecetteDepart[] = [
     ],
     steps: [
       {
-        text: "Délaye la pâte de manioc dans un peu d'eau, puis chauffe-la en remuant énergiquement avec une spatule jusqu'à obtenir une pâte lisse et élastique.",
-        minutes: 25,
-      },
-      { text: "Coupe les gombos en fines rondelles.", minutes: 10 },
-      {
-        text: "Fais bouillir de l'eau avec l'oignon, le poisson fumé nettoyé, le cube et le sel.",
+        text: "Coupe les 500 g de gombos en fines rondelles, en retirant les queues.",
         minutes: 10,
       },
       {
-        text: "Ajoute les gombos, l'huile de palme et le piment, et cuis sans couvrir en battant la sauce pour qu'elle file.",
+        text: "Fais bouillir environ 1 litre d'eau avec l'oignon émincé, les 2 morceaux de poisson fumé nettoyés et sans arêtes, le cube et le sel.",
+        minutes: 10,
+      },
+      {
+        text: "Ajoute les gombos, les 6 cuillères d'huile de palme et les 2 piments. Cuis sans couvrir à feu moyen en battant la sauce avec une cuillère en bois pour qu'elle devienne gluante et file.",
         minutes: 15,
       },
       {
-        text: "Forme des boules de placali avec les mains mouillées et sers avec la sauce.",
+        text: "Pour le placali, délaye les 2 boules de pâte de manioc dans environ 500 ml d'eau, en écrasant les grumeaux.",
+        minutes: 5,
+      },
+      {
+        text: "Verse dans une marmite et chauffe à feu moyen en remuant énergiquement et sans arrêt avec une spatule en bois.",
+        minutes: 15,
+      },
+      {
+        text: "Continue jusqu'à obtenir une pâte lisse, légèrement translucide, élastique, qui se détache des bords. Ajoute un peu d'eau si elle est trop dure.",
+        minutes: 10,
+      },
+      {
+        text: "Mouille tes mains et forme des boules de placali. Sers-les avec la sauce gombo bien chaude.",
         minutes: 5,
       },
     ],
@@ -1370,15 +1492,27 @@ export const recettesDepart: RecetteDepart[] = [
     ],
     steps: [
       {
-        text: "Cuis les spaghetti al dente, égoutte-les et rince-les à l'eau froide.",
+        text: "Fais bouillir une grande marmite d'eau salée et cuis le paquet de spaghetti en suivant le temps du paquet, en les gardant un peu fermes.",
         minutes: 12,
       },
       {
-        text: "Fais revenir l'oignon et le poivron dans l'huile, puis ajoute les tomates, le concentré, le piment et le cube.",
-        minutes: 8,
+        text: "Égoutte-les et rince-les à l'eau froide pour qu'ils ne collent pas entre eux.",
+        minutes: 2,
       },
       {
-        text: "Ajoute les spaghetti et fais-les sauter à feu vif jusqu'à ce qu'ils soient bien enrobés.",
+        text: "Émince les 2 oignons et le poivron, coupe les 2 tomates en petits dés et écrase les 2 piments.",
+        minutes: 5,
+      },
+      {
+        text: "Dans une grande poêle, fais chauffer les 5 cuillères d'huile à feu moyen et fais revenir les oignons et le poivron jusqu'à ce qu'ils soient tendres.",
+        minutes: 5,
+      },
+      {
+        text: "Ajoute les tomates, la boîte de concentré, le piment, le cube écrasé et le sel. Laisse cuire jusqu'à obtenir une sauce épaisse.",
+        minutes: 5,
+      },
+      {
+        text: "Ajoute les spaghetti et fais-les sauter à feu vif en remuant, jusqu'à ce qu'ils soient bien enrobés de sauce et commencent à dorer.",
         minutes: 5,
       },
     ],
@@ -1406,9 +1540,26 @@ export const recettesDepart: RecetteDepart[] = [
       { name: "Sel", quantity: 0.5, unit: "c. à café" },
     ],
     steps: [
-      { text: "Émince l'oignon et le piment, puis bats-les avec les œufs et le sel.", minutes: 3 },
-      { text: "Cuis une omelette fine dans l'huile chaude.", minutes: 4 },
-      { text: "Ouvre le pain, glisse l'omelette et quelques rondelles de tomate.", minutes: 2 },
+      {
+        text: "Émince finement l'oignon et le piment, et coupe la tomate en rondelles si tu en mets.",
+        minutes: 3,
+      },
+      {
+        text: "Bats les 6 œufs avec l'oignon, le piment et le sel jusqu'à ce que le mélange soit mousseux.",
+        minutes: 2,
+      },
+      {
+        text: "Fais chauffer les 2 cuillères d'huile dans une poêle à feu moyen et verse les œufs. Laisse cuire 3 à 4 minutes, en ramenant les bords vers le centre, jusqu'à ce que l'omelette soit prise.",
+        minutes: 4,
+      },
+      {
+        text: "Coupe les 2 baguettes en deux, puis ouvre chaque morceau sur la longueur sans le séparer complètement.",
+        minutes: 2,
+      },
+      {
+        text: "Glisse un quart de l'omelette et quelques rondelles de tomate dans chaque morceau de pain, et sers tout de suite.",
+        minutes: 2,
+      },
     ],
     leftoverIdeas: [],
   },
@@ -1434,10 +1585,26 @@ export const recettesDepart: RecetteDepart[] = [
       { name: "Sel", quantity: 0.5, unit: "c. à café" },
     ],
     steps: [
-      { text: "Coupe les aubergines en dés, émince l'oignon, la tomate et le piment.", minutes: 5 },
-      { text: "Fais revenir les aubergines et l'oignon dans l'huile chaude.", minutes: 8 },
-      { text: "Ajoute la tomate, le piment et le sel, puis laisse fondre.", minutes: 4 },
-      { text: "Casse les œufs dessus et remue jusqu'à ce qu'ils soient pris.", minutes: 3 },
+      {
+        text: "Lave les 4 aubergines et coupe-les en dés d'environ 2 cm. Émince l'oignon, coupe les 2 tomates en petits dés et le piment en fines rondelles si tu en mets.",
+        minutes: 5,
+      },
+      {
+        text: "Fais chauffer les 3 cuillères d'huile dans une grande poêle à feu moyen à vif.",
+        minutes: 2,
+      },
+      {
+        text: "Ajoute les aubergines et l'oignon, et fais-les revenir en remuant souvent, jusqu'à ce que les aubergines soient dorées et tendres.",
+        minutes: 8,
+      },
+      {
+        text: "Ajoute les tomates, le piment et le sel, puis laisse cuire en remuant jusqu'à ce que les tomates fondent.",
+        minutes: 4,
+      },
+      {
+        text: "Bats les 4 œufs, verse-les sur les légumes et remue doucement, jusqu'à ce qu'ils soient pris mais encore moelleux. Sers chaud.",
+        minutes: 3,
+      },
     ],
     leftoverIdeas: ["Dans du pain le lendemain matin."],
   },
@@ -1468,15 +1635,30 @@ export const recettesDepart: RecetteDepart[] = [
       { name: "Laitue", quantity: 1, unit: "pièce", optional: true },
     ],
     steps: [
-      { text: "Lave le persil et la menthe, puis sèche-les très bien.", minutes: 10 },
-      { text: "Hache le persil et la menthe très finement au couteau.", minutes: 10 },
       {
-        text: "Coupe les tomates en tout petits dés et l'oignon très finement. Rince le boulgour et pose-le sur les tomates pour qu'il gonfle dans leur jus.",
+        text: "Lave les 3 bottes de persil et les feuilles de menthe dans plusieurs eaux, jusqu'à ce qu'il ne reste plus de terre. Égoutte-les, puis sèche-les bien dans un torchon propre : un persil mouillé rend le taboulé détrempé.",
+        minutes: 10,
+      },
+      {
+        text: "Retire les grosses tiges du persil. Serre les feuilles en petit tas et hache-les très finement avec un couteau bien aiguisé, sans écraser. Évite le mixeur, qui en fait une purée.",
+        minutes: 10,
+      },
+      { text: "Hache finement les feuilles de menthe de la même façon.", minutes: 3 },
+      {
+        text: "Coupe les 5 tomates en tout petits dés, d'environ un demi-centimètre, et l'oignon le plus finement possible.",
         minutes: 8,
       },
       {
-        text: "Juste avant de servir, mélange avec le jus de citron, l'huile d'olive et le sel. Sers avec des feuilles de laitue.",
+        text: "Rince la cuillère de boulgour fin, égoutte-la et pose-la sur les tomates : le boulgour gonfle avec leur jus.",
+        minutes: 10,
+      },
+      {
+        text: "Juste avant de servir, mélange tout avec le jus des 2 citrons, les 120 ml d'huile d'olive et la cuillère à café de sel. Goûte et ajoute un peu de citron ou de sel si besoin.",
         minutes: 2,
+      },
+      {
+        text: "Sers tout de suite, avec des feuilles de laitue pour le manger à la main.",
+        minutes: 1,
       },
     ],
     leftoverIdeas: ["Le persil haché en trop se garde 2 jours au frigo, sans assaisonnement."],
@@ -1505,23 +1687,28 @@ export const recettesDepart: RecetteDepart[] = [
     ],
     steps: [
       {
-        text: "La veille, mets les pois chiches à tremper dans beaucoup d'eau froide.",
+        text: "La veille, rince les 250 g de pois chiches secs et mets-les à tremper dans trois fois leur volume d'eau froide, pendant au moins 12 heures.",
         minutes: 2,
       },
       {
-        text: "Égoutte-les et cuis-les dans de l'eau sans sel jusqu'à ce qu'ils s'écrasent facilement entre les doigts. Garde un bol d'eau de cuisson.",
-        minutes: 90,
+        text: "Égoutte et rince les pois chiches. Mets-les dans une marmite, couvre largement d'eau sans sel et porte à ébullition. Retire la mousse qui se forme.",
+        minutes: 10,
       },
       {
-        text: "Mixe les pois chiches encore chauds avec l'ail, le jus de citron et le sel.",
+        text: "Laisse cuire à petit feu jusqu'à ce que les pois chiches s'écrasent facilement entre deux doigts. Garde un bol d'eau de cuisson.",
+        minutes: 80,
+      },
+      {
+        text: "Mixe les pois chiches encore chauds avec la gousse d'ail, le jus des 2 citrons et le sel, jusqu'à obtenir une pâte épaisse.",
         minutes: 5,
       },
       {
-        text: "Ajoute le tahiné et un peu d'eau de cuisson, et mixe jusqu'à obtenir une crème lisse.",
+        text: "Ajoute les 120 g de tahiné et mixe de nouveau, en versant l'eau de cuisson cuillère par cuillère, jusqu'à obtenir une crème lisse et légère.",
         minutes: 5,
       },
+      { text: "Goûte : ajoute du citron, du sel ou du tahiné selon ton goût.", minutes: 1 },
       {
-        text: "Étale dans une assiette creuse, arrose d'huile d'olive et sers avec le pain.",
+        text: "Étale le houmous dans une assiette creuse en creusant un puits au centre, arrose des 2 cuillères d'huile d'olive, saupoudre de cumin si tu veux et sers avec le pain.",
         minutes: 2,
       },
     ],
@@ -1549,20 +1736,29 @@ export const recettesDepart: RecetteDepart[] = [
     ],
     steps: [
       {
-        text: "Rince les lentilles et cuis-les dans de l'eau pendant 15 minutes, sans les égoutter.",
+        text: "Rince les 250 g de lentilles, mets-les dans une marmite avec 750 ml d'eau et fais-les cuire 15 minutes à feu moyen : elles doivent rester un peu fermes. Ne les égoutte pas.",
         minutes: 15,
       },
+      { text: "Pendant ce temps, émince finement les 4 oignons en lamelles.", minutes: 5 },
       {
-        text: "Émince les oignons et fais-les frire doucement dans l'huile jusqu'à ce qu'ils soient bien bruns. Garde-en la moitié bien croustillante pour la fin.",
+        text: "Fais chauffer les 100 ml d'huile dans une poêle et fais frire les oignons à feu moyen, en remuant souvent, jusqu'à ce qu'ils soient bien bruns. Ne les laisse pas noircir, sinon ils deviennent amers.",
         minutes: 20,
       },
       {
-        text: "Ajoute aux lentilles le riz rincé, l'autre moitié des oignons avec leur huile, le sel et le cumin. Complète d'eau à hauteur.",
+        text: "Retire la moitié des oignons et pose-la sur du papier : elle va devenir croustillante pour la fin.",
+        minutes: 1,
+      },
+      {
+        text: "Rince les 200 g de riz et ajoute-les aux lentilles avec l'autre moitié des oignons et leur huile, le sel et le cumin. Complète d'eau chaude si besoin : le liquide doit dépasser d'un doigt.",
         minutes: 3,
       },
       {
-        text: "Couvre et cuis à feu doux jusqu'à ce que le riz soit tendre. Sers avec les oignons croustillants dessus.",
-        minutes: 20,
+        text: "Couvre et cuis à feu doux jusqu'à ce que le riz soit tendre et ait absorbé l'eau. Laisse reposer 5 minutes à couvert.",
+        minutes: 25,
+      },
+      {
+        text: "Sers avec les oignons croustillants par-dessus, avec une salade de tomates ou du yaourt.",
+        minutes: 2,
       },
     ],
     leftoverIdeas: ["Elle se mange aussi froide, avec une salade de tomates."],
@@ -1593,14 +1789,32 @@ export const recettesDepart: RecetteDepart[] = [
     ],
     steps: [
       {
-        text: "Mets la farine, le sucre et le sel dans un saladier, creuse un puits et fouette avec les œufs.",
+        text: "Dans un grand saladier, mélange les 250 g de farine, les 40 g de sucre et le sel. Creuse un puits au milieu.",
+        minutes: 2,
+      },
+      {
+        text: "Casse les 4 œufs dans le puits et fouette en partant du centre, en ramenant peu à peu la farine.",
         minutes: 3,
       },
-      { text: "Verse le lait petit à petit en fouettant pour éviter les grumeaux.", minutes: 3 },
-      { text: "Ajoute le beurre fondu (et le rhum si tu en mets).", minutes: 2 },
       {
-        text: "Verse une demi-louche de pâte dans une poêle chaude huilée et cuis environ une minute de chaque côté.",
-        minutes: 30,
+        text: "Verse les 600 ml de lait petit à petit, en fouettant toujours, jusqu'à obtenir une pâte lisse et sans grumeaux.",
+        minutes: 4,
+      },
+      {
+        text: "Fais fondre les 40 g de beurre et ajoute-le à la pâte, avec le rhum si tu en mets. Mélange bien.",
+        minutes: 2,
+      },
+      {
+        text: "Fais chauffer une poêle à feu moyen à vif et graisse-la avec un papier imbibé d'huile.",
+        minutes: 2,
+      },
+      {
+        text: "Verse une demi-louche de pâte et incline la poêle pour l'étaler en couche fine. Cuis environ 1 minute, jusqu'à ce que les bords dorent et se décollent.",
+        minutes: 15,
+      },
+      {
+        text: "Retourne la crêpe avec une spatule et cuis l'autre face environ 1 minute. Recommence jusqu'à la fin de la pâte, en graissant la poêle de temps en temps.",
+        minutes: 15,
       },
     ],
     leftoverIdeas: ["Les crêpes se gardent 2 jours au frigo, roulées dans un torchon."],
@@ -1630,12 +1844,27 @@ export const recettesDepart: RecetteDepart[] = [
       { name: "Poivre moulu", quantity: 0.5, unit: "c. à café" },
     ],
     steps: [
-      { text: "Épluche les légumes et coupe-les en petits morceaux.", minutes: 20 },
       {
-        text: "Fais-les fondre dans le beurre, à couvert et à feu doux, sans qu'ils colorent.",
+        text: "Épluche les 400 g de pommes de terre, les 250 g de carottes, les 2 navets et l'oignon. Coupe le vert des 2 poireaux et lave-les bien entre les feuilles.",
+        minutes: 10,
+      },
+      {
+        text: "Coupe tous les légumes en petits dés ou en fines lamelles, à peu près de la même taille pour qu'ils cuisent en même temps (et la branche de céleri si tu en mets).",
+        minutes: 10,
+      },
+      { text: "Fais fondre les 45 g de beurre dans une grande marmite à feu doux.", minutes: 2 },
+      {
+        text: "Ajoute les légumes, couvre et laisse-les fondre doucement en remuant de temps en temps, sans qu'ils prennent de couleur.",
         minutes: 15,
       },
-      { text: "Ajoute 2 litres d'eau, sale, poivre et laisse cuire une demi-heure.", minutes: 30 },
+      {
+        text: "Verse 2 litres d'eau, ajoute les 2 cuillères à café de sel et le poivre, et porte à ébullition.",
+        minutes: 8,
+      },
+      {
+        text: "Baisse le feu et laisse cuire une demi-heure à petits bouillons, jusqu'à ce que les légumes soient bien tendres. Goûte et rectifie le sel.",
+        minutes: 30,
+      },
     ],
     leftoverIdeas: ["La soupe se garde 3 jours au frigo et se congèle en portions."],
   },
@@ -1662,20 +1891,34 @@ export const recettesDepart: RecetteDepart[] = [
       { name: "Poivre moulu", quantity: 0.5, unit: "c. à café" },
     ],
     steps: [
-      { text: "Préchauffe le four à 210 °C.", minutes: 10 },
       {
-        text: "Frotte le poulet avec le beurre, le sel, le poivre et le thym, et glisse l'ail à l'intérieur.",
-        minutes: 5,
-      },
-      {
-        text: "Coupe les pommes de terre en quartiers, mélange-les avec l'huile et le sel, et dispose-les autour du poulet.",
+        text: "Sors le poulet du frigo 30 minutes avant pour qu'il cuise régulièrement, et préchauffe le four à 210 °C.",
         minutes: 10,
       },
       {
-        text: "Enfourne 20 minutes, puis baisse à 180 °C et poursuis 45 minutes en arrosant le poulet avec son jus toutes les 15 minutes.",
-        minutes: 65,
+        text: "Mélange les 40 g de beurre ramolli avec le thym, la moitié du sel et le poivre. Frotte-en tout le poulet, et glisse les 4 gousses d'ail entières à l'intérieur.",
+        minutes: 5,
       },
-      { text: "Laisse reposer 10 minutes avant de découper.", minutes: 10 },
+      {
+        text: "Épluche ou lave le kilo de pommes de terre et coupe-les en quartiers. Mélange-les dans le plat avec les 2 cuillères d'huile et le reste du sel.",
+        minutes: 10,
+      },
+      {
+        text: "Pose le poulet au milieu du plat, entouré des pommes de terre, et enfourne pour 20 minutes.",
+        minutes: 20,
+      },
+      {
+        text: "Baisse le four à 180 °C et poursuis la cuisson 45 minutes, en arrosant le poulet avec son jus toutes les 15 minutes et en retournant les pommes de terre une fois.",
+        minutes: 45,
+      },
+      {
+        text: "Vérifie la cuisson : en piquant la cuisse, le jus qui sort doit être clair, sans trace rose.",
+        minutes: 2,
+      },
+      {
+        text: "Laisse reposer le poulet 10 minutes sous une feuille d'aluminium avant de le découper : il reste plus moelleux.",
+        minutes: 10,
+      },
     ],
     leftoverIdeas: [
       "La carcasse fait un bon bouillon pour une soupe.",
@@ -1711,22 +1954,30 @@ export const recettesDepart: RecetteDepart[] = [
     ],
     steps: [
       {
-        text: "Fais fondre l'oignon et les poivrons en lamelles dans l'huile d'olive.",
+        text: "Émince l'oignon, coupe les 2 poivrons en fines lamelles et hache les 2 gousses d'ail. Coupe les 6 tomates en petits dés.",
+        minutes: 8,
+      },
+      {
+        text: "Fais chauffer les 4 cuillères d'huile d'olive dans une grande poêle à feu moyen. Fais fondre l'oignon et les poivrons en remuant, jusqu'à ce qu'ils soient tendres.",
         minutes: 10,
       },
       {
-        text: "Ajoute l'ail, le cumin, le paprika et la harissa, et remue une minute.",
+        text: "Ajoute l'ail, le cumin, le paprika et la harissa, et remue 1 minute pour que les épices libèrent leur parfum.",
         minutes: 1,
       },
       {
-        text: "Ajoute les tomates en dés et le sel, puis laisse mijoter jusqu'à ce que la sauce épaississe.",
+        text: "Ajoute les tomates et le sel. Laisse mijoter à feu moyen en remuant de temps en temps, jusqu'à ce que la sauce épaississe et que l'eau des tomates s'évapore.",
         minutes: 10,
       },
       {
-        text: "Creuse quatre petits puits, casse un œuf dans chacun, couvre et cuis jusqu'à ce que les blancs soient pris.",
+        text: "Creuse 4 petits puits dans la sauce avec une cuillère et casse un œuf dans chacun.",
+        minutes: 1,
+      },
+      {
+        text: "Couvre et laisse cuire à feu doux jusqu'à ce que les blancs soient pris et que les jaunes restent coulants.",
         minutes: 6,
       },
-      { text: "Sers directement dans la poêle, avec du pain.", minutes: 1 },
+      { text: "Sers directement dans la poêle, avec du pain pour saucer.", minutes: 1 },
     ],
     leftoverIdeas: ["La sauce sans les œufs se garde 2 jours : il suffit d'y recasser des œufs."],
   },
@@ -1763,25 +2014,36 @@ export const recettesDepart: RecetteDepart[] = [
       { name: "Sel", quantity: 2, unit: "c. à café" },
     ],
     steps: [
-      { text: "La veille, mets les pois chiches à tremper.", minutes: 2 },
       {
-        text: "Dans le bas du couscoussier, fais revenir les oignons dans l'huile avec les épices, les tomates, les herbes et les pois chiches, puis couvre d'eau.",
-        minutes: 30,
+        text: "La veille, mets les 100 g de pois chiches secs à tremper dans un grand volume d'eau froide.",
+        minutes: 2,
       },
       {
-        text: "Humidifie la semoule, roule-la entre tes mains avec un peu d'huile, et fais-la cuire une première fois à la vapeur au-dessus du bouillon.",
+        text: "Dans le bas du couscoussier, fais revenir les 2 oignons émincés dans les 4 cuillères d'huile avec le ras el-hanout, le curcuma, le poivre et la moitié du sel.",
+        minutes: 5,
+      },
+      {
+        text: "Ajoute les 2 tomates râpées, les herbes nouées en bouquet et les pois chiches égouttés. Couvre de 2 litres d'eau et laisse bouillir à couvert.",
+        minutes: 25,
+      },
+      {
+        text: "Mets les 500 g de semoule dans un grand plat, arrose-la d'un verre d'eau et d'un filet d'huile, et roule-la entre tes paumes pour bien séparer les grains.",
+        minutes: 5,
+      },
+      {
+        text: "Place la semoule dans le haut du couscoussier, au-dessus du bouillon, et laisse-la cuire à la vapeur, sans couvercle, jusqu'à ce que la vapeur traverse toute la semoule.",
         minutes: 15,
       },
       {
-        text: "Verse la semoule dans un plat, arrose-la d'eau salée, égrène-la, puis remets-la à la vapeur. Ajoute dans le bouillon les carottes, les navets et le chou.",
+        text: "Verse la semoule dans le plat, arrose-la d'un verre d'eau salée, égrène-la à la fourchette puis avec les mains, et remets-la à la vapeur. Ajoute alors dans le bouillon les 300 g de carottes, les 2 navets et les 300 g de chou coupés en gros morceaux.",
         minutes: 15,
       },
       {
-        text: "Ajoute les courgettes et le potiron dans le bouillon, et fais cuire la semoule une troisième fois.",
+        text: "Ajoute dans le bouillon les 2 courgettes et le morceau de potiron coupés en gros morceaux : ils cuisent vite. Égrène la semoule une dernière fois et remets-la à la vapeur.",
         minutes: 15,
       },
       {
-        text: "Mélange le beurre à la semoule, dresse-la en dôme, pose les légumes dessus et sers le bouillon à part.",
+        text: "Mélange les 30 g de beurre à la semoule chaude. Dresse-la en dôme dans le plat, pose les légumes et les pois chiches dessus, et sers le bouillon à part.",
         minutes: 5,
       },
     ],
@@ -1814,18 +2076,22 @@ export const recettesDepart: RecetteDepart[] = [
     ],
     steps: [
       {
-        text: "Rince les lentilles. Râpe les tomates, hache l'oignon, l'ail et les herbes.",
+        text: "Rince les 400 g de lentilles. Râpe les 3 tomates, hache l'oignon, écrase les 3 gousses d'ail et cisèle la coriandre et le persil.",
         minutes: 10,
       },
       {
-        text: "Mets tout dans une marmite, sauf la moitié des herbes, avec l'huile, les épices et un litre d'eau.",
+        text: "Mets dans une marmite les lentilles, les tomates, l'oignon, l'ail, la moitié des herbes, les 4 cuillères d'huile d'olive, le cumin, le paprika, le sel et le poivre.",
         minutes: 3,
       },
+      { text: "Ajoute 1 litre d'eau, mélange et porte à ébullition.", minutes: 5 },
       {
-        text: "Fais cuire jusqu'à ce que les lentilles soient tendres et la sauce épaisse.",
-        minutes: 40,
+        text: "Baisse le feu et laisse cuire à couvert, en remuant de temps en temps, jusqu'à ce que les lentilles soient tendres et la sauce épaisse. Ajoute un peu d'eau si ça attache.",
+        minutes: 35,
       },
-      { text: "Ajoute le reste des herbes et sers avec du pain.", minutes: 2 },
+      {
+        text: "Ajoute le reste des herbes, goûte, rectifie le sel et sers chaud avec du pain.",
+        minutes: 2,
+      },
     ],
     leftoverIdeas: [
       "Les lentilles se gardent 3 jours au frigo et sont encore meilleures réchauffées.",
@@ -1856,14 +2122,28 @@ export const recettesDepart: RecetteDepart[] = [
       { name: "Sel", quantity: 1, unit: "c. à café" },
     ],
     steps: [
-      { text: "Émince l'oignon et fais-le fondre doucement dans l'huile d'olive.", minutes: 5 },
       {
-        text: "Ajoute les tomates écrasées à la main, le sel et le piment, et laisse mijoter.",
+        text: "Émince finement l'oignon. Fais-le fondre doucement dans les 4 cuillères d'huile d'olive, à feu doux, jusqu'à ce qu'il soit transparent, sans le laisser brunir.",
+        minutes: 7,
+      },
+      {
+        text: "Ajoute les 2 boîtes de tomates pelées en les écrasant à la main ou à la fourchette, le sel et le piment si tu en mets.",
+        minutes: 3,
+      },
+      {
+        text: "Laisse mijoter à découvert à feu doux, en remuant de temps en temps, jusqu'à ce que la sauce épaississe.",
         minutes: 20,
       },
-      { text: "Cuis les spaghetti al dente dans beaucoup d'eau salée.", minutes: 10 },
       {
-        text: "Mélange les pâtes avec la sauce, une louche d'eau de cuisson et le basilic frais déchiré.",
+        text: "Pendant ce temps, porte à ébullition une grande marmite d'eau bien salée et cuis les 400 g de spaghetti al dente, en suivant le temps du paquet.",
+        minutes: 10,
+      },
+      {
+        text: "Garde une louche d'eau de cuisson, égoutte les pâtes et verse-les dans la sauce.",
+        minutes: 2,
+      },
+      {
+        text: "Mélange 1 minute sur le feu avec l'eau de cuisson pour que la sauce enrobe bien les pâtes, puis ajoute les feuilles de basilic déchirées à la main.",
         minutes: 2,
       },
     ],
@@ -1899,26 +2179,37 @@ export const recettesDepart: RecetteDepart[] = [
       { name: "Spaghetti", quantity: 600, unit: "g" },
     ],
     steps: [
-      { text: "Hache la poitrine de porc et fais-la fondre dans l'huile d'olive.", minutes: 5 },
       {
-        text: "Ajoute l'oignon, la carotte et le céleri hachés finement au couteau, et laisse-les fondre doucement sans brûler.",
+        text: "Hache finement au couteau les 60 g d'oignon, les 60 g de carotte et la branche de céleri : à Bologne, on évite le mixeur.",
         minutes: 10,
       },
       {
-        text: "Monte le feu, ajoute le bœuf et cuis une dizaine de minutes en remuant, jusqu'à ce qu'il grésille.",
-        minutes: 10,
-      },
-      {
-        text: "Verse le vin et laisse-le s'évaporer complètement, puis ajoute le concentré et les tomates.",
+        text: "Hache ou coupe en tout petits morceaux les 150 g de poitrine de porc. Dans une casserole lourde, fais-la fondre dans les 3 cuillères d'huile d'olive.",
         minutes: 5,
       },
       {
-        text: "Ajoute une tasse de bouillon chaud, couvre et laisse cuire doucement environ 2 heures, en rajoutant du bouillon si besoin. À mi-cuisson, ajoute le lait et laisse-le s'absorber.",
+        text: "Ajoute les légumes hachés et laisse-les fondre lentement à feu moyen-doux, en remuant avec une cuillère en bois. L'oignon ne doit surtout pas brûler.",
+        minutes: 10,
+      },
+      {
+        text: "Monte le feu, ajoute les 400 g de bœuf haché et cuis une dizaine de minutes en mélangeant bien, jusqu'à ce qu'il grésille.",
+        minutes: 10,
+      },
+      {
+        text: "Verse les 200 ml de vin et laisse-le s'évaporer complètement, jusqu'à ce qu'on ne sente plus l'odeur du vin.",
+        minutes: 5,
+      },
+      {
+        text: "Ajoute la cuillère de concentré et les 200 g de tomates pelées écrasées. Dissous le cube dans 500 ml d'eau chaude et verse-en une tasse dans la casserole.",
+        minutes: 5,
+      },
+      {
+        text: "Couvre et laisse cuire très doucement environ 2 heures, en ajoutant du bouillon chaud quand la sauce devient trop épaisse. À mi-cuisson, ajoute le lait si tu en mets et laisse-le s'absorber entièrement.",
         minutes: 120,
       },
       {
-        text: "Rectifie le sel et le poivre, et sers avec les spaghetti cuits al dente.",
-        minutes: 10,
+        text: "En fin de cuisson, rectifie le sel et le poivre : le ragù doit être d'un orange foncé, crémeux et enveloppant. Cuis les 600 g de spaghetti al dente et mélange-les au ragù.",
+        minutes: 15,
       },
     ],
     leftoverIdeas: [
@@ -1949,10 +2240,27 @@ export const recettesDepart: RecetteDepart[] = [
       { name: "Sel", quantity: 1, unit: "c. à café" },
     ],
     steps: [
-      { text: "Fais dorer l'ail dans l'huile d'olive avec le piment.", minutes: 2 },
-      { text: "Ajoute les tomates écrasées et le sel, et laisse cuire 10 minutes.", minutes: 10 },
-      { text: "Ajoute le thon égoutté et émietté, et réchauffe 3 minutes.", minutes: 3 },
-      { text: "Mélange avec les pâtes cuites al dente et le persil haché.", minutes: 2 },
+      { text: "Porte à ébullition une grande marmite d'eau salée pour les pâtes.", minutes: 8 },
+      {
+        text: "Écrase légèrement les 2 gousses d'ail. Fais-les dorer doucement dans les 3 cuillères d'huile d'olive avec le piment, sans les laisser brûler.",
+        minutes: 2,
+      },
+      {
+        text: "Ajoute la boîte de tomates pelées en les écrasant, puis le sel, et laisse cuire à feu moyen.",
+        minutes: 10,
+      },
+      {
+        text: "Pendant ce temps, cuis les 400 g de spaghetti al dente en suivant le temps du paquet.",
+        minutes: 10,
+      },
+      {
+        text: "Égoutte les 2 boîtes de thon, émiette-le et ajoute-le à la sauce. Réchauffe 3 minutes sans trop remuer pour garder des morceaux.",
+        minutes: 3,
+      },
+      {
+        text: "Égoutte les pâtes, mélange-les à la sauce et ajoute le persil haché au moment de servir.",
+        minutes: 2,
+      },
     ],
     leftoverIdeas: ["Froides, elles font une salade de pâtes pour le lendemain midi."],
   },
@@ -1980,31 +2288,43 @@ export const recettesDepart: RecetteDepart[] = [
       { name: "Jambon cuit", quantity: 220, unit: "g" },
       { name: "Petits pois en boîte", quantity: 110, unit: "g" },
       { name: "Sel", quantity: 1.5, unit: "c. à café" },
-      { name: "Sucre en poudre", quantity: 1, unit: "g" },
+      { name: "Sucre en poudre", quantity: 0.25, unit: "c. à café" },
       { name: "Oignon vert", quantity: 0.25, unit: "botte" },
       { name: "Laitue", quantity: 0.3, unit: "pièce" },
       { name: "Poivre moulu", quantity: 0.1, unit: "c. à café" },
     ],
     steps: [
       {
-        text: "La veille ou plusieurs heures avant, cuis le riz avec un peu moins d'eau que d'habitude, étale-le pour qu'il refroidisse et sépare les grains.",
+        text: "La veille (ou plusieurs heures avant), cuis les 400 g de riz avec un peu moins d'eau que d'habitude. Étale-le sur un plat pour qu'il refroidisse et sépare les grains avec une fourchette ou les mains.",
         minutes: 20,
       },
       {
-        text: "Brouille les œufs dans une cuillère d'huile et réserve. Blanchis les crevettes dans l'eau bouillante et égoutte-les.",
-        minutes: 5,
-      },
-      {
-        text: "À feu vif, fais revenir l'oignon en dés dans le reste de l'huile, puis le jambon en dés.",
+        text: "Bats les 2 œufs. Fais-les cuire en œufs brouillés dans 1 cuillère d'huile, à feu moyen à vif, puis réserve-les.",
         minutes: 3,
       },
       {
-        text: "Ajoute le riz et fais-le sauter 2 minutes en cassant les mottes, puis les crevettes et les petits pois.",
+        text: "Plonge les 110 g de crevettes décortiquées 1 minute dans de l'eau bouillante, égoutte-les et réserve.",
+        minutes: 3,
+      },
+      {
+        text: "Coupe l'oignon et les 220 g de jambon en petits dés. Émince l'oignon vert et coupe la laitue en fines lanières.",
+        minutes: 5,
+      },
+      {
+        text: "Fais chauffer les 2 cuillères d'huile restantes à feu vif dans un wok ou une grande poêle. Fais revenir l'oignon jusqu'à ce qu'il soit transparent, puis ajoute le jambon 30 secondes.",
+        minutes: 3,
+      },
+      {
+        text: "Ajoute le riz et fais-le sauter 2 minutes en cassant les mottes. Ajoute les crevettes et les 110 g de petits pois, et saute encore 2 minutes.",
         minutes: 4,
       },
       {
-        text: "Ajoute le sel, le sucre, puis les œufs, l'oignon vert, la laitue émincée et le poivre. Saute jusqu'à ce que la laitue fane.",
-        minutes: 2,
+        text: "Saupoudre le sel et la pincée de sucre et mélange. Si le riz semble sec, ajoute un tout petit peu d'eau.",
+        minutes: 1,
+      },
+      {
+        text: "Ajoute les œufs, l'oignon vert, la laitue et le poivre, et saute juste jusqu'à ce que la laitue ramollisse. Sers aussitôt.",
+        minutes: 1,
       },
     ],
     leftoverIdeas: ["C'est la recette idéale pour finir le riz de la veille."],
@@ -2036,31 +2356,46 @@ export const recettesDepart: RecetteDepart[] = [
       { name: "Huile végétale", quantity: 1, unit: "c. à soupe" },
       { name: "Graines de fenugrec", quantity: 0.1, unit: "c. à café" },
       { name: "Oignon", quantity: 1, unit: "pièce" },
-      { name: "Feuilles de curry", quantity: 5, unit: "g", optional: true },
+      { name: "Feuilles de curry", quantity: 2, unit: "brin", optional: true },
       { name: "Coriandre moulue", quantity: 0.5, unit: "c. à café" },
       { name: "Tomate", quantity: 1, unit: "pièce" },
       { name: "Ghee", quantity: 2.5, unit: "c. à soupe" },
       { name: "Graines de cumin", quantity: 1.5, unit: "c. à café" },
-      { name: "Piment sec", quantity: 5, unit: "g" },
+      { name: "Piment sec", quantity: 10, unit: "pièce" },
       { name: "Riz", quantity: 300, unit: "g" },
     ],
     steps: [
       {
-        text: "Cuis les deux dals lavés dans 1,5 litre d'eau avec le sel, une partie du piment en poudre, le curcuma et l'asa-fœtida, jusqu'à ce qu'ils soient fondants (2 à 3 sifflets en autocuiseur, ou 40 minutes en marmite). Écrase-les à la louche. Cuis le riz à côté.",
-        minutes: 40,
-      },
-      { text: "Pile le gingembre, l'ail et les piments frais en pâte grossière.", minutes: 3 },
-      {
-        text: "Chauffe l'huile, ajoute le fenugrec et la pâte, puis l'oignon haché, les feuilles de curry, les épices en poudre et la tomate. Cuis jusqu'à ce que la tomate fonde.",
-        minutes: 8,
-      },
-      {
-        text: "Verse le dal écrasé dans ce mélange, sale et laisse frémir quelques minutes.",
+        text: "Lave les 200 g de toor dal et les 15 g d'urad dal. Mets-les à cuire dans 1,5 litre d'eau avec le sel, 1 cuillère à café de piment rouge en poudre, une demi-cuillère de curcuma et un quart de cuillère d'asa-fœtida.",
         minutes: 5,
       },
       {
-        text: "Chauffe le ghee, fais crépiter le cumin, ajoute les piments secs, une pincée d'asa-fœtida et de piment en poudre, puis verse aussitôt sur le dal. Sers avec le riz.",
-        minutes: 2,
+        text: "Cuis jusqu'à ce que les dals soient fondants : 2 à 3 sifflets en autocuiseur, ou environ 40 minutes à feu moyen dans une marmite, en remuant de temps en temps. Écrase-les ensuite à la louche.",
+        minutes: 40,
+      },
+      {
+        text: "Pendant ce temps, pile les 10 g de gingembre, les 3 gousses d'ail et les 2 piments frais en pâte grossière. Hache l'oignon et coupe la tomate en dés.",
+        minutes: 5,
+      },
+      {
+        text: "Fais chauffer la cuillère d'huile, ajoute le fenugrec et la pâte gingembre-ail, et remue 1 minute.",
+        minutes: 1,
+      },
+      {
+        text: "Ajoute l'oignon et fais-le revenir 2 à 3 minutes jusqu'à ce qu'il soit transparent. Ajoute les feuilles de curry, le reste du curcuma, un quart de cuillère de piment rouge, la coriandre moulue, la tomate et un peu d'eau. Cuis jusqu'à ce que la tomate fonde.",
+        minutes: 6,
+      },
+      {
+        text: "Verse les dals écrasés dans ce mélange, rectifie le sel et laisse frémir quelques minutes. Fais cuire le riz à côté.",
+        minutes: 5,
+      },
+      {
+        text: "Pour la touche finale, fais chauffer les 2,5 cuillères de ghee. Quand il est chaud, ajoute les graines de cumin et laisse-les crépiter quelques secondes.",
+        minutes: 1,
+      },
+      {
+        text: "Ajoute les piments secs, le reste de l'asa-fœtida et le dernier quart de cuillère de piment rouge, remue quelques secondes et verse aussitôt sur le dal. Sers bien chaud avec le riz.",
+        minutes: 1,
       },
     ],
     leftoverIdeas: [
@@ -2068,3 +2403,73 @@ export const recettesDepart: RecetteDepart[] = [
     ],
   },
 ];
+
+// ───────── Prix réellement relevés (sources publiées), en FCFA par kg, marchés d'Abidjan ─────────
+
+const NOTEOCPV =
+  "OCPV, note de conjoncture n° 41, marchés d'Abidjan (Adjamé, Abobo, Koumassi, Bingerville, Cocody Cocovico), semaine du 5 au 11 octobre 2026";
+const SIKAFINANCE =
+  "Sikafinance, liste des prix des produits de consommation, Abidjan, 27 septembre 2026";
+
+/** Prix minimum et maximum relevés par l'OCPV sur les marchés d'Abidjan. */
+function ocpv(minimum: number, maximum: number, produit = ""): PrixDepart[] {
+  const precision = produit ? ` (${produit})` : "";
+  return [
+    {
+      unit: "kg",
+      priceFcfa: minimum,
+      placeType: "market",
+      source: "team",
+      observedAt: "2026-10-11",
+      reference: `${NOTEOCPV}, prix minimum${precision}`,
+    },
+    {
+      unit: "kg",
+      priceFcfa: maximum,
+      placeType: "market",
+      source: "team",
+      observedAt: "2026-10-11",
+      reference: `${NOTEOCPV}, prix maximum${precision}`,
+    },
+  ];
+}
+
+function sikafinance(prix: number, produit = ""): PrixDepart {
+  const precision = produit ? ` (${produit})` : "";
+  return {
+    unit: "kg",
+    priceFcfa: prix,
+    placeType: "market",
+    source: "team",
+    observedAt: "2026-09-27",
+    reference: `${SIKAFINANCE}${precision}`,
+  };
+}
+
+/**
+ * Relevés réels par ingrédient. Ils s'ajoutent aux estimations ci-dessus et passent toujours
+ * avant elles tant qu'ils ont moins de 90 jours (CLAUDE.md §11).
+ */
+export const relevesDepart: Record<string, PrixDepart[]> = {
+  Riz: ocpv(500, 650, "riz de grande consommation"),
+  "Banane plantain": [...ocpv(460, 1240), sikafinance(450)],
+  // L'OCPV et Sikafinance relèvent l'aubergine locale N'drowa
+  Aubergine: [...ocpv(490, 960, "aubergine N'drowa"), sikafinance(500, "aubergine N'drowa")],
+  Gombo: ocpv(730, 1470, "gombo frais"),
+  Oignon: [
+    ...ocpv(800, 800, "oignon violet"),
+    ...ocpv(650, 800, "oignon Holland"),
+    sikafinance(750, "oignon blanc"),
+  ],
+  "Piment frais": [...ocpv(530, 1090), sikafinance(700)],
+  Tomate: [...ocpv(500, 1000, "tomate SODEFEL"), sikafinance(650, "tomate type salade")],
+  "Graine de palme": [...ocpv(250, 500), sikafinance(350)],
+  Gingembre: [sikafinance(2500)],
+  Citron: [sikafinance(350)],
+  Chou: [sikafinance(700)],
+  Poivron: [sikafinance(800)],
+  Navet: [sikafinance(700)],
+  Courgette: [sikafinance(600)],
+  "Pomme de terre": [sikafinance(700)],
+  Carotte: [sikafinance(1300)],
+};
