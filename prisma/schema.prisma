@@ -50,9 +50,12 @@ enum RecipeSource {
   ai
 }
 
+// team : relevé par l'équipe ; user : déclaré par une famille ;
+// estimate : estimation de l'équipe, utilisée seulement à défaut de relevé
 enum PriceSource {
   team
   user
+  estimate
 }
 
 enum PlanStatus {

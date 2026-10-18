@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { MealSlot, PlaceType, Prisma, ProposalStatus, Severity, StockStatus } from "@prisma/client";
+import {
+  MealSlot,
+  PlaceType,
+  PriceSource,
+  Prisma,
+  ProposalStatus,
+  Severity,
+  StockStatus,
+} from "@prisma/client";
 
 // Vérifie que le client généré expose les énumérations attendues par CLAUDE.md (section 8).
 describe("schéma Prisma", () => {
@@ -25,5 +33,9 @@ describe("schéma Prisma", () => {
 
   it("prévoit la date de naissance facultative des membres", () => {
     expect(Object.values(Prisma.HouseholdMemberScalarFieldEnum)).toContain("birthDate");
+  });
+
+  it("distingue les prix relevés des prix estimés", () => {
+    expect(Object.values(PriceSource)).toEqual(["team", "user", "estimate"]);
   });
 });

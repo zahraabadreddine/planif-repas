@@ -387,7 +387,7 @@ Chaque service externe est isolé derrière une interface dans `src/lib/`, pour 
 | `Severity` | strict, preference |
 | `PlaceType` | market, supermarket, shop |
 | `RecipeSource` | team, ai |
-| `PriceSource` | team, user |
+| `PriceSource` | team, user, estimate |
 | `PlanStatus` | draft, active, archived |
 | `MealSlot` | breakfast, lunch, dinner |
 | `MealStatus` | planned, cooked, skipped, replaced |
@@ -551,7 +551,9 @@ Un outil renvoie toujours des données structurées et courtes. En cas d'échec,
 
 ### Prix retenu
 
-Médiane des relevés des 90 derniers jours pour l'ingrédient, la ville et le type de lieu. **Tant qu'il y a moins de 3 relevés d'utilisatrices, on utilise en priorité les relevés de l'équipe.** Sans aucun relevé, l'article est marqué « prix inconnu » et exclu du total, avec un avertissement.
+Médiane des relevés des 90 derniers jours pour l'ingrédient, la ville et le type de lieu. **Tant qu'il y a moins de 3 relevés d'utilisatrices, on utilise en priorité les relevés de l'équipe.** Un relevé (`team` ou `user`) est un prix réellement observé, avec sa source et sa date.
+
+Sans aucun relevé récent, on utilise l'estimation la plus récente de l'équipe (`estimate`), toujours affichée comme estimation (« prix estimé »). Sans relevé ni estimation, l'article est marqué « prix inconnu » et exclu du total, avec un avertissement.
 
 ### Où acheter
 
