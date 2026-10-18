@@ -61,7 +61,7 @@ Une application web qui aide les familles en Côte d'Ivoire à décider quoi cui
 | Acteur | Rôle dans le système |
 | --- | --- |
 | Parent | Utilisatrice principale : décrit le foyer, reçoit et valide le menu, discute avec l'agent |
-| Personne qui fait les courses ou cuisine | Reçoit la liste et les recettes par WhatsApp, sans compte |
+| Personne qui fait les courses ou cuisine | Reçoit la liste et les recettes par WhatsApp sans compte, ou rejoint le foyer avec un code d'invitation (voir ou modifier) |
 | Administratrice | L'équipe : gère recettes, ingrédients, unités, prix et magasins |
 | Agent IA | Comprend les demandes, appelle les outils, propose et explique |
 
@@ -297,7 +297,7 @@ La **logique métier** vit dans `src/lib/` sous forme de fonctions pures et test
 
 ### Routes API
 
-- Une route vérifie dans cet ordre : session, rôle si besoin, validation zod de l'entrée, logique métier, réponse.
+- Une route vérifie dans cet ordre : session, rôle si besoin, droit de modifier le foyer si la route écrit des données du foyer (une personne invitée en lecture seule est refusée, 403), validation zod de l'entrée, logique métier, réponse.
 - Format d'erreur unique, défini dans `src/lib/erreurs.ts` :
 
 ```json
@@ -333,8 +333,9 @@ Chaque service externe est isolé derrière une interface dans `src/lib/`, pour 
 
 | Modèle | Champs principaux | Relations et règles |
 | --- | --- | --- |
-| `User` | email (unique), passwordHash, fullName, role, consentHealthAt, consentLocationAt | Appartient à un `Household` ; role : user ou admin |
-| `Household` | name, weeklyBudgetFcfa, cuisinesPreferred (Json), equipment (Json), shoppingDay | Propriétaire (`User`), quartier (`Neighborhood`, facultatif) ; un seul compte par foyer au MVP |
+| `User` | email (unique), passwordHash, fullName, role, consentHealthAt, consentLocationAt, householdAccess | Appartient à un `Household` ; role : user ou admin ; householdAccess : droit d'une personne invitée (edit ou view), vide pour le propriétaire |
+| `Household` | name, weeklyBudgetFcfa, cuisinesPreferred (Json), equipment (Json), shoppingDay | Propriétaire (`User`), quartier (`Neighborhood`, facultatif) ; plusieurs comptes par foyer : le propriétaire et des personnes invitées |
+| `HouseholdInvitation` | codeHash (unique), access, expiresAt, usedAt, revokedAt | Foyer + auteur + personne qui l'a utilisée ; code à 6 caractères jamais stocké en clair, valable 48 h, utilisable une fois, annulable |
 | `HouseholdMember` | label, ageGroup, birthDate, schedule (Json) | Appartient à un foyer ; label = surnom choisi par la famille (« Papa », « Awa »), affiché dans l'app et jamais envoyé à l'IA ; birthDate facultative, jamais envoyée à l'IA ; quand elle est connue, ageGroup en est déduit |
 | `MemberRestriction` | type, value, severity | Appartient à un membre ; severity strict = filtre dur |
 | `DishRating` | rating (1 à 3) | Foyer + recette, couple unique |
@@ -382,6 +383,7 @@ Chaque service externe est isolé derrière une interface dans `src/lib/`, pour 
 | Énumération | Valeurs |
 | --- | --- |
 | `Role` | user, admin |
+| `HouseholdAccess` | edit, view |
 | `AgeGroup` | baby, child, teen, adult, senior |
 | `RestrictionType` | allergy, diet, dislike, healthGoal |
 | `Severity` | strict, preference |
@@ -419,6 +421,11 @@ Routes Next.js sous `src/app/api/`. Toutes exigent une session sauf `register` e
 | GET, PUT | `/api/household` | Lire ou modifier le foyer | EF-03 |
 | POST | `/api/household/members` | Ajouter un membre | EF-03 |
 | PUT, DELETE | `/api/household/members/:id` | Modifier ou retirer un membre et ses restrictions | EF-03 |
+| GET, POST | `/api/household/invitations` | Comptes et invitations du foyer ; créer un code d'invitation (propriétaire) | EF-03 |
+| DELETE | `/api/household/invitations/:id` | Annuler un code d'invitation (propriétaire) | EF-03 |
+| POST | `/api/household/join` | Rejoindre un foyer avec un code | EF-03 |
+| DELETE | `/api/household/users/:id` | Retirer une personne du foyer (propriétaire) | EF-03 |
+| POST | `/api/household/leave` | Quitter le foyer (personne invitée) | EF-03 |
 | POST | `/api/household/ratings` | Notes de plats du départ | EF-04 |
 | GET | `/api/household/learned` | Préférences apprises | EF-19 |
 | PATCH | `/api/household/learned/:id` | Corriger ou désactiver une préférence | EF-19 |
@@ -628,6 +635,8 @@ Texte généré par `src/lib/courses/whatsapp.ts` : titre, articles regroupés p
 - [ ] Session Auth.js dans un cookie HttpOnly, Secure, SameSite.
 - [ ] Garde de session sur toutes les routes privées ; garde de rôle sur toutes les routes admin, **côté serveur**.
 - [ ] Chaque requête de foyer filtrée sur le foyer de la session.
+- [ ] Droit de modifier vérifié côté serveur : une personne invitée en lecture seule ne peut rien écrire.
+- [ ] Codes d'invitation hachés, valables 48 h, utilisables une fois, annulables ; tentatives limitées comme la connexion.
 - [ ] Validation zod de toutes les entrées et de tous les appels d'outils.
 - [ ] Limitation du nombre de requêtes sur la connexion et le chat.
 - [ ] Aucun secret dans le code, les logs ou les réponses d'erreur.
@@ -662,6 +671,7 @@ Texte généré par `src/lib/courses/whatsapp.ts` : titre, articles regroupés p
 - [ ] Un ingrédient en stock en quantité suffisante n'apparaît pas dans la liste.
 - [ ] Un repas cuisiné crée les mouvements de stock et ne rend jamais une quantité négative.
 - [ ] Un compte A ne peut ni lire ni modifier le foyer d'un compte B.
+- [ ] Une personne invitée en lecture seule ne peut rien modifier dans le foyer ; un code d'invitation expiré, utilisé ou annulé est refusé.
 - [ ] Une proposition ne modifie rien tant qu'elle n'est pas confirmée ; une proposition expirée est refusée.
 - [ ] Une route admin refuse un compte non admin.
 - [ ] Les magasins sont renvoyés du plus proche au plus loin.
@@ -781,7 +791,6 @@ Ne pas implémenter sans demande explicite. Le code peut être préparé pour ce
 | Brouillons de recettes rédigés par l'IA | Route admin dédiée, recettes `source = ai` à valider |
 | Recherche de magasins élargie | Google Places ou OpenStreetMap derrière `StoreLocator` |
 | Bot WhatsApp, applications mobiles | Après le pilote |
-| Second compte et invitation dans un foyer | Relation `User` → `Household` déjà prévue ; écran et route d'invitation à ajouter |
 
 ---
 
