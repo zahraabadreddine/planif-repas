@@ -9,11 +9,14 @@ import { fcfa } from "@/lib/format";
 import { getRecipe, household, shoppingList, stock, weekPlan } from "@/lib/donnees-simulees";
 import { auth } from "@/lib/auth/config";
 import { exigerSession } from "@/lib/auth/garde";
+import { nombreDeNotes } from "@/lib/foyer/notes";
 
 export default async function HomePage() {
   // Sans foyer décrit, on invite le parent à le faire (EF-03). La garde de session est dans le layout.
   const session = await exigerSession().catch(() => null);
   const sansFoyer = !session?.householdId;
+  // Foyer décrit mais aucun plat noté : on invite à noter les plats (EF-04).
+  const sansNotes = session && !sansFoyer ? (await nombreDeNotes(session)) === 0 : false;
   // Le nom vient du compte connecté (enregistré à l'inscription) : on garde le premier mot.
   const prenom = (await auth())?.user?.name?.trim().split(/\s+/)[0];
   // Date du jour à Abidjan, quel que soit le pays du serveur : « mercredi 14 octobre ».
@@ -72,6 +75,22 @@ export default async function HomePage() {
               Décris ton foyer
             </span>
             <span className="text-sm font-bold">pour recevoir ton premier menu de la semaine</span>
+          </span>
+          <ArrowRight size={22} strokeWidth={2.8} />
+        </Link>
+      )}
+
+      {sansNotes && (
+        <Link
+          href="/foyer/plats"
+          className="press paper-shadow relative mt-5 flex items-center gap-3 rounded-[20px_16px_22px_18px] border-[2.5px] border-foret bg-or p-4 text-foret"
+        >
+          <UmiHead size={44} />
+          <span className="flex-1">
+            <span className="block font-display text-lg font-semibold leading-tight">
+              Note vos plats
+            </span>
+            <span className="text-sm font-bold">pour des menus à votre goût</span>
           </span>
           <ArrowRight size={22} strokeWidth={2.8} />
         </Link>

@@ -1,3 +1,4 @@
+import type { MembreFoyer } from "@/lib/foyer/membres";
 import { ALLERGENES, REGIMES, normaliser } from "@/lib/validation/membre";
 
 // Filtres durs (CLAUDE.md §11, règle 2) : une recette qui contient un allergène ou ne respecte
@@ -59,4 +60,16 @@ export function incompatibilites(
     }
   }
   return trouvees;
+}
+
+/** Allergies et régimes de tous les membres du foyer, avec leur surnom pour l'affichage. */
+export function restrictionsDuFoyer(membres: MembreFoyer[]): RestrictionAFiltrer[] {
+  return membres.flatMap((membre) => [
+    ...[...membre.allergies, ...membre.autresAllergies].map((value) => ({
+      membre: membre.label,
+      type: "allergy" as const,
+      value,
+    })),
+    ...membre.regimes.map((value) => ({ membre: membre.label, type: "diet" as const, value })),
+  ]);
 }

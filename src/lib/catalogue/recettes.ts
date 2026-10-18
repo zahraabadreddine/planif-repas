@@ -1,8 +1,12 @@
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import type { SessionVerifiee } from "@/lib/auth/garde";
-import { listerMembres, type MembreFoyer } from "@/lib/foyer/membres";
-import { incompatibilites, type RestrictionAFiltrer } from "@/lib/planificateur/filtres";
+import { listerMembres } from "@/lib/foyer/membres";
+import {
+  incompatibilites,
+  restrictionsDuFoyer,
+  type RestrictionAFiltrer,
+} from "@/lib/planificateur/filtres";
 import type { Filtres } from "@/lib/validation/catalogue";
 import { coutRecette, meilleurPrix, type LignePourCout } from "./cout";
 import { afficherQuantite } from "./quantites";
@@ -36,18 +40,6 @@ function chargerRecettes(id?: string) {
     include: avecIngredients,
     orderBy: { title: "asc" },
   });
-}
-
-/** Allergies et régimes de tous les membres, avec leur surnom pour l'affichage. */
-function restrictionsDuFoyer(membres: MembreFoyer[]): RestrictionAFiltrer[] {
-  return membres.flatMap((membre) => [
-    ...[...membre.allergies, ...membre.autresAllergies].map((value) => ({
-      membre: membre.label,
-      type: "allergy" as const,
-      value,
-    })),
-    ...membre.regimes.map((value) => ({ membre: membre.label, type: "diet" as const, value })),
-  ]);
 }
 
 function lignesPourCout(recette: LigneRecette): LignePourCout[] {
