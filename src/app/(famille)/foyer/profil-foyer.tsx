@@ -44,7 +44,11 @@ export function ProfilFoyer({ foyer: foyerInitial }: { foyer: Profil | null }) {
           onEnregistre={(enregistre) => {
             setFoyer(enregistre);
             setEdition(false);
-            setMessage(foyer ? "Ton foyer a bien été modifié." : "Ton foyer est créé !");
+            setMessage(
+              foyer
+                ? "Ton foyer a bien été modifié."
+                : "Ton foyer est créé ! Ajoute maintenant tes membres et note vos plats.",
+            );
           }}
         />
       </section>
