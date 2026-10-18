@@ -242,3 +242,49 @@ describe("allergènes du catalogue", () => {
     }
   });
 });
+
+describe("prix de départ : relevés réels et estimations", () => {
+  const tousLesPrix = async () => {
+    const { relevesDepart } = await import("../../prisma/donnees-depart");
+    return { relevesDepart };
+  };
+
+  it("donne à chaque prix une source, une date réelle et une référence", async () => {
+    const { relevesDepart } = await tousLesPrix();
+    const prix = [
+      ...ingredientsDepart.flatMap((i) => i.prices),
+      ...Object.values(relevesDepart).flat(),
+    ];
+    for (const p of prix) {
+      expect(["team", "estimate"]).toContain(p.source);
+      expect(p.observedAt).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      expect(p.observedAt <= "2026-10-18").toBe(true);
+      expect(p.reference.length).toBeGreaterThan(10);
+    }
+  });
+
+  it("ne garde dans les prix des ingrédients que des estimations, signalées comme telles", () => {
+    for (const ingredient of ingredientsDepart) {
+      for (const p of ingredient.prices) expect(p.source, ingredient.name).toBe("estimate");
+    }
+  });
+
+  it("cite une source publiée pour chaque relevé réel, au kilo, sur un ingrédient du catalogue", async () => {
+    const { relevesDepart } = await tousLesPrix();
+    for (const [nom, releves] of Object.entries(relevesDepart)) {
+      expect(parNom.has(nom), nom).toBe(true);
+      for (const r of releves) {
+        expect(r.source).toBe("team");
+        expect(r.unit).toBe("kg");
+        expect(r.reference).toMatch(/OCPV|Sikafinance/);
+        expect(Number.isInteger(r.priceFcfa) && r.priceFcfa > 0).toBe(true);
+      }
+    }
+  });
+
+  it("ne dépasse pas le prix maximum officiel du sucre (875 FCFA le kg)", () => {
+    for (const p of parNom.get("Sucre en poudre")!.prices) {
+      expect(p.priceFcfa).toBeLessThanOrEqual(875);
+    }
+  });
+});
