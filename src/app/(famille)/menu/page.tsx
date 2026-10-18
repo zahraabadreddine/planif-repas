@@ -45,6 +45,13 @@ export default function MenuPage() {
         </a>
       </header>
 
+      <Link
+        href="/recettes"
+        className="mt-2 inline-flex min-h-11 items-center gap-1 text-sm font-extrabold text-palme underline underline-offset-4"
+      >
+        Toutes les recettes →
+      </Link>
+
       <p className="mt-2 text-[13px] font-bold text-cacao">
         Pour {household.members} · {household.restrictions.join(", ").toLowerCase()} ·{" "}
         {fcfa(household.spentFcfa, false)} F dépensés sur {fcfa(household.weeklyBudgetFcfa, false)}

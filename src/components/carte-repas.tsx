@@ -33,10 +33,7 @@ export function MealCard({ recipe, slot, tag, delay = 0 }: Props) {
         {recipe.minutes} min · {fcfa(recipe.costFcfa, false)} F
       </p>
       <div className="mt-1.5 flex items-center gap-3.5">
-        <Link
-          href={`/recettes/${recipe.id}`}
-          className="flex h-9 items-center gap-1 text-sm font-extrabold"
-        >
+        <Link href="/recettes" className="flex h-9 items-center gap-1 text-sm font-extrabold">
           La recette <ArrowRight size={16} strokeWidth={2.8} />
         </Link>
         <Link
