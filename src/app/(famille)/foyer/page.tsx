@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/titre-page";
 import { ChevronRight } from "@/components/icones";
+import type { AccesFoyer } from "@/lib/auth/garde";
 import { fcfa } from "@/lib/format";
+import { lirePartage, type PersonneFoyer } from "@/lib/foyer/invitations";
 import { listerMembres, type MembreFoyer } from "@/lib/foyer/membres";
 import { platsDuFoyer } from "@/lib/foyer/notes";
 import { lireFoyer } from "@/lib/foyer/profil";
@@ -32,8 +34,12 @@ function Carte({ href, titre, detail }: { href: string; titre: string; detail: s
 }
 
 /** « Awa : arachide · Papa : végétarien », ou un rappel s'il n'y a encore personne. */
-function resumeMembres(membres: MembreFoyer[]): string {
-  if (membres.length === 0) return "Ajoute les personnes qui mangent à la maison";
+function resumeMembres(membres: MembreFoyer[], lectureSeule: boolean): string {
+  if (membres.length === 0) {
+    return lectureSeule
+      ? "Aucun membre décrit pour l'instant"
+      : "Ajoute les personnes qui mangent à la maison";
+  }
   const libelle = (valeur: string) =>
     [...ALLERGENES, ...REGIMES].find((x) => x.valeur === valeur)?.libelle.toLowerCase() ?? valeur;
   const avecRestrictions = membres
@@ -44,6 +50,15 @@ function resumeMembres(membres: MembreFoyer[]): string {
     .filter((m) => m.restrictions.length > 0);
   if (avecRestrictions.length === 0) return "Aucune allergie ni régime";
   return avecRestrictions.map((m) => `${m.surnom} : ${m.restrictions.join(", ")}`).join(" · ");
+}
+
+/** Pour le propriétaire : qui partage le foyer ; pour une personne invitée : son droit. */
+function resumePartage(acces: AccesFoyer | null, personnes: PersonneFoyer[]): string {
+  if (acces === "edit") return "Tu peux modifier ce foyer";
+  if (acces === "view") return "Tu peux seulement voir ce foyer";
+  const autres = personnes.filter((p) => !p.moi).map((p) => p.nom);
+  if (autres.length === 0) return "Invite la personne qui fait les courses ou qui cuisine";
+  return `Avec ${autres.join(", ")}`;
 }
 
 export default async function FoyerPage() {
@@ -61,11 +76,18 @@ export default async function FoyerPage() {
         <PageHeader overline="Mon foyer" title="Bienvenue" />
         <ProfilFoyer foyer={null} />
         <ul className="mt-6 flex flex-col gap-3">
+          <Carte
+            href="/foyer/rejoindre"
+            titre="Rejoindre un foyer"
+            detail="Quelqu'un t'a envoyé un code d'invitation ?"
+          />
           <Carte href="/foyer/compte" titre="Mon compte" detail="Mot de passe, déconnexion" />
         </ul>
       </>
     );
   }
+
+  const { personnes } = await lirePartage(session);
 
   const cuisines = CUISINES.filter((c) => foyer.cuisinesPreferred.includes(c.valeur)).map((c) =>
     c.libelle.toLowerCase(),
@@ -87,16 +109,23 @@ export default async function FoyerPage() {
         <Carte
           href="/foyer/membres"
           titre={`Membres${membres.length > 0 ? ` (${membres.length})` : ""}`}
-          detail={resumeMembres(membres)}
+          detail={resumeMembres(membres, session.acces === "view")}
         />
         <Carte
           href="/foyer/plats"
           titre={`Vos plats${notes > 0 ? ` (${notes} notés)` : ""}`}
           detail={
             notes === 0
-              ? "Note quelques plats pour des menus à votre goût"
+              ? session.acces === "view"
+                ? "Aucun plat noté pour l'instant"
+                : "Note quelques plats pour des menus à votre goût"
               : `${aDecouvrir} à découvrir`
           }
+        />
+        <Carte
+          href="/foyer/partage"
+          titre={`Le foyer partagé${personnes.length > 1 ? ` (${personnes.length} comptes)` : ""}`}
+          detail={resumePartage(session.acces, personnes)}
         />
         <Carte href="/foyer/compte" titre="Mon compte" detail="Mot de passe, déconnexion" />
       </ul>
