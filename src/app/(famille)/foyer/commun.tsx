@@ -17,7 +17,13 @@ export async function sessionDeLaPage(): Promise<SessionVerifiee> {
 }
 
 /** En-tête d'une sous-page : retour au sommaire « Mon foyer », puis le titre. */
-export function EnTeteSousPage({ titre }: { titre: string }) {
+export function EnTeteSousPage({
+  titre,
+  lectureSeule = false,
+}: {
+  titre: string;
+  lectureSeule?: boolean;
+}) {
   return (
     <header>
       <Link
@@ -27,6 +33,12 @@ export function EnTeteSousPage({ titre }: { titre: string }) {
         <ChevronLeft size={20} strokeWidth={2.8} /> Mon foyer
       </Link>
       <h1 className="retro text-[28px] leading-[1.3]">{titre}</h1>
+      {lectureSeule && (
+        <p className="mt-2 rounded-[16px_12px_18px_14px] bg-lagon/40 px-4 py-2.5 text-sm font-bold text-foret">
+          Tu peux seulement voir ce foyer : seule la personne qui l&apos;a créé peut te permettre de
+          le modifier.
+        </p>
+      )}
     </header>
   );
 }

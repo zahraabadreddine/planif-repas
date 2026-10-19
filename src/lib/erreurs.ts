@@ -15,6 +15,20 @@ export const ERREURS = {
     status: 403,
     message: "Ton accord est nécessaire pour enregistrer des allergies ou des régimes.",
   },
+  LECTURESEULE: {
+    status: 403,
+    message:
+      "Tu peux seulement voir ce foyer. Demande le droit de modifier à la personne qui l'a créé.",
+  },
+  CODEINVALIDE: {
+    status: 400,
+    message: "Ce code ne fonctionne pas. Vérifie-le ou demande un nouveau code.",
+  },
+  DEJADANSUNFOYER: { status: 409, message: "Ton compte fait déjà partie d'un foyer." },
+  TROPDINVITATIONS: {
+    status: 409,
+    message: "Tu as déjà 5 codes en attente. Annules-en un pour en créer un nouveau.",
+  },
   TROPDEREQUETES: { status: 429, message: "Trop de tentatives. Réessaie dans quelques minutes." },
   ERREURSERVEUR: { status: 500, message: "Un problème est survenu. Réessaie plus tard." },
 } as const;

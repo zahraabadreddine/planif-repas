@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { exigerSession } from "@/lib/auth/garde";
+import { exigerEcriture } from "@/lib/auth/garde";
 import { gererErreur } from "@/lib/erreurs";
 import { noterPlat } from "@/lib/foyer/notes";
 import { noteSchema } from "@/lib/validation/note";
@@ -11,7 +11,7 @@ import { lireCorps } from "@/lib/validation/requete";
  */
 export async function POST(requete: Request) {
   try {
-    const session = await exigerSession();
+    const session = await exigerEcriture();
     const { recipeId, rating } = await lireCorps(requete, noteSchema);
     await noterPlat(session, recipeId, rating);
     return NextResponse.json({ recipeId, rating });

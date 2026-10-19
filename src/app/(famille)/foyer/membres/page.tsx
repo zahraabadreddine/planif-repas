@@ -14,10 +14,11 @@ export default async function MembresPage() {
   ]);
   return (
     <>
-      <EnTeteSousPage titre="Les membres" />
+      <EnTeteSousPage titre="Les membres" lectureSeule={session.acces === "view"} />
       <MembresFoyer
         membres={membres}
         aUnFoyer={session.householdId !== null}
+        lectureSeule={session.acces === "view"}
         consentSante={consentSante}
         ingredients={ingredients}
       />

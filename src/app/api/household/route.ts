@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { exigerSession } from "@/lib/auth/garde";
+import { exigerEcriture, exigerSession } from "@/lib/auth/garde";
 import { gererErreur } from "@/lib/erreurs";
 import { enregistrerFoyer, lireFoyer } from "@/lib/foyer/profil";
 import { foyerSchema } from "@/lib/validation/foyer";
@@ -18,7 +18,7 @@ export async function GET() {
 /** PUT /api/household : crée le foyer de la session (201) ou le modifie (200) (EF-03). */
 export async function PUT(requete: Request) {
   try {
-    const session = await exigerSession();
+    const session = await exigerEcriture();
     const donnees = await lireCorps(requete, foyerSchema);
     const { foyer, cree } = await enregistrerFoyer(session, donnees);
     return NextResponse.json({ household: foyer }, { status: cree ? 201 : 200 });

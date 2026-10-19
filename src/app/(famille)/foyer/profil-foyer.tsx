@@ -21,7 +21,13 @@ function libelleJour(foyer: Profil) {
 }
 
 /** Profil du foyer : formulaire s'il n'existe pas encore, sinon résumé avec « Modifier » (EF-03). */
-export function ProfilFoyer({ foyer: foyerInitial }: { foyer: Profil | null }) {
+export function ProfilFoyer({
+  foyer: foyerInitial,
+  lectureSeule = false,
+}: {
+  foyer: Profil | null;
+  lectureSeule?: boolean;
+}) {
   // Le foyer enregistré s'affiche aussitôt, sans attendre le rechargement de la page.
   const [foyer, setFoyer] = useState(foyerInitial);
   const [edition, setEdition] = useState(false);
@@ -59,16 +65,18 @@ export function ProfilFoyer({ foyer: foyerInitial }: { foyer: Profil | null }) {
     <section className={cadre}>
       <div className="flex items-start justify-between gap-3">
         <h2 className="font-display text-xl font-semibold text-foret">{foyer.name}</h2>
-        <button
-          type="button"
-          onClick={() => {
-            setMessage(null);
-            setEdition(true);
-          }}
-          className="press -mr-1 -mt-1 h-11 shrink-0 rounded-[14px_18px_16px_12px] border-[2.5px] border-foret px-4 text-sm font-extrabold text-foret"
-        >
-          Modifier
-        </button>
+        {!lectureSeule && (
+          <button
+            type="button"
+            onClick={() => {
+              setMessage(null);
+              setEdition(true);
+            }}
+            className="press -mr-1 -mt-1 h-11 shrink-0 rounded-[14px_18px_16px_12px] border-[2.5px] border-foret px-4 text-sm font-extrabold text-foret"
+          >
+            Modifier
+          </button>
+        )}
       </div>
       <dl className="mt-3 flex flex-col gap-2.5 text-[15px]">
         <div>

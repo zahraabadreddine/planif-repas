@@ -20,10 +20,10 @@ const CHOIX: { valeur: Note | null; court: string }[] = [
   { valeur: null, court: "Pas goûté" },
 ];
 
-type Props = { plats: PlatANoter[]; aUnFoyer: boolean };
+type Props = { plats: PlatANoter[]; aUnFoyer: boolean; lectureSeule?: boolean };
 
 /** Section « Vos plats » de la page foyer : résumé des notes et notation (EF-04). */
-export function NotesPlats({ plats: platsInitiaux, aUnFoyer }: Props) {
+export function NotesPlats({ plats: platsInitiaux, aUnFoyer, lectureSeule = false }: Props) {
   const router = useRouter();
   const [plats, setPlats] = useState(platsInitiaux);
   const [notation, setNotation] = useState(false);
@@ -72,8 +72,9 @@ export function NotesPlats({ plats: platsInitiaux, aUnFoyer }: Props) {
         <>
           {notes.length === 0 ? (
             <p className="mt-2 text-sm font-semibold text-cacao">
-              Note quelques plats que vous aimez ou pas : Umami s&apos;en servira pour vous proposer
-              des menus à votre goût.
+              {lectureSeule
+                ? "Aucun plat n'est encore noté dans ce foyer."
+                : "Note quelques plats que vous aimez ou pas : Umami s'en servira pour vous proposer des menus à votre goût."}
             </p>
           ) : (
             NOTES.map((groupe) => {
@@ -85,15 +86,21 @@ export function NotesPlats({ plats: platsInitiaux, aUnFoyer }: Props) {
                   <ul className="mt-1 flex flex-col gap-1.5">
                     {dansLeGroupe.map((plat) => (
                       <li key={plat.id}>
-                        <button
-                          type="button"
-                          aria-expanded={ouvert === plat.id}
-                          onClick={() => setOuvert(ouvert === plat.id ? null : plat.id)}
-                          className="press flex min-h-11 w-full items-center justify-between rounded-[14px_18px_16px_12px] bg-sable/60 px-3.5 text-left text-[15px] font-bold text-foret"
-                        >
-                          {plat.title}
-                          <span className="text-sm text-cacao">changer</span>
-                        </button>
+                        {lectureSeule ? (
+                          <p className="flex min-h-11 items-center rounded-[14px_18px_16px_12px] bg-sable/60 px-3.5 text-[15px] font-bold text-foret">
+                            {plat.title}
+                          </p>
+                        ) : (
+                          <button
+                            type="button"
+                            aria-expanded={ouvert === plat.id}
+                            onClick={() => setOuvert(ouvert === plat.id ? null : plat.id)}
+                            className="press flex min-h-11 w-full items-center justify-between rounded-[14px_18px_16px_12px] bg-sable/60 px-3.5 text-left text-[15px] font-bold text-foret"
+                          >
+                            {plat.title}
+                            <span className="text-sm text-cacao">changer</span>
+                          </button>
+                        )}
                         {ouvert === plat.id && (
                           <div className="mt-1.5 grid grid-cols-4 gap-1.5">
                             {CHOIX.map((choix) => (
@@ -128,7 +135,7 @@ export function NotesPlats({ plats: platsInitiaux, aUnFoyer }: Props) {
             </div>
           )}
 
-          {aDecouvrir.length > 0 && (
+          {!lectureSeule && aDecouvrir.length > 0 && (
             <button
               type="button"
               onClick={() => setNotation(true)}
