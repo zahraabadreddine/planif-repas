@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  HouseholdAccess,
   MealSlot,
   PlaceType,
   PriceSource,
@@ -37,5 +38,13 @@ describe("schéma Prisma", () => {
 
   it("distingue les prix relevés des prix estimés", () => {
     expect(Object.values(PriceSource)).toEqual(["team", "user", "estimate"]);
+  });
+
+  it("prévoit le partage du foyer : rôles et invitations", () => {
+    expect(Object.values(HouseholdAccess)).toEqual(["edit", "view"]);
+    expect(Object.values(Prisma.UserScalarFieldEnum)).toContain("householdAccess");
+    expect(Object.values(Prisma.HouseholdInvitationScalarFieldEnum)).toEqual(
+      expect.arrayContaining(["codeHash", "access", "expiresAt", "usedAt", "revokedAt"]),
+    );
   });
 });

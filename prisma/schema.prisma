@@ -19,6 +19,12 @@ enum Role {
   admin
 }
 
+// Droit d'une personne invitée dans un foyer ; le propriétaire est Household.ownerId
+enum HouseholdAccess {
+  edit
+  view
+}
+
 enum AgeGroup {
   baby
   child
@@ -129,22 +135,26 @@ enum ProposalStatus {
 // ---------------------------------------------------------------------------
 
 model User {
-  id                String    @id @default(uuid()) @db.Uuid
-  email             String    @unique
+  id                String           @id @default(uuid()) @db.Uuid
+  email             String           @unique
   passwordHash      String
   fullName          String
-  role              Role      @default(user)
+  role              Role             @default(user)
   consentHealthAt   DateTime?
   consentLocationAt DateTime?
-  householdId       String?   @db.Uuid
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  householdId       String?          @db.Uuid
+  // Rôle d'une personne invitée (null pour le propriétaire ou sans foyer)
+  householdAccess   HouseholdAccess?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
 
-  household      Household?     @relation("HouseholdUsers", fields: [householdId], references: [id], onDelete: SetNull)
-  ownedHousehold Household?     @relation("HouseholdOwner")
-  reportedPrices Price[]
-  mealFeedbacks  MealFeedback[]
-  conversations  Conversation[]
+  household            Household?            @relation("HouseholdUsers", fields: [householdId], references: [id], onDelete: SetNull)
+  ownedHousehold       Household?            @relation("HouseholdOwner")
+  reportedPrices       Price[]
+  mealFeedbacks        MealFeedback[]
+  conversations        Conversation[]
+  invitationsCreees    HouseholdInvitation[] @relation("InvitationAuteur")
+  invitationsUtilisees HouseholdInvitation[] @relation("InvitationUtilisee")
 
   @@index([householdId])
 }
@@ -162,9 +172,9 @@ model Household {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  owner              User                @relation("HouseholdOwner", fields: [ownerId], references: [id], onDelete: Cascade)
-  neighborhood       Neighborhood?       @relation(fields: [neighborhoodId], references: [id], onDelete: SetNull)
-  users              User[]              @relation("HouseholdUsers")
+  owner              User                  @relation("HouseholdOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  neighborhood       Neighborhood?         @relation(fields: [neighborhoodId], references: [id], onDelete: SetNull)
+  users              User[]                @relation("HouseholdUsers")
   members            HouseholdMember[]
   dishRatings        DishRating[]
   mealPlans          MealPlan[]
@@ -172,8 +182,32 @@ model Household {
   stockItems         StockItem[]
   conversations      Conversation[]
   learnedPreferences LearnedPreference[]
+  invitations        HouseholdInvitation[]
 
   @@index([neighborhoodId])
+}
+
+// Invitation à rejoindre un foyer : un code à 6 caractères, valable 48 h, utilisable une fois.
+// Le code n'est jamais stocké en clair : seulement son empreinte (codeHash).
+model HouseholdInvitation {
+  id          String          @id @default(uuid()) @db.Uuid
+  householdId String          @db.Uuid
+  codeHash    String          @unique
+  access      HouseholdAccess
+  createdById String          @db.Uuid
+  expiresAt   DateTime
+  usedAt      DateTime?
+  usedById    String?         @db.Uuid
+  revokedAt   DateTime?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  createdBy User      @relation("InvitationAuteur", fields: [createdById], references: [id], onDelete: Cascade)
+  usedBy    User?     @relation("InvitationUtilisee", fields: [usedById], references: [id], onDelete: SetNull)
+
+  @@index([householdId])
+  @@index([expiresAt])
 }
 
 model HouseholdMember {
