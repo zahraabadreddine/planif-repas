@@ -11,8 +11,8 @@ export default async function ProfilPage() {
   if (!foyer) redirect("/foyer");
   return (
     <>
-      <EnTeteSousPage titre="Le foyer" />
-      <ProfilFoyer foyer={foyer} />
+      <EnTeteSousPage titre="Le foyer" lectureSeule={session.acces === "view"} />
+      <ProfilFoyer foyer={foyer} lectureSeule={session.acces === "view"} />
     </>
   );
 }

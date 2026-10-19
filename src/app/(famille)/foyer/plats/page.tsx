@@ -8,12 +8,13 @@ export default async function PlatsPage() {
   const plats = await platsDuFoyer(session);
   return (
     <>
-      <EnTeteSousPage titre="Vos plats" />
+      <EnTeteSousPage titre="Vos plats" lectureSeule={session.acces === "view"} />
       {/* Recréée quand la liste change : foyer créé, ou membre allergique ajouté */}
       <NotesPlats
         key={plats.map((p) => p.id).join()}
         plats={plats}
         aUnFoyer={session.householdId !== null}
+        lectureSeule={session.acces === "view"}
       />
     </>
   );

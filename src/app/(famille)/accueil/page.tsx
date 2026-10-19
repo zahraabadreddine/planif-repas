@@ -16,7 +16,11 @@ export default async function HomePage() {
   const session = await exigerSession().catch(() => null);
   const sansFoyer = !session?.householdId;
   // Foyer décrit mais aucun plat noté : on invite à noter les plats (EF-04).
-  const sansNotes = session && !sansFoyer ? (await nombreDeNotes(session)) === 0 : false;
+  // Une personne en lecture seule ne peut pas noter : pas d'invitation pour elle.
+  const sansNotes =
+    session && !sansFoyer && session.acces !== "view"
+      ? (await nombreDeNotes(session)) === 0
+      : false;
   // Le nom vient du compte connecté (enregistré à l'inscription) : on garde le premier mot.
   const prenom = (await auth())?.user?.name?.trim().split(/\s+/)[0];
   // Date du jour à Abidjan, quel que soit le pays du serveur : « mercredi 14 octobre ».

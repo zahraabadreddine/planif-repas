@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { exigerSession } from "@/lib/auth/garde";
+import { exigerEcriture } from "@/lib/auth/garde";
 import { ErreurApi, gererErreur } from "@/lib/erreurs";
 import { modifierMembre, retirerMembre } from "@/lib/foyer/membres";
 import { membreSchema } from "@/lib/validation/membre";
@@ -18,7 +18,7 @@ async function lireId({ params }: Contexte): Promise<string> {
 /** PUT /api/household/members/:id : modifie un membre du foyer de la session (EF-03). */
 export async function PUT(requete: Request, contexte: Contexte) {
   try {
-    const session = await exigerSession();
+    const session = await exigerEcriture();
     const id = await lireId(contexte);
     const membre = await lireCorps(requete, membreSchema);
     return NextResponse.json({ member: await modifierMembre(session, id, membre) });
@@ -30,7 +30,7 @@ export async function PUT(requete: Request, contexte: Contexte) {
 /** DELETE /api/household/members/:id : retire un membre et ses restrictions (EF-03). */
 export async function DELETE(requete: Request, contexte: Contexte) {
   try {
-    const session = await exigerSession();
+    const session = await exigerEcriture();
     await retirerMembre(session, await lireId(contexte));
     return NextResponse.json({ ok: true });
   } catch (erreur) {

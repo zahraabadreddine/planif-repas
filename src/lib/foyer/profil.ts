@@ -72,7 +72,10 @@ export async function enregistrerFoyer(
           data: { ...donnees, ownerId: session.userId },
           select: champs,
         });
-    await tx.user.update({ where: { id: session.userId }, data: { householdId: ligne.id } });
+    await tx.user.update({
+      where: { id: session.userId },
+      data: { householdId: ligne.id, householdAccess: null },
+    });
     return { foyer: versProfil(ligne), cree: !existant };
   });
 }

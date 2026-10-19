@@ -32,6 +32,7 @@ function libellesRegimes(membre: MembreFoyer) {
 type Props = {
   membres: MembreFoyer[];
   aUnFoyer: boolean;
+  lectureSeule?: boolean;
   consentSante: boolean;
   ingredients: string[];
 };
@@ -40,6 +41,7 @@ type Props = {
 export function MembresFoyer({
   membres: membresInitiaux,
   aUnFoyer,
+  lectureSeule = false,
   consentSante,
   ingredients,
 }: Props) {
@@ -114,8 +116,9 @@ export function MembresFoyer({
         <>
           {membres.length === 0 && edition !== "nouveau" && (
             <p className="mt-2 text-sm font-semibold text-cacao">
-              Ajoute les personnes qui mangent à la maison : Umami adaptera les portions et écartera
-              les plats qui ne leur conviennent pas.
+              {lectureSeule
+                ? "Aucun membre n'est encore décrit dans ce foyer."
+                : "Ajoute les personnes qui mangent à la maison : Umami adaptera les portions et écartera les plats qui ne leur conviennent pas."}
             </p>
           )}
 
@@ -176,6 +179,7 @@ export function MembresFoyer({
                       </div>
                     </div>
                   ) : (
+                    !lectureSeule &&
                     edition === null && (
                       <div className="mt-3 flex gap-2">
                         <button
@@ -220,6 +224,7 @@ export function MembresFoyer({
               {formulaire(null)}
             </div>
           ) : (
+            !lectureSeule &&
             edition === null && (
               <button
                 type="button"

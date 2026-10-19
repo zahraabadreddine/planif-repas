@@ -9,7 +9,8 @@ const { recipe, dishRating, exigerSession, listerMembres } = vi.hoisted(() => ({
 }));
 
 vi.mock("@/lib/db", () => ({ prisma: { recipe, dishRating } }));
-vi.mock("@/lib/auth/garde", () => ({ exigerSession }));
+// exigerEcriture renvoie la même session : son refus en lecture seule est testé dans garde.test.ts
+vi.mock("@/lib/auth/garde", () => ({ exigerSession, exigerEcriture: exigerSession }));
 vi.mock("@/lib/foyer/membres", () => ({ listerMembres }));
 
 import { POST } from "@/app/api/household/ratings/route";
@@ -46,6 +47,12 @@ describe("POST /api/household/ratings", () => {
   it("refuse une requête sans session", async () => {
     exigerSession.mockRejectedValue(new ErreurApi("NONCONNECTE"));
     expect((await POST(requete({ recipeId: ID, rating: 3 }))).status).toBe(401);
+    expect(dishRating.upsert).not.toHaveBeenCalled();
+  });
+
+  it("refuse une personne invitée en lecture seule (403), sans rien écrire", async () => {
+    exigerSession.mockRejectedValue(new ErreurApi("LECTURESEULE"));
+    expect((await POST(requete({ recipeId: ID, rating: 3 }))).status).toBe(403);
     expect(dishRating.upsert).not.toHaveBeenCalled();
   });
 

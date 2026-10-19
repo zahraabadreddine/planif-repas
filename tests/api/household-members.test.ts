@@ -22,7 +22,8 @@ vi.mock("@/lib/db", () => {
   };
   return { prisma };
 });
-vi.mock("@/lib/auth/garde", () => ({ exigerSession }));
+// exigerEcriture renvoie la même session : son refus en lecture seule est testé dans garde.test.ts
+vi.mock("@/lib/auth/garde", () => ({ exigerSession, exigerEcriture: exigerSession }));
 
 import { POST } from "@/app/api/household/members/route";
 import { DELETE, PUT } from "@/app/api/household/members/[id]/route";
@@ -88,6 +89,14 @@ describe("POST /api/household/members", () => {
     exigerSession.mockRejectedValue(new ErreurApi("NONCONNECTE"));
     expect((await POST(requete("POST", sansSante))).status).toBe(401);
     expect(householdMember.create).not.toHaveBeenCalled();
+  });
+
+  it("refuse une personne invitée en lecture seule (403), sans rien écrire", async () => {
+    exigerSession.mockRejectedValue(new ErreurApi("LECTURESEULE"));
+    expect((await POST(requete("POST", sansSante))).status).toBe(403);
+    expect((await DELETE(requete("DELETE"), contexte())).status).toBe(403);
+    expect(householdMember.create).not.toHaveBeenCalled();
+    expect(householdMember.deleteMany).not.toHaveBeenCalled();
   });
 
   it("demande de décrire d'abord le foyer", async () => {

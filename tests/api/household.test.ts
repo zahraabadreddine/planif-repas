@@ -15,7 +15,8 @@ vi.mock("@/lib/db", () => {
   };
   return { prisma };
 });
-vi.mock("@/lib/auth/garde", () => ({ exigerSession }));
+// exigerEcriture renvoie la même session : son refus en lecture seule est testé dans garde.test.ts
+vi.mock("@/lib/auth/garde", () => ({ exigerSession, exigerEcriture: exigerSession }));
 
 import { GET, PUT } from "@/app/api/household/route";
 
@@ -81,6 +82,13 @@ describe("PUT /api/household", () => {
     expect(household.create).not.toHaveBeenCalled();
   });
 
+  it("refuse une personne invitée en lecture seule (403), sans rien écrire", async () => {
+    exigerSession.mockRejectedValue(new ErreurApi("LECTURESEULE"));
+    expect((await PUT(requete(corpsValide))).status).toBe(403);
+    expect(household.update).not.toHaveBeenCalled();
+    expect(household.create).not.toHaveBeenCalled();
+  });
+
   it("refuse des données invalides avec le détail par champ", async () => {
     const reponse = await PUT(requete({ ...corpsValide, weeklyBudgetFcfa: 25 }));
     expect(reponse.status).toBe(400);
@@ -102,7 +110,10 @@ describe("PUT /api/household", () => {
     expect(household.create).toHaveBeenCalledWith(
       expect.objectContaining({ data: { ...corpsValide, ownerId: "u1" } }),
     );
-    expect(user.update).toHaveBeenCalledWith({ where: { id: "u1" }, data: { householdId: "f1" } });
+    expect(user.update).toHaveBeenCalledWith({
+      where: { id: "u1" },
+      data: { householdId: "f1", householdAccess: null },
+    });
   });
 
   it("modifie le foyer de la session sans en créer un autre (200)", async () => {
@@ -138,6 +149,9 @@ describe("PUT /api/household", () => {
     const reponse = await PUT(requete(corpsValide));
     expect(reponse.status).toBe(200);
     expect(household.create).not.toHaveBeenCalled();
-    expect(user.update).toHaveBeenCalledWith({ where: { id: "u1" }, data: { householdId: "f1" } });
+    expect(user.update).toHaveBeenCalledWith({
+      where: { id: "u1" },
+      data: { householdId: "f1", householdAccess: null },
+    });
   });
 });
