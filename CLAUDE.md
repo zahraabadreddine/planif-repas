@@ -424,7 +424,7 @@ Routes Next.js sous `src/app/api/`. Toutes exigent une session sauf `register` e
 | GET, POST | `/api/household/invitations` | Comptes et invitations du foyer ; créer un code d'invitation (propriétaire) | EF-03 |
 | DELETE | `/api/household/invitations/:id` | Annuler un code d'invitation (propriétaire) | EF-03 |
 | POST | `/api/household/join` | Rejoindre un foyer avec un code | EF-03 |
-| DELETE | `/api/household/users/:id` | Retirer une personne du foyer (propriétaire) | EF-03 |
+| PATCH, DELETE | `/api/household/users/:id` | Changer le droit d'une personne invitée, ou la retirer du foyer (propriétaire) | EF-03 |
 | POST | `/api/household/leave` | Quitter le foyer (personne invitée) | EF-03 |
 | POST | `/api/household/ratings` | Notes de plats du départ | EF-04 |
 | GET | `/api/household/learned` | Préférences apprises | EF-19 |
