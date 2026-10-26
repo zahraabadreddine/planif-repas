@@ -218,6 +218,20 @@ export async function lireListe(session: SessionVerifiee, id: string): Promise<L
   return versListe(liste);
 }
 
+export type ListeDuMenuActif = { menuId: string; liste: ListeEnregistree | null };
+
+/** Menu actif le plus récent du foyer de la session et sa liste ; null sans menu validé. */
+export async function listeDuMenuActif(session: SessionVerifiee): Promise<ListeDuMenuActif | null> {
+  if (!session.householdId) return null;
+  const menu = await prisma.mealPlan.findFirst({
+    where: { householdId: session.householdId, status: "active" },
+    orderBy: { weekStart: "desc" },
+    include: { shoppingList: { include: avecArticles } },
+  });
+  if (!menu) return null;
+  return { menuId: menu.id, liste: menu.shoppingList ? versListe(menu.shoppingList) : null };
+}
+
 /** Coche ou décoche un article d'une liste du foyer de la session. */
 export async function cocherArticle(
   session: SessionVerifiee,

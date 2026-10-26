@@ -26,6 +26,7 @@ vi.mock("@/lib/auth/garde", () => ({ exigerSession, exigerEcriture }));
 import { POST } from "@/app/api/meal-plans/[id]/shopping-list/route";
 import { GET } from "@/app/api/shopping-lists/[id]/route";
 import { PATCH } from "@/app/api/shopping-lists/[id]/items/[itemId]/route";
+import { listeDuMenuActif } from "@/lib/courses/generation";
 
 const MENU = "8f2b4c1e-3d5a-4e6f-9a7b-1c2d3e4f5a6b";
 const LISTE = "1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d";
@@ -326,5 +327,31 @@ describe("PATCH /api/shopping-lists/:id/items/:itemId", () => {
       data: { checked: true },
     });
     expect((await reponse.json()).list.remainingFcfa).toBe(500);
+  });
+});
+
+describe("listeDuMenuActif (page Courses)", () => {
+  it("renvoie null sans foyer, sans lire la base", async () => {
+    expect(await listeDuMenuActif({ ...SESSION, householdId: null } as never)).toBeNull();
+    expect(mealPlan.findFirst).not.toHaveBeenCalled();
+  });
+
+  it("cherche le menu actif du foyer de la session", async () => {
+    mealPlan.findFirst.mockResolvedValue(null);
+    expect(await listeDuMenuActif(SESSION as never)).toBeNull();
+    expect(mealPlan.findFirst.mock.calls[0][0].where).toEqual({ householdId: "f1", status: "active" });
+  });
+
+  it("renvoie le menu sans liste quand elle n'est pas encore préparée", async () => {
+    mealPlan.findFirst.mockResolvedValue({ id: MENU, shoppingList: null });
+    expect(await listeDuMenuActif(SESSION as never)).toEqual({ menuId: MENU, liste: null });
+  });
+
+  it("renvoie la liste du menu actif avec ce qu'il reste à dépenser", async () => {
+    mealPlan.findFirst.mockResolvedValue({ id: MENU, shoppingList: listeLue });
+    const actif = await listeDuMenuActif(SESSION as never);
+    expect(actif?.menuId).toBe(MENU);
+    expect(actif?.liste?.remainingFcfa).toBe(500);
+    expect(actif?.liste?.items[1]).toMatchObject({ ingredient: "Oignon", unit: "tas", checked: false });
   });
 });
