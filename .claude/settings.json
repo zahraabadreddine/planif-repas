@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(./docs/*.pdf)",
+      "Read(./package-lock.json)",
+      "Read(./node_modules/**)",
+      "Read(./.next/**)",
+      "Read(./playwright-report/**)",
+      "Read(./test-results/**)",
+      "Read(./coverage/**)"
+    ]
+  }
+}

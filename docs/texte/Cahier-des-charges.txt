@@ -1,0 +1,956 @@
+  CAHIER DES CHARGES
+
+Agent IA de
+planification des repas
+
+Un assistant conversationnel qui décide avec les familles quoi
+cuisiner chaque jour, selon leur temps, leur budget en FCFA, leur
+santé et ce qu'il reste dans la cuisine.
+
+PRÉSENTÉ PAR                    F O R M AT I O N
+
+Zahraa Badreddine               Licence 3 Informatique
+Fatima Zreik                    USJ-CI
+
+DOCUMENT                        D AT E
+
+Version de présentation         Octobre 2026
+Première version (MVP)
+
+Soumis à l'encadreur du projet  Abidjan, Côte d'Ivoire
+Agent IA de planification des repas        Cahier des charges
+
+SOMMAIRE
+
+01 Le projet en bref                                                                                             2
+
+02 Contexte et problème                                                                                          3
+
+03 Objectifs et indicateurs                                                                                      4
+
+04 Périmètre du MVP                                                                                              5
+
+05 Exigences                                                                                                     6
+
+06 Cas d'utilisation                                                                                             8
+
+07 Architecture et choix techniques                                                                              9
+
+08 L'agent IA                                                                                                    10
+
+09 Diagramme de classes (UML)                                                                                    11
+
+10 Modèle conceptuel des données (MCD)                                                                           12
+
+11 Modèle logique des données (MLD)                                                                              15
+
+12 API du backend                                                                                                17
+
+13 Parcours clés : menu et mode urgence                                                                          19
+
+14 Où faire ses courses                                                                                          21
+
+15 Organisation et planning                                                                                      22
+
+Ce document présente l'essentiel du projet. Une version détaillée (routes de l'API, attributs de chaque classe,
+stratégie de tests complète) est disponible sur demande.
+
+Zahraa Badreddine · Fatima Zreik · USJ-CI  Page 1 / 22
+Agent IA de planification des repas                                             Cahier des charges
+
+01 Le projet en bref
+
+Une application web qui aide les familles ivoiriennes à décider quoi cuisiner chaque
+jour, grâce à un agent conversationnel qui tient compte de leur temps, de leur budget
+en FCFA, de leur santé et de ce qu'il reste dans la cuisine.
+
+POUR QUI                                   CE QU'ELLE FAIT                      COMMENT
+
+Les personnes qui cuisinent                Menu de la semaine, liste de         Une application Next.js, une
+pour un foyer, en priorité à               courses en unités du marché,         base PostgreSQL et l'IA Claude
+Abidjan pour le pilote.                    lieux d'achat, suivi du stock,       d'Anthropic comme agent.
+                                           mode urgence.
+
+PRINCIPE DIRECTEUR                         Le code vérifie                      La famille confirme
+
+L'IA propose                               Allergies, budget, quantités, coûts  Rien ne change sans son accord
+
+Elle comprend la demande et
+suggère
+
+Critère de réussite du MVP : une famille suit pendant une semaine complète le menu proposé, fait ses
+courses avec la liste partagée sur WhatsApp et ne jette rien.
+
+Zahraa Badreddine · Fatima Zreik · USJ-CI                                       Page 2 / 22
+Agent IA de planification des repas                                                        Cahier des charges
+
+02 Contexte et problème
+
+Décider quoi cuisiner est une charge mentale quotidienne, surtout pour les mères de famille. La décision
+doit concilier six contraintes à la fois : le temps, les personnes du foyer, la santé, le budget, le stock et la
+variété. Résultat : on refait les mêmes plats, on achète trop ou mal, et des restes finissent à la poubelle.
+
+54,3 %                                     60 %                               79 kg
+
+des dépenses des ménages                   du gaspillage alimentaire mondial  de nourriture jetés à la maison
+pauvres ivoiriens vont à                   a lieu à la maison                 par personne et par an
+l'alimentation
+                                           PNUE, 2024                         PNUE, 2024
+ANStat, EHCVM 2021
+
+Le moment est favorable : la Côte d'Ivoire comptait 13,4 millions d'internautes fin 2025, soit 40,7 % de la
+population (DataReportal, 2026), beaucoup de familles s'organisent déjà par WhatsApp, et l'IA permet
+aujourd'hui de comprendre une demande en langage naturel pour un coût raisonnable.
+
+Positionnement
+
+SOLUTION EXISTANTE                   LIMITE POUR NOS UTILISATEURS
+
+Jow, Mealime, Samsung                Pensées pour l'Europe ou les États-Unis : ni cuisine ivoirienne, ni marchés, ni budget
+Food                                 en FCFA
+
+Sites et vidéos de recettes Aident à cuisiner un plat, pas à organiser la semaine
+
+Carnet et habitudes                  Aucune aide pour le budget, le stock ou les imprévus
+familiales
+
+Aucune solution ne combine cuisine locale, budget en FCFA, unités du marché (tas, morceau, sachet),
+partage WhatsApp, indication des lieux d'achat et agent capable de gérer les imprévus. C'est l'espace que
+nous occupons.
+
+Zahraa Badreddine · Fatima Zreik · USJ-CI                                                  Page 3 / 22
+Agent IA de planification des repas                                                                  Cahier des charges
+
+03 Objectifs et indicateurs
+
+OBJECTIF         INDICATEUR                            MESURÉ À PARTIR DE
+Gagner du temps
+                 Minutes par semaine pour décider des Délai entre génération et validation du menu,
+Moins gaspiller
+Tenir le budget  repas                                 questionnaire
+
+Mieux manger     Kilos jetés par semaine               Journal du stock (produits déclarés jetés)
+Acheter au bon
+endroit          FCFA dépensés par rapport au budget Coût des listes de courses
+Adoption         fixé
+
+                 Plats différents cuisinés dans le mois Repas marqués cuisinés
+
+                 Part des articles achetés au lieu     Retours des utilisatrices
+                 conseillé
+
+                 Part des foyers actifs après un mois  Dernière activité par foyer
+
+Les valeurs cibles seront fixées grâce à un questionnaire auprès de 30 à 50 personnes qui cuisinent pour
+un foyer, lancé dès le premier sprint. Les répondants volontaires formeront le pilote de 10 à 20 foyers.
+
+Utilisateurs                               BESOIN PRINCIPAL
+                                           Décider vite et varier sans dépasser le budget
+  PROFIL                                   Des repas rapides planifiés et une aide en cas d'imprévu
+  Mère de famille, budget serré            Transmettre menu, liste et recette par WhatsApp
+  Parent actif qui rentre tard             Des recettes simples, guidées étape par étape
+  Foyer avec aide ménagère
+  Jeune qui apprend à cuisiner
+
+SCÉNARIO : UN MARDI SOIR
+
+Aujourd'hui. Aminata rentre à 19 h, rien n'est prévu. Elle refait le même plat que la semaine dernière, et les
+aubergines achetées samedi s'abîment au fond du frigo.
+
+Avec l'application. Le matin, l'application signale les aubergines à utiliser. À 18 h : « Je rentre à 20 h, j'ai 20
+minutes. » L'agent décale la sauce à demain, propose un riz sauté aux œufs et aux aubergines avec ce qu'il
+y a, et la recette part sur WhatsApp à sa fille aînée. Rien n'est jeté.
+
+Zahraa Badreddine · Fatima Zreik · USJ-CI                                                            Page 4 / 22
+Agent IA de planification des repas                     Cahier des charges
+
+04 Périmètre du MVP
+
+Le MVP est volontairement resserré pour garantir une application qui fonctionne parfaitement à la
+soutenance : une application web en français, un chat écrit, et le parcours complet menu, courses, stock et
+urgence.
+
+DANS LE MVP                                             VERSIONS SUIVANTES
+
+    Compte et connexion                                     Messages vocaux
+    Accueil conversationnel et profil du foyer              Anglais et arabe
+    Chat écrit avec l'agent                                 Application installable et notifications
+    Menu de la semaine et remplacement d'un repas           Bilan du mois
+    Liste de courses en unités du marché, coût en           Autres situations d'urgence
+    FCFA                                                    Mode événements (baptême, Tabaski)
+    Partage WhatsApp                                        Offre premium et paiement mobile money
+    Où acheter : lieux et magasins les plus proches         Bot WhatsApp, applications mobiles
+    Stock, déduction automatique, alertes de
+    péremption
+    « Vider le frigo » et mode urgence « pas le temps
+    »
+    Apprentissage des goûts, corrigible par la famille
+    Espace admin : recettes, prix, magasins
+
+L'application ne vend ni ne livre de produits, ne pose aucun diagnostic médical et présente les dates de péremption
+comme des estimations.
+
+Zahraa Badreddine · Fatima Zreik · USJ-CI               Page 5 / 22
+Agent IA de planification des repas                                                         Cahier des charges
+
+05 Exigences
+
+Exigences fonctionnelles du MVP
+
+N°         L'APPLICATION DOIT PERMETTRE DE…
+
+EF-01 Créer un compte, se connecter et se déconnecter
+
+EF-02 Décrire son foyer en conversation avec l'agent (membres, âges, allergies, régimes, budget, équipement,
+             quartier)
+
+EF-03 Modifier son foyer et ses membres à tout moment
+
+EF-04 Noter une vingtaine de plats au départ pour amorcer les préférences
+
+EF-05 Discuter par écrit avec l'agent, la réponse s'affichant au fur et à mesure
+
+EF-06 Générer un menu de la semaine respectant budget, allergies, temps, équipement, variété et saison
+
+EF-07 Remplacer ou déplacer un repas, par un bouton ou en le demandant à l'agent
+
+EF-08 Confirmer ou refuser chaque proposition de l'agent avant qu'elle soit appliquée
+
+EF-09 Générer la liste de courses du menu, en retirant ce qui est déjà en stock
+
+EF-10 Afficher la liste en unités du marché avec un coût estimé en FCFA
+
+EF-11 Partager la liste ou une recette sur WhatsApp
+
+EF-12 Indiquer où acheter chaque article et les magasins les plus proches, avec itinéraire
+
+EF-13 Déclarer ses achats en une phrase, transformée en stock après confirmation
+
+EF-14 Déduire automatiquement le stock quand un repas est cuisiné
+
+EF-15 Être alerté avant qu'un produit s'abîme
+
+EF-16 Obtenir des recettes faisables avec ce qui reste (« vider le frigo »)
+
+EF-17 Mode urgence : 2 ou 3 options immédiates, puis réorganisation de la semaine
+
+EF-18 Donner un retour après chaque repas (cuisiné, apprécié, restes)
+
+EF-19 Voir et corriger ce que l'agent a appris
+
+EF-20 Consulter le catalogue de recettes et une recette étape par étape
+
+EF-21 Administrer recettes, ingrédients, prix et magasins (rôle admin)
+
+Exigences non fonctionnelles
+
+DOMAINE      EXIGENCE
+
+Fiabilité    Aucun repas proposé ne contient un allergène déclaré ; quantités, coûts et distances sont
+             toujours calculés par le code, jamais par l'IA
+
+Performance  Réponse de l'agent visible en moins de 3 s ; menu de la semaine en moins de 30 s ;
+             pages en moins de 2 s en 4G
+
+Zahraa Badreddine · Fatima Zreik · USJ-CI                                                               Page 6 / 22
+Agent IA de planification des repas                                                          Cahier des charges
+
+Ergonomie       Pensée d'abord pour le téléphone ; premier menu obtenu en moins de 10 minutes ;
+                bouton urgence toujours visible
+
+Sécurité        HTTPS, mots de passe chiffrés, clés d'API uniquement sur le serveur, chaque foyer ne
+                voit que ses données
+
+Données personnelles Consentement pour la santé et la localisation (loi n° 2013-450), suppression du compte
+                                    possible, minimum de données envoyé à l'IA
+
+Disponibilité   Menu, liste et stock restent utilisables si l'IA est indisponible
+
+Coûts           Coût de l'IA mesuré par message et plafonné
+
+Maintenabilité  TypeScript, un seul projet, services externes isolés derrière une interface
+
+Zahraa Badreddine · Fatima Zreik · USJ-CI                                                    Page 7 / 22
+Agent IA de planification des repas                                                                    Cahier des charges
+
+06 Cas d'utilisation
+
+Quatre acteurs utilisent le système. Le parent déclenche presque tous les cas ; l'agent intervient dans ceux
+qui demandent de comprendre ou de proposer ; la personne qui fait les courses reçoit la liste et les recettes
+par WhatsApp, sans compte ; l'administratrice tient le catalogue.
+
+      Parent                                      Application (MVP)                                       Agent IA
+Administratrice                                                    Créer son compte et se connecter         (Claude)
+                                                                      Décrire son foyer en discutant
+                                                                    Gérer son foyer et ses membres      Personne qui
+                                                                     Recevoir le menu de la semaine    fait les courses
+                                                                               Modifier un repas
+
+                                                                 Confirmer une proposition de l'agent
+                                                                     Mode urgence « pas le temps »
+                                                                                  Vider le frigo
+                                                                             Déclarer ses achats
+                                                                    Donner un retour après un repas
+                                                                        Recevoir la liste de courses
+                                                                               Savoir où acheter
+                                                                           Partager sur WhatsApp
+                                                                     Gérer recettes, prix et magasins
+
+                                           Figure 1. Diagramme de cas d'utilisation du MVP
+
+Zahraa Badreddine · Fatima Zreik · USJ-CI                                                              Page 8 / 22
+Agent IA de planification des repas                                                                                                    Cahier des charges
+
+07 Architecture et choix techniques
+
+L'application tient en un seul projet Next.js, une base PostgreSQL et un seul service externe indispensable,
+l'API Claude. WhatsApp et Google Maps sont ouverts par un simple lien, sans serveur ni clé.
+
+                                           Projet Next.js · un seul déploiement
+
+                  Utilisatrice                      Interface (React)
+               mobile, en HTTPS            chat, menu, courses, stock, admin
+
+                              liens                                   JSON et flux SSE
+
+              WhatsApp, Maps                    Routes API (backend)
+              ouverts par un lien,           session Auth.js, validation zod
+              sans serveur ni clé
+                                            Planificateur                             Agent                           API Claude
+                                           filtres et contrôles                  boucle et outils                  Anthropic, externe
+
+                                                Courses                   Stock
+                                           coûts et magasins     journal et péremption
+
+                                           Prisma · accès typé à la base
+
+BESOIN                                                                                   PostgreSQL                POURQUOI
+Application                                                                                    toutes les données
+                                                                                                                   Interface et backend dans un seul
+              Trait plein : notre code. Pointillés : service externe, toujours derrière une interface à nous.      projet, un seul langage
+
+                                                      Figure 2. Architecture générale                              Relationnelle, migrations et requêtes
+                   CHOIX                                                                                           typées
+                   Next.js, React, TypeScript
+                                                                                                                   Compréhension du langage naturel
+Base de données PostgreSQL + Prisma                                                                                et appel d'outils
+
+Intelligence  Claude (Anthropic), SDK officiel                                                                     Sessions sécurisées intégrées à
+artificielle  Auth.js + bcrypt                                                                                     Next.js
+
+Connexion                                                                                                          Chaque entrée et chaque action de
+                                                                                                                   l'agent est vérifiée
+Validation    zod
+                                                                                                                   Gratuits, sans compte professionnel
+Cartes et partage Liens Google Maps et WhatsApp
+                                                                                                                   Tests des calculs et des parcours
+Tests         Vitest, Playwright                                                                                   complets
+
+Hébergement   Local en développement, plateforme Next.js et                                                        Offres gratuites suffisantes pour le
+              PostgreSQL hébergé pour la démonstration                                                             pilote
+
+La version 0.1 prévoyait une interface et un backend séparés. Next.js a été retenu pour n'avoir qu'un seul
+projet à développer, tester et déployer à deux, avec TypeScript partout.
+
+Zahraa Badreddine · Fatima Zreik · USJ-CI                                                                                              Page 9 / 22
+Agent IA de planification des repas                                                  Cahier des charges
+
+08 L'agent IA
+
+L'agent ne modifie jamais la base de données directement. Il dispose d'une liste fermée d'outils fournis par
+notre code, qui calcule, vérifie et enregistre.
+
+CLAUDE COMPREND                            LE CODE CONTRÔLE                   LA FAMILLE DÉCIDE
+
+Interprète « jeudi je rentre tard »,       Filtre les allergènes, additionne  Chaque proposition s'affiche
+choisit les outils, propose et             les quantités, calcule coûts,      avec un bouton Confirmer ; rien
+explique ses choix.                        distances et stock.                ne change sans elle.
+
+TYPE         OUTILS                                                           EFFET
+D'OUTIL
+Lecture      Profil du foyer, menu en cours, stock, recherche de recettes,    Aucun
+             recettes faisables avec le stock, lieux d'achat
+Proposition
+             Mise à jour du profil, menu de la semaine, changement de repas,  Appliqué après confirmation et
+Écriture     achats déclarés, mode urgence                                    revérification
+
+             Liste de courses d'un menu validé, retour après repas,           Enregistré par le code
+             préférence apprise
+
+Garde-fous
+
+    Allergies : filtrées par le code avant que l'IA voie les recettes, puis revérifiées avant enregistrement.
+    Santé : jamais d'avis médical ; les conseils sont présentés comme une aide.
+    Données : l'IA ne reçoit ni email, ni nom complet, ni position GPS.
+    Coûts : modèle Claude Sonnet par défaut, mise en cache, quota de messages et plafond de dépenses.
+
+Zahraa Badreddine · Fatima Zreik · USJ-CI                                                             Page 10 / 22
+Agent IA de planification des repas                                                                                                                                                                                                                            Cahier des charges
+
+09 Diagramme de classes (UML)
+
+Le MVP repose sur 23 classes réparties en cinq domaines. Le stock n'est jamais modifié directement :
+chaque achat, repas cuisiné ou produit jeté ajoute un mouvement, ce qui permet de mesurer le gaspillage.
+
+                                                                                               Household
+
+                                                                               1                     0..*  1
+
+                                                                                                     11
+
+                                                                                               1              1
+
+                                                                                                     1
+
+                                                                 0..*                                                                         0..*                                                      0..*
+                                           LearnedPreference                                                                      StockItem                                                  MealPlan
+
+                  mangent                                                      comptes
+
+                                                                                        1..*                                      0..* 1                                                     1  1
+                                                                                 User
+                                    1..*                                                                                                                                              0..1   restes de                        1..*                0..*
+               HouseholdMember                                                      1                                                                                  ShoppingList                      0..*  PlannedMeal           DishRating
+
+                              1                                                                                                           journal                               1                      0..1                               0..*
+
+                                                                                                                                                                                                               1  0..*
+
+                                     0..*                                                0..* 0..*                                                  1..*                                                                       0..*              1
+               MemberRestriction                                               Conversation                                       StockMovement                                                                MealFeedback                 1
+
+                                                                                                                                                                                       1..*                                          Recipe
+                                                                                                                                                            ShoppingListItem
+                                                                                                  1  1
+
+                                                                                         0..*                               0..*                                                                                                                  1
+                                                                               Message                     AgentProposal
+                                                                                                                                                                                                                                                         1..*
+                                                                                                                                                                                                                                     RecipeIngredient
+
+                                                                       habite                                                                                              0..*                                                                    0..* 0..*
+                                                                                                                                                                               111
+                                                                                                                                                                                                                        0..* 1
+                                                                                                                                                                       Ingredient                              MarketUnit
+
+                                                                                                                                                                       11
+
+                                                                                                                                                            0..*       se vend en
+                                                                                                                                                    Price
+
+                                                                                                                                                    0..*
+
+                                                                                                                                                    relevé dans
+
+                                                                                                                                                                 0..1
+                                                                                                                                                       Store
+                                                                                                                                                       0..*
+                                                                                                                                                    situé dans
+
+                                                                                                                        0..1 1
+                                                                                                           Neighborhood
+
+                                           Figure 3. Diagramme de classes UML, vue d'ensemble
+
+DOMAINE                                    CLASSES
+
+Comptes et foyer                           User, Household, HouseholdMember, MemberRestriction, DishRating, Neighborhood
+
+Catalogue et magasins Recipe, RecipeIngredient, Ingredient, MarketUnit, Price, Store
+
+Planification                              MealPlan, PlannedMeal, MealFeedback
+
+Courses et stock                           ShoppingList, ShoppingListItem, StockItem, StockMovement
+
+Agent et apprentissage Conversation, Message, AgentProposal, LearnedPreference
+
+Zahraa Badreddine · Fatima Zreik · USJ-CI                                                                                                                                                                                                                      Page 11 / 22
+Agent IA de planification des repas                                                                                               Cahier des charges
+
+10 Modèle conceptuel des données (MCD)
+
+Le MCD décrit les données selon la méthode Merise : les entités (rectangles), les associations qui les relient
+(ovales) et leurs cardinalités. Les associations porteuses de données (NOTER, CONTENIR, LISTER)
+deviennent des tables à part entière dans le modèle logique.
+
+                                                    Utilisateur
+                                                idUtilisateur
+                                                email
+                                                motDePasseHache
+                                                role
+
+                                                                1,1
+
+                                                APPARTENIR
+
+                                                     1,n
+
+                                                         Foyer
+                                                     idFoyer
+                                                     nom
+                                                     budgetHebdo
+                                                     equipement
+
+                                     1,n        0,1  0,n          0,n          0,n                    0,n
+
+COMPOSER                             HABITER                  PLANIFIER        DIALOGUER                       APPRENDRE
+
+1,1                                        0,n       NOTER              1,1                      1,1                         1,1
+
+                                                        note                                                     Préférence
+                                                                                                                 idPreference
+  Membre              Quartier                                     Menu        Conversation                      cle
+ idMembre       idQuartier                                    idMenu           idConversation                    valeur
+ libelle        commune                                       debutSemaine     mode                              explication
+ trancheAge     nom                                           statut
+                latitude, longitude                           coutEstime                    0,n                 0,n
+           0,n
+                                                                          1,n                                   PROPOSER
+    AVOIR
+                                                              PRÉVOIR          ÉCHANGER                                    1,1
+           1,1
+                                                     0,n                1,1                   1,1              Proposition
+Restriction                                                                                                    idProposition
+idRestriction                                                     Repas             Message                    type
+type                                                              idRepas           idMessage                  contenu
+valeur                                                            date              role                       statut
+severite                                                          creneau           contenu
+                                                                  statut            jetons
+
+                                                                        1,1    0,n
+
+                                                              SERVIR           ÉVALUER
+
+                                                                   0,n                      1,1
+                                                     Recette
+                                                                               Retour repas
+                                                                               idRetour
+                                                                               cuisine
+                                                                               apprecie
+                                                                               restes
+
+                                                      Figure 4. MCD, partie 1 : foyer, planification et agent
+Les rectangles en pointillés renvoient à une entité détaillée dans l'autre partie du MCD.
+
+Zahraa Badreddine · Fatima Zreik · USJ-CI                                                                                         Page 12 / 22
+Agent IA de planification des repas                                                                               Cahier des charges
+
+Catalogue, courses et stock
+
+                      Foyer                                       Menu
+                                                                       0,1
+                      0,n
+                                                              GÉNÉRER
+                 STOCKER
+
+                      1,1                                                 1,1
+
+        Article de stock          Unité de marché        Liste de courses            Recette                     Prix
+        idArticle                 idUnite                idListe               idRecette                     idPrix
+        quantite                  libelle                totalEstime           titre                         prixFcfa
+        rangement                 equivalentGrammes      partageeLe            tempsPreparation              typeLieu
+        peremption                                                             sansCuisson                   dateReleve
+                                                    0,1                  1,n
+                 1,n         1,1                                                            1,n              1,1         0,1
+
+TRACER                DÉSIGNER       SE VENDRE EN              LISTER          CONTENIR           CONCERNER       RELEVER DANS
+                                                               quantite            quantite
+                                                              prixEstime
+
+                                                                 coche
+
+            1,1                      0,n                 0,n  0,n              0,n           0,n                                 0,n
+                                                                                                                        Magasin
+Mouvement                                                    Ingrédient                                           idMagasin
+idMouvement                                              idIngredient                                             nom
+type                                                     nom                                                      type
+quantite                                                 allergenes                                               latitude, longitude
+grammes                                                  dureeConservation
+                                                                                                                                  1,1
+
+                                                                                                                       SE SITUER
+
+                                                                                                                                 0,n
+
+                                                                                                                          Quartier
+
+                                     Figure 5. MCD, partie 2 : catalogue, courses et stock
+
+Règles de gestion
+
+N°      RÈGLE
+
+RG01 Un utilisateur appartient à un seul foyer ; un foyer peut être partagé par plusieurs utilisateurs.
+
+RG02 Un foyer est composé d'au moins un membre ; un membre peut avoir plusieurs restrictions (allergie,
+            régime, dégoût, objectif).
+
+RG03 Une restriction de sévérité « stricte » est un filtre dur : aucune recette qui la contredit n'est jamais
+            proposée au foyer.
+
+RG04 Une recette contient au moins un ingrédient, avec une quantité exprimée dans une unité de marché.
+
+RG05 Seules les recettes validées par l'administratrice peuvent être proposées dans un menu.
+
+RG06 Un foyer a au plus un menu actif par semaine ; un menu prévoit au moins un repas, chaque repas servant
+            une seule recette.
+
+RG07 Un repas peut réutiliser les restes d'un autre repas du même menu.
+
+RG08 Un menu validé génère au plus une liste de courses ; la liste ne contient que les ingrédients absents ou
+            insuffisants dans le stock.
+
+RG09 Les quantités de la liste sont arrondies à l'unité de marché supérieure ; le total de la liste est la somme des
+            prix estimés de ses articles.
+
+Zahraa Badreddine · Fatima Zreik · USJ-CI                                                                                     Page 13 / 22
+Agent IA de planification des repas        Cahier des charges
+
+RG10 Le prix retenu pour un ingrédient est la médiane des relevés récents de la ville, par type de lieu.
+
+RG11  Le stock n'est jamais modifié directement : tout achat, repas cuisiné, produit jeté ou correction crée un
+      mouvement, et aucun mouvement n'est supprimé.
+
+RG12 La date de péremption d'un article est calculée à partir de sa date d'achat, de son lieu de rangement et de
+            la durée de conservation de l'ingrédient.
+
+RG13 Une proposition de l'agent n'est appliquée qu'après confirmation ; non confirmée, elle expire au bout de
+            24 heures.
+
+RG14 Supprimer un foyer supprime ses membres, ses menus, son stock, ses conversations et ses préférences ;
+            le catalogue partagé (recettes, ingrédients, prix, magasins) n'est pas touché.
+
+Zahraa Badreddine · Fatima Zreik · USJ-CI                                                                 Page 14 / 22
+Agent IA de planification des repas                                                                  Cahier des charges
+
+11 Modèle logique des données (MLD)
+
+Chaque entité et chaque association porteuse devient une table PostgreSQL. Notation : la clé primaire est
+soulignée, les clés étrangères sont précédées de #. Toutes les tables ont aussi une date de création et de
+modification ; les montants sont des entiers en FCFA. La dernière colonne donne le nom du modèle dans le
+code (Prisma).
+
+Comptes et foyer
+
+TABLE        ATTRIBUTS                                                                               PRISMA
+                                                                                                     User
+Utilisateur  (idUtilisateur, email, motDePasseHache, nomComplet, role, consentementSante,
+             consentementLocalisation, #idFoyer)                                                     Household
+
+Foyer        (idFoyer, nom, budgetHebdoFcfa, cuisinesPreferees, equipement, jourCourses,             HouseholdMember
+             #idProprietaire, #idQuartier)                                                           MemberRestriction
+                                                                                                     DishRating
+Membre       (idMembre, libelle, trancheAge, horaires, #idFoyer)                                     Neighborhood
+
+Restriction (idRestriction, type, valeur, severite, #idMembre)
+
+NoteDePlat (#idFoyer, #idRecette, note)
+
+Quartier     (idQuartier, commune, nom, latitude, longitude)
+
+Catalogue et magasins
+
+TABLE          ATTRIBUTS                                                                             PRISMA
+                                                                                                     Ingredient
+Ingredient     (idIngredient, nom, categorie, allergenes, dureeConservation, moisDeSaison,
+               conseilConservation, #idUniteParDefaut)                                               MarketUnit
+                                                                                                     Recipe
+UniteMarche (idUnite, libelle, equivalentGrammes, #idIngredient)
+                                                                                                     RecipeIngredient
+Recette        (idRecette, titre, cuisine, typesDeRepas, tempsPreparation, tempsCuisson,             Price
+               sansCuisson, portions, difficulte, etiquettes, etapes, ideesRestes, source, validee)
+                                                                                                     Store
+LigneRecette (idLigne, quantite, optionnel, #idRecette, #idIngredient, #idUnite)
+
+Prix           (idPrix, prixFcfa, typeLieu, ville, source, dateReleve, #idIngredient, #idUnite,
+
+               #idMagasin, #idDeclarant)
+
+Magasin        (idMagasin, nom, type, adresse, latitude, longitude, horaires, #idQuartier)
+
+Planification
+
+TABLE          ATTRIBUTS                                                                             PRISMA
+                                                                                                     MealPlan
+Menu           (idMenu, debutSemaine, statut, coutEstimeFcfa, notesGeneration, #idFoyer)             PlannedMeal
+                                                                                                     MealFeedback
+Repas          (idRepas, date, creneau, portions, statut, #idMenu, #idRecette, #idRepasRestes)
+
+RetourRepas (idRetour, cuisine, apprecie, restes, commentaire, #idRepas, #idUtilisateur)
+
+Zahraa Badreddine · Fatima Zreik · USJ-CI                                                            Page 15 / 22
+Agent IA de planification des repas                                                                           Cahier des charges
+
+Courses et stock
+
+TABLE         ATTRIBUTS                                                                             PRISMA
+                                                                                                    ShoppingList
+ListeCourses (idListe, totalEstimeFcfa, partageeLe, #idFoyer, #idMenu)                              ShoppingListItem
+
+ArticleListe  (idArticleListe, quantite, prixEstimeFcfa, typeLieu, coche, #idListe, #idIngredient,  StockItem
+              #idUnite)
+                                                                                                    StockMovement
+ArticleStock  (idArticle, quantite, rangement, dateAjout, datePeremption, statut, #idFoyer,
+              #idIngredient, #idUnite)
+
+Mouvement (idMouvement, type, quantite, grammes, reference, #idArticle)
+
+Agent et apprentissage
+
+TABLE         ATTRIBUTS                                                                             PRISMA
+                                                                                                    Conversation
+Conversation (idConversation, mode, #idFoyer, #idUtilisateur)                                       Message
+                                                                                                    AgentProposal
+Message       (idMessage, role, contenu, modele, jetonsEntree, jetonsSortie, #idConversation)       LearnedPreference
+
+Proposition   (idProposition, type, contenu, statut, expireLe, #idConversation)
+
+Preference    (idPreference, cle, valeur, confiance, explication, source, active, #idFoyer)
+
+Valeurs autorisées                         VALEURS
+                                           allergie, régime, dégoût, objectif santé / stricte, préférence
+  ATTRIBUT                                 bébé, enfant, adolescent, adulte, senior
+  Restriction.type / severite              marché, supermarché, boutique
+  Membre.trancheAge                        brouillon, actif, archivé
+  Prix.typeLieu, Magasin.type              petit-déjeuner, déjeuner, dîner / prévu, cuisiné, sauté, remplacé
+  Menu.statut                              frigo, congélateur, placard / ok, à consommer vite, utilisé, jeté
+  Repas.creneau / statut                   achat, cuisiné, jeté, correction
+  ArticleStock.rangement / statut          en attente, acceptée, refusée, expirée
+  Mouvement.type
+  Proposition.statut
+
+Zahraa Badreddine · Fatima Zreik · USJ-CI                                                                     Page 16 / 22
+Agent IA de planification des repas                         Cahier des charges
+
+12 API du backend
+
+Les routes sont des routes API de Next.js sous /api, protégées par la session (sauf inscription et
+connexion). Elles répondent en JSON, sauf le chat qui répond en flux. Le foyer concerné est toujours lu dans
+la session, jamais dans la requête, et chaque corps de requête est validé.
+
+MÉTHODE      ROUTE                                    RÔLE
+
+COMPTE       /api/register                            Créer un compte
+POST         /api/auth/…                              Connexion, déconnexion, session (Auth.js)
+—            /api/account/password                    Changer son mot de passe
+PUT          /api/account                             Supprimer son compte et son foyer
+DELETE
+FOYER        /api/household                           Lire ou modifier le foyer (budget, quartier,
+GET, PUT                                              équipement)
+                                                      Ajouter un membre
+POST         /api/household/members                   Modifier ou retirer un membre et ses restrictions
+PUT, DELETE  /api/household/members/:id               Notes de plats du départ
+POST         /api/household/ratings                   Voir, corriger ou désactiver ce que l'agent a
+GET, PATCH   /api/household/learned(/:id)             appris
+
+AGENT        /api/chat/messages                       Envoyer un message ; réponse en flux
+POST         /api/chat/conversations/:id              Historique
+GET          /api/chat/proposals/:id/accept           Appliquer une proposition après revérification
+POST         /api/chat/proposals/:id/reject           Refuser une proposition
+POST         /api/emergency                           Mode urgence : 2 ou 3 options classées par
+POST                                                  rapidité
+
+MENUS ET REPAS                                        Générer un menu brouillon
+                                                      Menu de la semaine en cours
+POST         /api/meal-plans/generate                 Valider le menu
+                                                      Déplacer ou remplacer un repas
+GET          /api/meal-plans/current                  Marquer cuisiné (déduit le stock)
+POST         /api/meal-plans/:id/activate             Retour après le repas
+
+PATCH        /api/planned-meals/:id                   Générer la liste (stock déduit)
+POST         /api/planned-meals/:id/cooked            Lire la liste, cocher un article
+                                                      Texte et lien WhatsApp
+POST         /api/planned-meals/:id/feedback          Découpage par lieu et magasins conseillés
+                                                      Magasins triés par distance
+COURSES, MAGASINS ET STOCK
+
+POST         /api/meal-plans/:id/shopping-list
+
+GET, PATCH   /api/shopping-lists/:id(/items/:itemId)
+GET          /api/shopping-lists/:id/share
+
+GET          /api/shopping-lists/:id/where-to-buy
+GET          /api/stores
+
+Zahraa Badreddine · Fatima Zreik · USJ-CI                   Page 17 / 22
+Agent IA de planification des repas             Cahier des charges
+
+GET   /api/stock                                Stock, produits à consommer vite
+POST  /api/stock/purchases                      Déclarer des achats
+                                                Corriger une quantité, déclarer un produit jeté
+PATCH, POST /api/stock/:id(/thrown)
+                                                Catalogue filtré, recette étape par étape
+RECETTES, PRIX ET ADMINISTRATION                Déclarer un prix observé
+                                                Gestion du catalogue (rôle admin)
+GET   /api/recipes(/:id)
+                                                Usage, coût de l'IA, indicateurs
+POST  /api/prices/report
+CRUD  /api/admin/recipes, ingredients, prices,
+      stores
+GET   /api/admin/stats
+
+Codes de réponse : 200 succès, 201 créé, 400 données invalides, 401 non connecté, 403 interdit, 404 introuvable, 429
+trop de requêtes. Les erreurs renvoient un code et un message lisible en français.
+
+Zahraa Badreddine · Fatima Zreik · USJ-CI       Page 18 / 22
+Agent IA de planification des repas                                                                                                             Cahier des charges
+
+13 Parcours clés : menu et mode urgence
+
+Générer le menu de la semaine
+
+  1                             2                    3                                              4                                            5
+
+Filtres                        Score                Composition                                    Vérification                                 Validation
+
+Le code écarte                 Coût, saison, stock  Claude choisit parmi                           Le code contrôle                             La famille ajuste et
+allergènes, régimes            à écouler, variété,  les 30 meilleures et                           budget, allergies et                         valide ; la liste est
+et recettes                    goûts                explique                                       temps                                        générée
+incompatibles
+
+                               Interface            Routes API                                     Planificateur                    API Claude  PostgreSQL
+
+Utilisatrice
+
+Appuie sur Menu de la semaine
+
+                                     POST /api/meal-plans/generate
+
+                                                                             Lit profil, restrictions, stock, historique
+
+                                                                                                   Données du foyer
+
+                                                                                    Filtres durs et score
+                                                                        30 recettes compatibles avec leur coût
+
+                                                                             Contexte, recettes candidates, consignes
+
+                                                                             Menu composé et explication
+
+                                                                             Vérification du menu
+
+                                                                        alt  [menu valide]
+
+                                                                             OK
+                                                                                      [menu invalide]
+
+                                                                             Raison du refus
+                                                                                Nouvelle composition avec la raison
+
+                                                                             Menu corrigé
+
+              Affiche le menu            Menu brouillon et explication                             Enregistre le menu en brouillon
+              Valide le menu         POST /api/meal-plans/:id/activate                              Menu actif et liste de courses
+
+                                               Confirmation et liste
+
+                               Figure 6. Diagramme de séquence : génération du menu de la semaine
+
+Zahraa Badreddine · Fatima Zreik · USJ-CI                                                                                                       Page 19 / 22
+Agent IA de planification des repas                                                                                                                   Cahier des charges
+
+Mode urgence « pas le temps »
+
+Le bouton urgence est visible sur tous les écrans. L'utilisatrice décrit sa situation (« j'ai 15 minutes, on est 4
+») ; l'agent appelle l'outil d'urgence, le code cherche les recettes faisables uniquement avec le stock, dans
+le temps donné et sans allergène, et l'agent répond en quelques secondes avec 2 ou 3 options classées par
+rapidité. Une fois l'option choisie et confirmée, la semaine est réorganisée : le plat prévu ce soir est décalé à
+demain. Si rien n'est faisable, l'agent propose une solution de secours honnête (garba ou alloco à acheter à
+côté).
+
+                                               Interface                              Routes API                                   API Claude         PostgreSQL
+
+Utilisatrice
+
+Bouton urgence, j'ai 15 minutes, on est 4
+
+                                                          POST /api/emergency
+
+                                                                                                  Lit stock, restrictions, menu du jour
+
+                                                                                                  Situation, contexte, outils
+
+                                                                                                  Appel de l'outil planEmergency
+
+                                                                                                  Recettes faisables avec le stock en 15 min
+
+                                                                                                  Recettes compatibles
+
+                                                                                                  3 options classées par rapidité
+
+                                                                                      Réponse et proposition de réorganisation
+
+                                                                                                  Enregistre la proposition en attente
+
+                                               Réponse en flux et carte Confirmer
+
+              Choisit une option et confirme
+
+                                               POST /api/chat/proposals/:id/accept
+
+                                                                                                  Revérifie, remplace le repas, décale le plat prévu
+
+                                                          Menu mis à jour et recette
+
+              Recette à partager sur WhatsApp
+
+              Figure 7. Diagramme de séquence : mode urgence « pas le temps »
+
+Zahraa Badreddine · Fatima Zreik · USJ-CI                                                                                                             Page 20 / 22
+Agent IA de planification des repas        Cahier des charges
+
+14 Où faire ses courses
+
+L'agent découpe la liste en trois blocs (marché, supermarché, boutique du quartier) selon les prix relevés,
+puis indique les magasins les plus proches avec un bouton Itinéraire qui ouvre Google Maps.
+
+    Position : le quartier indiqué à l'accueil, ou la position du téléphone si l'utilisatrice l'accepte (jamais
+    enregistrée).
+    Magasins : 20 à 30 marchés, supermarchés et boutiques saisis par l'équipe dans les communes du
+    pilote.
+    Choix du lieu : le moins cher pour chaque article ; à moins de 10 % d'écart, le lieu où se trouve déjà le
+    reste de la liste.
+    Évolution : recherche élargie via Google Places ou OpenStreetMap après le MVP.
+
+Sécurité et données personnelles
+
+Les allergies sont des données de santé et la position une donnée personnelle : elles sont collectées avec
+un consentement explicite, limitées au nécessaire et supprimées avec le compte. Le projet respecte la loi
+ivoirienne n° 2013-450 sous le contrôle de l'ARTCI ; les formalités seront cadrées avant tout lancement
+public, le pilote se faisant avec des testeurs informés.
+
+Zahraa Badreddine · Fatima Zreik · USJ-CI  Page 21 / 22
+Agent IA de planification des repas                                                  Cahier des charges
+
+15 Organisation et planning
+
+RESPONSABLE        DOMAINES
+Fatima Zreik       Foyer, recettes, catalogue, menu de la semaine, retours après repas
+Zahraa Badreddine  Liste de courses, unités du marché, où acheter, stock et péremption
+Ensemble           Base de données, agent IA, mode urgence, tests de bout en bout, soutenance
+
+Le code est hébergé sur GitHub avec une branche stable protégée et une pull request relue par l'autre
+membre pour chaque fonctionnalité. Les tâches sont suivies sur Trello. Le développement est assisté par
+Claude Code, encadré par un fichier de consignes commun et une relecture systématique.
+
+SPRINT OBJECTIF                      LIVRABLE
+                                     Cahier des charges, diagrammes, maquettes, dépôt GitHub
+S0  Cadrage                          Projet, base de données, connexion, données de départ, questionnaire lancé
+
+S1  Fondations
+
+S2  Foyer et recettes Profil du foyer, catalogue de recettes
+
+S3  Menu et courses Menu, liste de courses, WhatsApp, où acheter
+
+S4  Stock                            Achats, déduction, alertes, vider le frigo
+
+S5  Agent IA                         Chat, accueil conversationnel, mode urgence
+
+S6  Finitions                        Tests, pilote avec quelques foyers, soutenance
+
+Chaque sprint dure environ deux semaines. À la fin du sprint 3, le parcours menu, courses et WhatsApp fonctionne déjà
+sans IA : c'est la version de secours si le planning glisse.
+
+Zahraa Badreddine · Fatima Zreik · USJ-CI                                                      Page 22 / 22
+

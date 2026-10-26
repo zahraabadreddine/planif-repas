@@ -1,0 +1,477 @@
+DOCUMENT DE PRÉSENTATION DU PROJET
+
+Agent IA de planification
+des repas
+
+Un assistant conversationnel qui décide avec les familles quoi
+cuisiner chaque jour, selon leur temps, leur budget, leur santé et
+ce qu'il reste dans la cuisine.
+
+PRÉSENTÉ PAR       DATE            CONTEXTE
+
+Zahraa Badreddine  Septembre 2026  Présentation de l'idée
+Fatima Zreik                       avant réalisation
+SOMMAIRE
+
+Contenu du document
+
+01 Vue d'ensemble                           3
+
+02 Le problème                              3
+
+03 Pourquoi maintenant                      4
+
+04 Les utilisateurs                         5
+
+05 La solution                              6
+
+06 Concurrence et positionnement            8
+
+07 Objectifs et impact attendu              10
+
+08 Modèle économique                        11
+
+09 Validation de l'idée                     12
+
+10 Risques et limites                       12
+
+11 Pourquoi ce projet mérite d'être retenu  13
+
+Zahraa Badreddine et Fatima Zreik           2
+Agent IA de planification des repas                                 Document de présentation du projet
+
+PARTIE 01
+
+Vue d'ensemble
+
+        LE PROJET EN UNE PHRASE
+
+     Un assistant conversationnel qui décide avec les familles quoi cuisiner chaque
+     jour, selon leur temps, leur budget en FCFA, leur santé et ce qu'il reste dans la
+     cuisine.
+
+Chaque jour, dans chaque foyer, quelqu'un doit répondre à la même question : « on mange quoi au-
+jourd'hui ? ». Notre projet est un agent d'intelligence artificielle qui prend cette décision avec la fa-
+mille. Il apprend les habitudes du foyer, propose les menus de la semaine, prépare la liste de courses
+et limite le gaspillage.
+L'application est pensée pour la Côte d'Ivoire : recettes locales et multiculturelles, budget en FCFA, prix
+des marchés, unités réelles d'achat (tas, morceau, sachet) et partage par WhatsApp. Un mode ur-
+gence propose en quelques secondes un repas faisable avec ce qu'il y a à la maison quand un im-
+prévu arrive.
+
+    Ce document présente l'idée : le problème, les personnes concernées, la solution imaginée et ce qui la
+    rend unique. Les choix de réalisation feront l'objet d'une étape ultérieure.
+
+PARTIE 02
+
+Le problème
+
+Décider quoi cuisiner est une charge mentale quotidienne, surtout pour les mères de famille et les
+personnes qui cuisinent pour tout un foyer. La décision doit concilier de nombreuses contraintes à la
+fois :
+
+Le temps                             Les personnes                  La santé
+
+L'emploi du temps de cha-            Bébés, enfants, adultes, per-  Allergies, régimes, objectifs
+cun et le temps disponible           sonnes âgées, et les goûts     de poids.
+pour cuisiner.                       de chacun.
+
+Le budget                            Le stock                       La variété
+
+Souvent serré, surtout en fin        Ce qui reste dans le frigo et  Ne pas manger toujours la
+de mois.                             le placard.                    même chose.
+
+Zahraa Badreddine et Fatima Zreik                                                                  3
+Agent IA de planification des repas                                 Document de présentation du projet
+
+Résultat : on refait toujours les mêmes plats, on achète trop ou mal, et des restes finissent à la
+poubelle.
+
+Le problème en chiffres
+
+54,3 %                               60 %                           79 kg
+
+des dépenses des ménages             du gaspillage alimentaire      de nourriture jetés à la maison
+pauvres vont à l'alimentation        mondial a lieu à la maison     par personne et par an
+(46,3 % pour les autres
+ménages)                             PNUE, 2024                     PNUE, 2024
+
+ANStat, EHCVM 2021
+
+Le gaspillage domestique n'est pas un problème de pays riches : sa moyenne ne varie que de 7 kg
+par personne et par an entre pays à revenu élevé et pays à revenu intermédiaire. Les pays chauds
+semblent même gaspiller davantage à la maison, faute de chaîne du froid solide, ce qui concerne
+directement la Côte d'Ivoire.
+
+    Ces chiffres sont nationaux ou mondiaux. Notre questionnaire (partie 09) mesurera la situation précise
+    des foyers que nous visons.
+
+PARTIE 03
+
+Pourquoi maintenant
+
+Le smartphone est déjà               L'IA est devenue               Les usages existent
+là                                   accessible
+                                                                    Beaucoup de familles s'or-
+13,4 millions d'internautes en       Comprendre une demande         ganisent déjà par messa-
+Côte d'Ivoire fin 2025, soit         en langage naturel, à l'écrit  gerie. L'application s'insère
+40,7 % de la population, et          ou à la voix, est aujourd'hui  dans ces habitudes au lieu
+92,7 % des connexions mo-            possible pour un coût rai-     d'en imposer de nouvelles.
+biles en haut débit (DataRe-         sonnable.
+portal, 2026).
+
+Zahraa Badreddine et Fatima Zreik                                                                    4
+Agent IA de planification des repas                                Document de présentation du projet
+
+PARTIE 04
+
+Les utilisateurs
+
+Profil                             Situation                       Besoin principal
+
+Mère de famille qui cuisine Foyer avec enfants, budget serré       Décider vite et varier sans dépasser le
+                                                                   budget
+Parent actif                       Rentre tard, peu de temps en
+                                   semaine                         Des repas rapides planifiés et une aide
+                                                                   en cas d'imprévu
+Foyer avec aide ménagère           Une personne décide, une autre
+                                   cuisine ou fait les courses     Transmettre menu, liste et recette par
+                                                                   WhatsApp
+Jeune qui apprend à                Étudiant ou jeune actif
+cuisiner                                                           Des recettes simples et une cuisine
+                                                                   guidée
+Organisateur d'événement           Baptême, fête religieuse,
+                                   anniversaire                    Quantités, budget et préparation pour
+                                                                   beaucoup de personnes
+
+Scénario : un mardi soir                                      AVEC L'APPLICATION
+
+AUJOURD'HUI                                                   À 7 h, l'agent lui rappelle que les aubergines
+                                                              doivent être utilisées ce soir. À 18 h, sa réunion
+Aminata rentre du travail à 19 h. Rien n'est                  déborde : « Je rentre à 20 h, j'ai 20 minutes. »
+prévu. Elle ouvre le frigo, hésite, envoie quel-              L'agent décale la sauce à demain et propose
+qu'un acheter du poisson et refait le même                    un riz sauté aux œufs avec ce qu'il y a. La re-
+plat que la semaine dernière. Les aubergines                  cette part sur WhatsApp à sa fille aînée, qui
+achetées samedi s'abîment au fond du frigo.                   commence la cuisson. Rien n'est jeté.
+
+Ce que veulent les utilisateurs
+
+En tant que…           je veux…                                    afin de…
+parent                                                             ne pas remplir un long formulaire
+                       décrire mon foyer en discutant avec
+                       l'agent                                     ne plus avoir à décider chaque
+                                                                   jour
+parent                 recevoir un menu de la semaine adapté à     m'adapter à un imprévu
+                       mon budget et aux allergies
+                                                                   acheter la bonne quantité
+parent                 modifier un repas simplement en le
+                       demandant
+
+personne qui fait les  recevoir la liste en unités du marché sur
+courses                WhatsApp
+
+Zahraa Badreddine et Fatima Zreik                                                                                 5
+Agent IA de planification des repas                         Document de présentation du projet
+
+En tant que…   je veux…                                     afin de…
+parent pressé
+               obtenir un plat faisable en 15 minutes avec  nourrir la famille sans stress
+parent         ce que j'ai
+parent
+organisateur   déclarer mes achats à la voix                tenir le stock sans effort
+
+parent         savoir quoi cuisiner avec ce qui reste       ne rien jeter
+
+débutant       préparer un repas pour 40 personnes          maîtriser les quantités et le
+                                                            budget
+
+               voir chaque mois l'argent économisé et le    mesurer ce que l'application
+               gaspillage évité                             m'apporte
+
+               être guidé étape par étape                   réussir des plats nouveaux
+
+PARTIE 05
+
+La solution : un agent conversationnel
+
+L'utilisateur ne navigue presque plus dans des menus : il parle à l'agent, à l'écrit ou à la voix, et les
+écrans servent surtout à afficher et confirmer. Par exemple :
+
+   « Remplace le poisson de mercredi, on en a déjà mangé. »
+   « Jeudi je rentre tard, propose un truc rapide. »
+   « On reçoit 6 personnes samedi, budget 15 000 FCFA, un invité ne mange pas de porc. »
+   « Qu'est-ce que je peux faire avec ce qui reste ? »
+
+L'agent apprend à partir de retours simples après chaque repas : cuisiné ou non, apprécié ou non,
+restes ou non. Plus la famille l'utilise, mieux il la connaît, et il explique toujours ce qu'il a appris.
+
+   Parcours utilisateur
+
+Le parcours tourne en boucle chaque semaine, avec des propositions de plus en plus adaptées au
+foyer.
+
+1  Accueil conversationnel
+
+   Une seule fois : l'agent découvre le foyer comme dans une discussion (membres, âges, allergies,
+   budget, horaires, cuisines préférées). La famille note une vingtaine de plats et peut ajouter ses
+   propres recettes dans un carnet familial.
+
+Zahraa Badreddine et Fatima Zreik                                                                     6
+Agent IA de planification des repas  Document de présentation du projet
+
+2  Menu de la semaine
+
+   Chaque dimanche, l'agent propose un menu qui respecte budget, temps, allergies, variété, saisons
+   et équilibre. Il prévoit des restes réutilisables : la sauce graine du dimanche devient le repas du
+   lundi soir.
+
+3  Liste de courses
+
+   Il additionne les ingrédients, retire ce qui est déjà à la maison et parle en unités réelles (tas, mor-
+   ceau, sachet). Il estime le coût en FCFA et envoie la liste sur WhatsApp à la personne qui fait les
+   courses.
+
+4  Courses et stock
+
+   Au retour : « j'ai acheté 2 poissons et un tas de tomates ». En cas de remplacement, l'agent adapte
+   les recettes et donne des conseils de conservation adaptés au climat chaud.
+
+5  Cuisine du jour
+
+   Rappel le matin (« pense à sortir la viande du congélateur »). Si une aide ménagère cuisine, elle re-
+   çoit la recette, en audio si besoin. Les débutants sont guidés étape par étape.
+
+6  Anti-gaspillage
+
+   Le stock est déduit automatiquement des achats et des repas cuisinés. L'agent prévient avant
+   qu'un produit s'abîme et l'intègre dans un prochain repas.
+
+7  Bilan du mois
+
+   FCFA économisés, kilos non jetés, variété des plats. L'agent explique ce qu'il a appris et la famille
+   peut le corriger.
+
+   Mode événements. Pour un baptême, une Tabaski ou un anniversaire (« samedi en huit, 40
+   personnes, 150 000 FCFA »), l'agent prépare le menu, les quantités, la liste d'achats et l'organi-
+   sation de la préparation sur plusieurs jours.
+
+Zahraa Badreddine et Fatima Zreik                                                                           7
+Agent IA de planification des repas                  Document de présentation du projet
+
+   Le mode urgence
+
+Un bouton toujours visible : l'utilisateur décrit sa situation, et l'agent répond en quelques secondes
+avec deux ou trois options faisables tout de suite, classées par rapidité. Ensuite, il réorganise auto-
+matiquement le reste de la semaine.
+
+Situation            Ce que dit l'utilisateur        Réponse de l'agent
+Pas le temps         « J'ai 15 minutes, on est 4. »
+                                                     Des plats faisables uniquement avec ce qu'il y a,
+Invités surprise     « 5 personnes arrivent dans     puis une cuisine guidée express
+                     une heure. »
+Plus de gaz ou de                                    Quantités recalculées, un plat qui se partage
+courant              « Plus de gaz ce soir. »        facilement, une petite liste pour la boutique du
+                                                     quartier
+Fin de mois          « Il me reste 2 000 FCFA
+                     jusqu'à vendredi. »             Repas sans cuisson ou très courts (salades,
+Quelqu'un est        « Mon fils a de la fièvre. »    attiéké, avocat) et produits du frigo à consommer
+malade                                               en priorité
+Rien n'est faisable  « Je n'ai rien. »
+                                                     Fin de semaine réorganisée avec le stock et des
+                                                     plats économiques
+
+                                                     Repas légers adaptés (bouillon, bouillie), sans
+                                                     jamais remplacer un avis médical
+
+                                                     Une solution de secours honnête : un garba ou un
+                                                     alloco à acheter à côté
+
+C'est la fonction la plus parlante de l'application : elle aide la famille précisément au moment
+où le stress est le plus fort.
+
+PARTIE 06
+
+Concurrence et positionnement
+
+Solution             Points forts                    Limites pour nos utilisateurs
+Jow
+Mealime              Menus et liste liés aux         Pensé pour la France : ni cuisine ivoirienne, ni
+Samsung Food         supermarchés                    marchés
+
+                     Planning simple, liste          En anglais, recettes occidentales, pas de
+                     automatique                     budget en FCFA
+
+                     Nombreuses recettes, suivi du   Saisie manuelle lourde, aucun contexte local
+                     garde-manger
+
+Zahraa Badreddine et Fatima Zreik                                                                       8
+Agent IA de planification des repas               Document de présentation du projet
+
+Solution             Points forts                 Limites pour nos utilisateurs
+
+Sites et vidéos de   Gratuits, très fournis       Aident à cuisiner un plat, pas à organiser la
+recettes                                          semaine
+
+Carnet et habitudes  Gratuits, adaptés aux goûts  Aucune aide pour le budget, le stock ou les
+familiales                                        imprévus
+
+Notre position : aucune de ces solutions ne combine cuisine locale, budget en FCFA, unités du
+marché, partage WhatsApp et agent conversationnel capable de gérer les imprévus. C'est
+l'espace que nous occupons.
+
+Proposition de valeur
+
+POUR                 les personnes qui cuisinent pour un foyer en Côte d'Ivoire
+
+QUI                  perdent du temps et de l'argent à décider des repas
+
+N O T R E A P P L I C A T I O N décide avec elles, en conversation, selon leur budget, leur temps, leur
+                                  santé et leur stock
+
+CONTRAIREMENT À      des applications étrangères qui ignorent la cuisine, les prix et les
+                     marchés locaux
+
+Ce qui nous différencie                           Budget en FCFA
+
+Cuisine locale et multiculturelle                 Coût par repas, marchés comparés aux super-
+                                                  marchés, repas économiques en fin de mois.
+Garba, sauce graine, placali, alloco, mêlés à
+d'autres cuisines selon les habitudes du foyer.   Saisie adaptée
+
+Unités réelles                                    Au marché, pas de ticket : les achats se dé-
+                                                  clarent à la voix.
+La liste parle en tas, morceaux, sachets et
+boîtes, pas en grammes.                           Produits de saison et stock déduit
+
+Partage WhatsApp                                  Les produits de saison sont privilégiés, et le
+                                                  stock est déduit plutôt que saisi à la main.
+Liste ou recette envoyée en un geste à la per-
+sonne qui fait les courses ou la cuisine.
+
+Zahraa Badreddine et Fatima Zreik                                                                        9
+Agent IA de planification des repas                                       Document de présentation du projet
+
+PARTIE 07
+
+Objectifs et impact attendu
+
+Gagner du temps                                  Moins gaspiller
+
+Réduire le temps passé à décider quoi cuisiner.  Réduire la nourriture jetée grâce au suivi du
+                                                 stock et aux restes planifiés.
+
+Tenir le budget                                  Mieux manger
+
+Aider le foyer à respecter son budget alimen-    Varier les repas en respectant goûts, santé et
+taire en FCFA.                                   contraintes de chacun.
+
+Indicateurs de succès
+
+Indicateur                         Ce que nous mesurons
+Temps de décision                  Minutes par semaine pour décider des repas, avant et après
+
+Gaspillage                         Kilos de nourriture jetés par semaine
+
+Budget                             FCFA dépensés par semaine par rapport au budget fixé
+
+Variété                            Nombre de plats différents cuisinés dans le mois
+
+Adoption                           Part des foyers qui utilisent encore l'application après un mois
+
+Les valeurs cibles seront fixées à partir des réponses au questionnaire.
+
+Ce que l'application ne fera pas
+
+Vendre ou livrer des produits : elle aide à décider et à acheter, elle n'est pas un magasin.
+Poser un diagnostic médical ou prescrire un régime : ses conseils restent une aide.
+Garantir la fraîcheur d'un aliment à partir d'une photo.
+
+Zahraa Badreddine et Fatima Zreik                                                                    10
+Agent IA de planification des repas                     Document de présentation du projet
+
+PARTIE 08
+
+Modèle économique
+
+Le modèle est freemium : l'essentiel est gratuit pour que toutes les familles puissent en profiter, et les
+fonctions à forte valeur sont proposées dans une offre premium.
+
+Fonction                                                Gratuit  Premium
+Menu de la semaine                                         ✓          ✓
+Liste de courses et partage WhatsApp                       ✓          ✓
+Anti-gaspillage et « vider le frigo »                      ✓          ✓
+Mode urgence « pas le temps »                              ✓          ✓
+Toutes les situations d'urgence                            —          ✓
+Agent vocal complet                                        —          ✓
+Mode événements                                            —          ✓
+Suivi nutritionnel                                         —          ✓
+Carnet de recettes familial                                —          ✓
+Envoi des recettes à la personne qui cuisine, en audio     —          ✓
+
+À terme, des partenariats avec des supermarchés ou des services de livraison permettraient de
+commander la liste directement depuis l'application.
+
+Zahraa Badreddine et Fatima Zreik                                         11
+Agent IA de planification des repas    Document de présentation du projet
+
+PARTIE 09
+
+Validation de l'idée
+
+Nous voulons justifier le projet par des chiffres réels, pas par une intuition. Un questionnaire auprès de
+30 à 50 personnes qui cuisinent pour un foyer mesurera :
+
+    le temps passé chaque jour à décider du repas ;
+    la fréquence à laquelle les mêmes plats reviennent ;
+    la quantité de nourriture jetée chaque semaine ;
+    le budget alimentaire et la difficulté en fin de mois ;
+    l'intérêt pour un assistant conversationnel et le partage par WhatsApp.
+
+Les réponses permettront de confirmer le besoin et de fixer des valeurs cibles réalistes pour les indi-
+cateurs d'impact.
+
+PARTIE 10
+
+Risques et limites
+
+Risque                                 Notre réponse
+Les familles abandonnent si
+l'application demande trop d'efforts   Tout se fait en conversation, et le stock est déduit plutôt que
+Les prix des marchés varient beaucoup  saisi
+
+Les habitudes alimentaires sont très   Des prix estimés, enrichis au fil du temps par ce que déclarent
+personnelles                           les utilisateurs
+Des conseils santé mal interprétés
+                                       L'agent apprend de chaque retour, et la famille garde toujours
+Une idée trop large                    le dernier mot
+
+                                       Des suggestions présentées comme une aide, jamais comme
+                                       un avis médical
+
+                                       Une promesse centrale claire, décider quoi manger ; le reste
+                                       vient l'enrichir
+
+Zahraa Badreddine et Fatima Zreik                                                                       12
+Agent IA de planification des repas                 Document de présentation du projet
+
+PARTIE 11
+
+Pourquoi ce projet mérite d'être retenu
+
+Un vrai problème, mesurable                         Un angle que personne n'occupe
+
+Du temps, de l'argent et de la nourriture perdus    La cuisine, les prix et les usages ivoiriens.
+chaque jour dans les foyers.
+                                                    Une IA utile et encadrée
+Une idée centrée sur les familles
+                                                    Elle comprend et propose, la famille décide.
+L'application s'adapte à leur quotidien, pas l'in-
+verse.                                              Une démarche validée sur le terrain
+
+Un impact social et économique                      Nous partons des chiffres de notre questionnaire,
+                                                    pas d'une intuition.
+Moins de gaspillage, un budget mieux tenu, un
+modèle freemium crédible.
+
+Zahraa Badreddine et Fatima Zreik                   13
+
