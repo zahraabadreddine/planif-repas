@@ -22,17 +22,20 @@ export type CoutRecette = {
   sansPrix: string[];
 };
 
+export type PrixDuLieu = PrixRetenu & { placeType: PlaceType };
+
 /** Prix le plus avantageux parmi les lieux ; un prix relevé passe toujours avant une estimation. */
-export function meilleurPrix(releves: ReleveDuLieu[], maintenant: Date): PrixRetenu | null {
+export function meilleurPrix(releves: ReleveDuLieu[], maintenant: Date): PrixDuLieu | null {
   const lieux = [...new Set(releves.map((r) => r.placeType))];
   const parLieu = lieux
-    .map((lieu) =>
-      prixRetenu(
+    .map((lieu) => {
+      const prix = prixRetenu(
         releves.filter((r) => r.placeType === lieu),
         maintenant,
-      ),
-    )
-    .filter((prix): prix is PrixRetenu => prix !== null);
+      );
+      return prix ? { ...prix, placeType: lieu } : null;
+    })
+    .filter((prix): prix is PrixDuLieu => prix !== null);
   const reels = parLieu.filter((prix) => prix.nature === "releve");
   const candidats = reels.length > 0 ? reels : parLieu;
   if (candidats.length === 0) return null;

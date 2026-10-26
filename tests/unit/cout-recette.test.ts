@@ -11,10 +11,11 @@ const au = (
 ): ReleveDuLieu => ({ priceFcfa, grams: 1000, source, observedAt: recent, placeType });
 
 describe("meilleur prix d'un ingrédient", () => {
-  it("prend le lieu le moins cher", () => {
-    expect(meilleurPrix([au("market", 700), au("supermarket", 1200)], maintenant)?.fcfaParKg).toBe(
-      700,
-    );
+  it("prend le lieu le moins cher et indique ce lieu", () => {
+    expect(meilleurPrix([au("market", 700), au("supermarket", 1200)], maintenant)).toMatchObject({
+      fcfaParKg: 700,
+      placeType: "market",
+    });
   });
 
   it("préfère un prix relevé à une estimation, même plus basse", () => {
