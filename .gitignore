@@ -162,3 +162,6 @@ playwright/.cache/
 
 # Certificats
 *.pem
+
+# Textes extraits des PDF (pdftotext -layout), générés en local
+docs/texte/
