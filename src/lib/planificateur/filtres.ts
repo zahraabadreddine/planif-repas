@@ -73,3 +73,11 @@ export function restrictionsDuFoyer(membres: MembreFoyer[]): RestrictionAFiltrer
     ...membre.regimes.map((value) => ({ membre: membre.label, type: "diet" as const, value })),
   ]);
 }
+
+/** Équipements qu'une recette exige quand elle porte leur étiquette (le gaz est supposé partout). */
+export const EQUIPEMENTSREQUIS = ["four"];
+
+/** Équipements exigés par la recette que le foyer n'a pas (liste vide : elle peut être cuisinée). */
+export function equipementManquant(tags: string[], equipement: string[]): string[] {
+  return EQUIPEMENTSREQUIS.filter((requis) => tags.includes(requis) && !equipement.includes(requis));
+}
