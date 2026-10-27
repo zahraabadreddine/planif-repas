@@ -32,9 +32,9 @@ const avecIngredients = {
   },
 } as const;
 
-type LigneRecette = Awaited<ReturnType<typeof chargerRecettes>>[number];
+export type LigneRecette = Awaited<ReturnType<typeof chargerRecettes>>[number];
 
-function chargerRecettes(id?: string) {
+export function chargerRecettes(id?: string) {
   return prisma.recipe.findMany({
     where: { validated: true, ...(id ? { id } : {}) },
     include: avecIngredients,
@@ -42,7 +42,7 @@ function chargerRecettes(id?: string) {
   });
 }
 
-function lignesPourCout(recette: LigneRecette): LignePourCout[] {
+export function lignesPourCout(recette: LigneRecette): LignePourCout[] {
   return recette.ingredients.map((ligne) => ({
     ingredient: ligne.ingredient.name,
     grams: ligne.quantity * ligne.unit.gramsEquivalent,

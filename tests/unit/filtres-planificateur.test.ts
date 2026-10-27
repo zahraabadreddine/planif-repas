@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { ingredientsDepart, recettesDepart } from "../../prisma/donnees-depart";
 import { filtrerCatalogue, type RecetteResume } from "@/lib/catalogue/recherche";
-import { incompatibilites, type RestrictionAFiltrer } from "@/lib/planificateur/filtres";
+import {
+  equipementManquant,
+  incompatibilites,
+  type RestrictionAFiltrer,
+} from "@/lib/planificateur/filtres";
 
 const catalogue = new Map(ingredientsDepart.map((i) => [i.name, i]));
 const ingredientsDe = (titre: string) =>
@@ -70,5 +74,19 @@ describe("test obligatoire : jamais d'arachide pour un foyer allergique (CLAUDE.
         .ingredients.some((l) => catalogue.get(l.name)!.allergens.includes("arachide"));
       expect(contient, recette.title).toBe(false);
     }
+  });
+});
+
+describe("filtres durs : équipement", () => {
+  it("signale le four manquant pour une recette au four", () => {
+    expect(equipementManquant(["four"], ["gaz"])).toEqual(["four"]);
+  });
+
+  it("laisse passer une recette au four quand le foyer a un four", () => {
+    expect(equipementManquant(["four"], ["gaz", "four"])).toEqual([]);
+  });
+
+  it("laisse passer une recette sans équipement particulier", () => {
+    expect(equipementManquant([], [])).toEqual([]);
   });
 });
