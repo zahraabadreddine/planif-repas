@@ -29,6 +29,18 @@ export const ERREURS = {
     status: 409,
     message: "Tu as déjà 5 codes en attente. Annules-en un pour en créer un nouveau.",
   },
+  BUDGETINSUFFISANT: {
+    status: 409,
+    message: "Le budget de la semaine ne suffit pas pour un menu complet. Augmente-le ou réessaie.",
+  },
+  RECETTESINSUFFISANTES: {
+    status: 409,
+    message: "Il n'y a pas assez de recettes adaptées à ton foyer pour remplir la semaine.",
+  },
+  MENUINCOMPATIBLE: {
+    status: 409,
+    message: "Ce menu ne convient plus aux allergies ou régimes du foyer. Génère un nouveau menu.",
+  },
   TROPDEREQUETES: { status: 429, message: "Trop de tentatives. Réessaie dans quelques minutes." },
   ERREURSERVEUR: { status: 500, message: "Un problème est survenu. Réessaie plus tard." },
 } as const;
