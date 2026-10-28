@@ -33,6 +33,7 @@ export const ERREURS = {
     status: 409,
     message: "Le budget de la semaine ne suffit pas pour un menu complet. Augmente-le ou réessaie.",
   },
+  BUDGETDEPASSE: { status: 409, message: "Le menu dépasse le budget de la semaine." },
   RECETTESINSUFFISANTES: {
     status: 409,
     message: "Il n'y a pas assez de recettes adaptées à ton foyer pour remplir la semaine.",
