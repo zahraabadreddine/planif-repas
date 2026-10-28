@@ -10,6 +10,7 @@ import { nombre, pluriel } from "@/lib/catalogue/quantites";
 import type { ArticleEnregistre, ListeEnregistree } from "@/lib/courses/generation";
 import { texteWhatsApp } from "@/lib/courses/whatsapp";
 import { cx, fcfa, whatsappLink } from "@/lib/format";
+import { OuAcheter } from "./ou-acheter";
 
 const LIEUX: { type: PlaceType; titre: string; couleur: string }[] = [
   { type: "market", titre: "Marché", couleur: "text-carmin" },
@@ -268,6 +269,8 @@ export function TicketCourses({ listeDeDepart, peutModifier }: Props) {
           <path d={ZIGZAG} fill="#FFFDF7" />
         </svg>
       </div>
+
+      <OuAcheter listeId={listeDeDepart.id} />
     </>
   );
 }
