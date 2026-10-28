@@ -37,14 +37,16 @@ export type MenuEnregistre = {
 
 const listeDeTextes = z.array(z.string()).catch([]);
 
-const avecRepas = {
+export const avecRepas = {
   meals: {
-    include: { recipe: { select: { id: true, title: true, prepMinutes: true, cookMinutes: true } } },
+    include: {
+      recipe: { select: { id: true, title: true, prepMinutes: true, cookMinutes: true } },
+    },
     orderBy: [{ date: "asc" as const }, { slot: "asc" as const }],
   },
 };
 
-type LigneMenu = {
+export type LigneMenu = {
   id: string;
   weekStart: Date;
   status: PlanStatus;
@@ -63,7 +65,7 @@ type LigneMenu = {
 
 const jourIso = (date: Date) => date.toISOString().slice(0, 10);
 
-function versMenu(menu: LigneMenu): MenuEnregistre {
+export function versMenu(menu: LigneMenu): MenuEnregistre {
   return {
     id: menu.id,
     weekStart: jourIso(menu.weekStart),
@@ -86,7 +88,7 @@ function versMenu(menu: LigneMenu): MenuEnregistre {
   };
 }
 
-function exigerFoyer(session: SessionVerifiee): string {
+export function exigerFoyer(session: SessionVerifiee): string {
   if (!session.householdId) throw new ErreurApi("FOYERMANQUANT");
   return session.householdId;
 }
@@ -97,10 +99,14 @@ function decaler(date: Date, jours: number): Date {
   return decalee;
 }
 
-const ingredientsAFiltrer = (recette: LigneRecette) => recette.ingredients.map((l) => l.ingredient);
+export const ingredientsAFiltrer = (recette: LigneRecette) =>
+  recette.ingredients.map((l) => l.ingredient);
 
 /** Une recette du catalogue, sous les formes attendues par la notation et la vérification. */
-function versCandidate(recette: LigneRecette, maintenant: Date): RecetteAVerifier & RecetteANoter {
+export function versCandidate(
+  recette: LigneRecette,
+  maintenant: Date,
+): RecetteAVerifier & RecetteANoter {
   const sansPrincipal = {
     id: recette.id,
     cuisine: recette.cuisine,
@@ -117,7 +123,7 @@ function versCandidate(recette: LigneRecette, maintenant: Date): RecetteAVerifie
   return { ...sansPrincipal, principal: ingredientPrincipal(sansPrincipal) };
 }
 
-async function chargerContexte(householdId: string, weekStart: Date) {
+export async function chargerContexte(householdId: string, weekStart: Date) {
   const [foyer, stock, recents, notes] = await Promise.all([
     prisma.household.findUnique({ where: { id: householdId } }),
     prisma.stockItem.findMany({ where: { householdId, status: "useSoon" } }),
@@ -146,7 +152,10 @@ async function chargerContexte(householdId: string, weekStart: Date) {
 }
 
 /** Génère le brouillon du menu de la semaine ; un brouillon existant pour cette semaine est remplacé. */
-export async function genererMenu(session: SessionVerifiee, weekStart: Date): Promise<MenuEnregistre> {
+export async function genererMenu(
+  session: SessionVerifiee,
+  weekStart: Date,
+): Promise<MenuEnregistre> {
   const householdId = exigerFoyer(session);
   const [recettes, membres, contexte] = await Promise.all([
     chargerRecettes(),
@@ -218,7 +227,10 @@ export async function genererMenu(session: SessionVerifiee, weekStart: Date): Pr
     return plan.id;
   });
 
-  const enregistre = await prisma.mealPlan.findFirst({ where: { id, householdId }, include: avecRepas });
+  const enregistre = await prisma.mealPlan.findFirst({
+    where: { id, householdId },
+    include: avecRepas,
+  });
   if (!enregistre) throw new ErreurApi("ERREURSERVEUR");
   return versMenu(enregistre);
 }
@@ -252,7 +264,9 @@ export async function activerMenu(
     prisma.mealPlan.findFirst({
       where: { id, householdId },
       include: {
-        meals: { include: { recipe: { include: { ingredients: { include: { ingredient: true } } } } } },
+        meals: {
+          include: { recipe: { include: { ingredients: { include: { ingredient: true } } } } },
+        },
       },
     }),
     listerMembres(session),
@@ -278,7 +292,10 @@ export async function activerMenu(
     prisma.mealPlan.update({ where: { id: plan.id }, data: { status: "active" } }),
   ]);
   const liste = await genererListe(session, plan.id);
-  const actif = await prisma.mealPlan.findFirst({ where: { id: plan.id, householdId }, include: avecRepas });
+  const actif = await prisma.mealPlan.findFirst({
+    where: { id: plan.id, householdId },
+    include: avecRepas,
+  });
   if (!actif) throw new ErreurApi("ERREURSERVEUR");
   return { menu: versMenu(actif), liste };
 }

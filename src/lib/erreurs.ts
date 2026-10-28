@@ -41,6 +41,8 @@ export const ERREURS = {
     status: 409,
     message: "Ce menu ne convient plus aux allergies ou régimes du foyer. Génère un nouveau menu.",
   },
+  REPASINCOMPATIBLE: { status: 400, message: "Cette recette ne convient pas à ce repas." },
+  MENUARCHIVE: { status: 409, message: "Ce menu est terminé : il ne peut plus être modifié." },
   TROPDEREQUETES: { status: 429, message: "Trop de tentatives. Réessaie dans quelques minutes." },
   ERREURSERVEUR: { status: 500, message: "Un problème est survenu. Réessaie plus tard." },
 } as const;
