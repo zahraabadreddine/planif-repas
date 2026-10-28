@@ -8,6 +8,7 @@ import { WhatsAppIcon } from "@/components/icones";
 import { MessageErreur } from "@/components/champ-formulaire";
 import { nombre, pluriel } from "@/lib/catalogue/quantites";
 import type { ArticleEnregistre, ListeEnregistree } from "@/lib/courses/generation";
+import { texteWhatsApp } from "@/lib/courses/whatsapp";
 import { cx, fcfa, whatsappLink } from "@/lib/format";
 
 const LIEUX: { type: PlaceType; titre: string; couleur: string }[] = [
@@ -111,20 +112,6 @@ export function PreparerListe({ menuId, peutModifier }: { menuId: string; peutMo
         </div>
       )}
     </div>
-  );
-}
-
-/** Texte simple de la liste pour WhatsApp. */
-function texteWhatsApp(liste: ListeEnregistree): string {
-  return (
-    `Liste de courses · environ ${fcfa(liste.estimatedTotalFcfa)}\n\n` +
-    LIEUX.map(({ type, titre }) => {
-      const articles = liste.items.filter((a) => a.placeType === type);
-      if (articles.length === 0) return null;
-      return `${titre.toUpperCase()}\n` + articles.map((a) => `• ${a.ingredient} : ${quantite(a)}`).join("\n");
-    })
-      .filter(Boolean)
-      .join("\n\n")
   );
 }
 
