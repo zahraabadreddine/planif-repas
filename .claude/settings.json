@@ -2,7 +2,9 @@
   "permissions": {
     "deny": [
       "Read(./docs/*.pdf)",
-      "Read(./docs/texte/Cahier-des-charges.txt)",
+      "Read(./docs/texte/**)",
+      "Read(./prisma/donnees-depart.ts)",
+      "Read(./prisma/migrations/**)",
       "Read(./tsconfig.tsbuildinfo)",
       "Read(./*.xlsx)",
       "Read(./package-lock.json)",
