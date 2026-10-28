@@ -2,6 +2,9 @@
   "permissions": {
     "deny": [
       "Read(./docs/*.pdf)",
+      "Read(./docs/texte/Cahier-des-charges.txt)",
+      "Read(./tsconfig.tsbuildinfo)",
+      "Read(./*.xlsx)",
       "Read(./package-lock.json)",
       "Read(./node_modules/**)",
       "Read(./.next/**)",

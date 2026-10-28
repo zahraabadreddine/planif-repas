@@ -30,7 +30,7 @@ Ce fichier ne garde que l'essentiel (projet, règles, stack, conventions, Git, m
 | 12 | [`docs/claude/interface.md`](docs/claude/interface.md) | Écrans, style « fait main », palette |
 | 16, 17 | ce fichier | Toujours |
 
-Le texte des documents de référence (`docs/*.pdf`) se lit dans `docs/texte/*.txt`, générés localement avec `pdftotext -layout` et non commités.
+Le texte des documents de référence (`docs/*.pdf`) se trouve dans `docs/texte/*.txt`, générés localement avec `pdftotext -layout` et non commités. Ces fichiers sont très longs : **ne jamais les lire en entier**. En cas de doute seulement, chercher un mot-clé avec Grep dans `docs/texte/Cahier-des-charges-complet.txt` et ne lire que les lignes trouvées. Les fichiers de `docs/claude/` suffisent dans la plupart des cas.
 
 ---
 
@@ -310,7 +310,7 @@ Résumé en quelques lignes
 
 ## 17. Méthode de travail avec Claude Code
 
-1. **Lire d'abord** : avant une fonctionnalité, relire ce fichier, le fichier de `docs/claude/` qui correspond à la carte (tableau « Où trouver le détail ») et la partie concernée du cahier des charges dans `docs/texte/`.
+1. **Lire d'abord** : avant une fonctionnalité, relire ce fichier et le fichier de `docs/claude/` qui correspond à la carte (tableau « Où trouver le détail »). Le cahier des charges ne se consulte qu'en cas de doute : chercher le mot-clé avec Grep dans `docs/texte/Cahier-des-charges-complet.txt` et lire seulement les lignes trouvées, **jamais le fichier en entier**.
 2. **Plan avant le code** : proposer un plan court (fichiers touchés, étapes, tests) et attendre la validation avant de coder.
 3. **Une carte à la fois** : rester dans le périmètre de la carte demandée ; ne pas modifier d'autres modules sans le signaler.
 4. **Petits pas** : des changements courts et vérifiables, plutôt qu'un module entier d'un coup.
