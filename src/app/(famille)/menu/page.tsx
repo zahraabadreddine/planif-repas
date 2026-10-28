@@ -5,23 +5,30 @@ import { useState } from "react";
 import { HandArrow, HandNote } from "@/components/main-levee";
 import { CheckIcon, ShareIcon } from "@/components/icones";
 import { MealCard } from "@/components/carte-repas";
+import { ChoixRecette } from "@/components/choix-recette";
 import { UrgencyButton } from "@/components/bouton-urgence";
 import { cx, fcfa, whatsappLink } from "@/lib/format";
-import { getRecipe, household, weekPlan } from "@/lib/donnees-simulees";
+import { recipes, getRecipe, household, weekPlan as weekPlanInit } from "@/lib/donnees-simulees";
+import type { MealSlot } from "@/lib/types";
+
+type RepasCible = { dayIndex: number; mealIndex: number; slot: MealSlot; currentId: string };
 
 export default function MenuPage() {
   const todayIndex = Math.max(
     0,
-    weekPlan.findIndex((d) => d.date === household.today),
+    weekPlanInit.findIndex((d) => d.date === household.today),
   );
   const [selected, setSelected] = useState(todayIndex);
-  const day = weekPlan[selected];
+  const [plan, setPlan] = useState(weekPlanInit);
+  const [cible, setCible] = useState<RepasCible | null>(null);
+
+  const day = plan[selected];
   const meals = day.meals.map((m) => ({ ...m, recipe: getRecipe(m.recipeId)! }));
   const dayTotal = meals.reduce((sum, m) => sum + m.recipe.costFcfa, 0);
 
   const shareText =
     `Menu de la semaine (${household.weekLabel})\n` +
-    weekPlan
+    plan
       .map((d) => `${d.label} : ${d.meals.map((m) => getRecipe(m.recipeId)?.name).join(" / ")}`)
       .join("\n");
 
@@ -62,7 +69,7 @@ export default function MenuPage() {
         aria-label="Jours de la semaine"
         className="mt-4 flex justify-between gap-0.5 border-b-2 border-dashed border-biscuit pb-2.5"
       >
-        {weekPlan.map((d, i) => {
+        {plan.map((d, i) => {
           const active = i === selected;
           return (
             <button
@@ -96,7 +103,16 @@ export default function MenuPage() {
       {/* key = jour : les cartes rejouent leur animation à chaque changement de jour */}
       <div key={day.date} className="mt-3.5 flex flex-col gap-3.5">
         {meals.map((m, i) => (
-          <MealCard key={m.slot} recipe={m.recipe} slot={m.slot} tag={m.tag} delay={i * 90} />
+          <MealCard
+            key={m.slot}
+            recipe={m.recipe}
+            slot={m.slot}
+            tag={m.tag}
+            delay={i * 90}
+            onChanger={() =>
+              setCible({ dayIndex: selected, mealIndex: i, slot: m.slot, currentId: m.recipeId })
+            }
+          />
         ))}
       </div>
 
@@ -115,6 +131,30 @@ export default function MenuPage() {
         courses
       </Link>
       <UrgencyButton variant="round" />
+
+      {cible && (
+        <ChoixRecette
+          slot={cible.slot}
+          currentId={cible.currentId}
+          recipes={recipes}
+          onChoose={(recipeId) => {
+            setPlan((prev) =>
+              prev.map((d, di) =>
+                di !== cible.dayIndex
+                  ? d
+                  : {
+                      ...d,
+                      meals: d.meals.map((m, mi) =>
+                        mi !== cible.mealIndex ? m : { ...m, recipeId },
+                      ),
+                    },
+              ),
+            );
+            setTimeout(() => setCible(null), 400);
+          }}
+          onClose={() => setCible(null)}
+        />
+      )}
     </>
   );
 }

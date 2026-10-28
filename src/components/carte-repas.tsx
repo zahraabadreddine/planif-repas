@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Plate } from "./illustrations/assiette";
-import { ArrowRight } from "./icones";
+import { ArrowRight, SwapIcon } from "./icones";
 import { fcfa } from "@/lib/format";
 import type { MealSlot, Recipe } from "@/lib/types";
 
@@ -11,10 +11,11 @@ type Props = {
   slot: MealSlot;
   tag?: string;
   delay?: number;
+  onChanger?: () => void;
 };
 
 /** Carte repas : l'assiette déborde à gauche, le tag est un post-it collé en haut */
-export function MealCard({ recipe, slot, tag, delay = 0 }: Props) {
+export function MealCard({ recipe, slot, tag, delay = 0, onChanger }: Props) {
   return (
     <article
       className="relative ml-3.5 min-h-[118px] animate-slide-up rounded-[20px_26px_22px_24px] bg-white py-3.5 pl-[92px] pr-3.5"
@@ -36,12 +37,22 @@ export function MealCard({ recipe, slot, tag, delay = 0 }: Props) {
         <Link href="/recettes" className="flex h-9 items-center gap-1 text-sm font-extrabold">
           La recette <ArrowRight size={16} strokeWidth={2.8} />
         </Link>
-        <Link
-          href="/chat"
-          className="flex h-9 items-center text-[13px] font-extrabold text-carmin underline decoration-wavy underline-offset-4"
-        >
-          changer
-        </Link>
+        {onChanger ? (
+          <button
+            type="button"
+            onClick={onChanger}
+            className="flex h-9 items-center gap-0.5 text-[13px] font-extrabold text-carmin underline decoration-wavy underline-offset-4"
+          >
+            <SwapIcon size={14} /> changer
+          </button>
+        ) : (
+          <Link
+            href="/chat"
+            className="flex h-9 items-center text-[13px] font-extrabold text-carmin underline decoration-wavy underline-offset-4"
+          >
+            changer
+          </Link>
+        )}
       </div>
 
       {tag && (
