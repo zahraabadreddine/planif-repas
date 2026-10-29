@@ -34,9 +34,9 @@ const avecIngredients = {
 
 export type LigneRecette = Awaited<ReturnType<typeof chargerRecettes>>[number];
 
-export function chargerRecettes(id?: string) {
+export function chargerRecettes(id?: string, toutesLesRecettes = false) {
   return prisma.recipe.findMany({
-    where: { validated: true, ...(id ? { id } : {}) },
+    where: { ...(toutesLesRecettes ? {} : { validated: true }), ...(id ? { id } : {}) },
     include: avecIngredients,
     orderBy: { title: "asc" },
   });

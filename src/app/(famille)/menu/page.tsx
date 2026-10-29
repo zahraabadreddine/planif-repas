@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { HandArrow, HandNote } from "@/components/main-levee";
 import { CheckIcon, ShareIcon } from "@/components/icones";
@@ -13,7 +14,17 @@ import type { MealSlot } from "@/lib/types";
 
 type RepasCible = { dayIndex: number; mealIndex: number; slot: MealSlot; currentId: string };
 
+function lundiDeLaSemaine(): string {
+  const now = new Date();
+  const jour = now.getUTCDay();
+  const diff = jour === 0 ? -6 : 1 - jour;
+  const lundi = new Date(now);
+  lundi.setUTCDate(lundi.getUTCDate() + diff);
+  return lundi.toISOString().slice(0, 10);
+}
+
 export default function MenuPage() {
+  const router = useRouter();
   const todayIndex = Math.max(
     0,
     weekPlanInit.findIndex((d) => d.date === household.today),
@@ -21,6 +32,38 @@ export default function MenuPage() {
   const [selected, setSelected] = useState(todayIndex);
   const [plan, setPlan] = useState(weekPlanInit);
   const [cible, setCible] = useState<RepasCible | null>(null);
+  const [validation, setValidation] = useState(false);
+  const [erreur, setErreur] = useState<string | null>(null);
+
+  async function validerMenu() {
+    setValidation(true);
+    setErreur(null);
+    try {
+      const genRes = await fetch("/api/meal-plans/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ weekStart: lundiDeLaSemaine() }),
+      });
+      if (!genRes.ok) {
+        const body = await genRes.json().catch(() => null);
+        throw new Error(body?.error?.message ?? "Impossible de préparer le menu.");
+      }
+      const { plan: menuCree } = await genRes.json();
+
+      const actRes = await fetch(`/api/meal-plans/${menuCree.id}/activate`, {
+        method: "POST",
+      });
+      if (!actRes.ok) {
+        const body = await actRes.json().catch(() => null);
+        throw new Error(body?.error?.message ?? "Impossible de valider le menu.");
+      }
+
+      router.push("/courses");
+    } catch (e) {
+      setErreur(e instanceof Error ? e.message : "Une erreur est survenue.");
+      setValidation(false);
+    }
+  }
 
   const day = plan[selected];
   const meals = day.meals.map((m) => ({ ...m, recipe: getRecipe(m.recipeId)! }));
@@ -123,13 +166,20 @@ export default function MenuPage() {
         </HandNote>
       </div>
 
-      <Link
-        href="/courses"
-        className="press fixed bottom-[104px] left-[max(20px,calc(50%-195px))] z-40 flex h-[50px] items-center gap-2 rounded-[16px_20px_18px_14px] bg-palme px-[18px] text-sm font-extrabold text-creme"
+      {erreur && (
+        <p className="fixed bottom-[160px] left-[max(20px,calc(50%-195px))] z-40 rounded-xl bg-carmin px-4 py-2 text-xs font-bold text-creme">
+          {erreur}
+        </p>
+      )}
+      <button
+        type="button"
+        disabled={validation}
+        onClick={validerMenu}
+        className="press fixed bottom-[104px] left-[max(20px,calc(50%-195px))] z-40 flex h-[50px] items-center gap-2 rounded-[16px_20px_18px_14px] bg-palme px-[18px] text-sm font-extrabold text-creme disabled:opacity-60"
       >
-        <CheckIcon size={18} strokeWidth={3} className="text-or" /> C&apos;est bon, on fait les
-        courses
-      </Link>
+        <CheckIcon size={18} strokeWidth={3} className="text-or" />
+        {validation ? "Préparation…" : "C’est bon, on fait les courses"}
+      </button>
       <UrgencyButton variant="round" />
 
       {cible && (
