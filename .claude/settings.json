@@ -3,7 +3,6 @@
     "deny": [
       "Read(./docs/*.pdf)",
       "Read(./docs/texte/**)",
-      "Read(./prisma/donnees-depart.ts)",
       "Read(./prisma/migrations/**)",
       "Read(./tsconfig.tsbuildinfo)",
       "Read(./*.xlsx)",
