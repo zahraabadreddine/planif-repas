@@ -9,10 +9,16 @@ import { listeDeCourses, type IngredientPourListe } from "./liste";
 // session (règle 4) : une liste ou un menu d'un autre foyer est traité comme introuvable.
 
 // Sans prix connu : produits emballés au supermarché, produits frais au marché (CLAUDE.md §11).
-const CATEGORIES_SUPERMARCHE = new Set(["conserve", "épicerie", "huile", "épice", "produit laitier"]);
+const CATEGORIESSUPERMARCHE = new Set([
+  "conserve",
+  "épicerie",
+  "huile",
+  "épice",
+  "produit laitier",
+]);
 
 export function lieuParDefaut(categorie: string): PlaceType {
-  return CATEGORIES_SUPERMARCHE.has(categorie) ? "supermarket" : "market";
+  return CATEGORIESSUPERMARCHE.has(categorie) ? "supermarket" : "market";
 }
 
 export type ArticleEnregistre = {
@@ -177,7 +183,10 @@ export async function genererListe(
         })),
       },
     })),
-    stock.map((s) => ({ ingredientId: s.ingredientId, grams: s.quantity * s.unit.gramsEquivalent })),
+    stock.map((s) => ({
+      ingredientId: s.ingredientId,
+      grams: s.quantity * s.unit.gramsEquivalent,
+    })),
     ingredients,
     new Date(),
   );

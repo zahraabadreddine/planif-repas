@@ -51,8 +51,12 @@ function verifier(
 
 const codes = (problemes: ReturnType<typeof verifier>) => problemes.map((p) => p.code);
 
-const recetteDu = (menu: MenuCompose, liste: RecetteAVerifier[], jour: number, slot: "lunch" | "dinner") =>
-  liste.find((r) => r.id === menu.repas[indice(menu, jour, slot)].recetteId) as RecetteAVerifier;
+const recetteDu = (
+  menu: MenuCompose,
+  liste: RecetteAVerifier[],
+  jour: number,
+  slot: "lunch" | "dinner",
+) => liste.find((r) => r.id === menu.repas[indice(menu, jour, slot)].recetteId) as RecetteAVerifier;
 
 describe("vérification du menu", () => {
   it("accepte un menu composé par le code", () => {
@@ -115,14 +119,16 @@ describe("vérification du menu", () => {
 
   it("refuse une recette cuisinée deux fois", () => {
     const problemes = verifier((menu) => {
-      menu.repas[indice(menu, 6, "dinner")].recetteId = menu.repas[indice(menu, 0, "lunch")].recetteId;
+      menu.repas[indice(menu, 6, "dinner")].recetteId =
+        menu.repas[indice(menu, 0, "lunch")].recetteId;
     });
     expect(codes(problemes)).toEqual(["RECETTEREPETEE"]);
   });
 
   it("refuse un reste qui ne vient pas du dîner de la veille", () => {
     const problemes = verifier((menu) => {
-      menu.repas[indice(menu, 1, "lunch")].recetteId = menu.repas[indice(menu, 2, "dinner")].recetteId;
+      menu.repas[indice(menu, 1, "lunch")].recetteId =
+        menu.repas[indice(menu, 2, "dinner")].recetteId;
     });
     expect(codes(problemes)).toEqual(["RESTEINCOHERENT"]);
   });

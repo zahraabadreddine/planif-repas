@@ -10,13 +10,19 @@ import { magasinsProches, type MagasinAvecDistance } from "./distance";
 // Règle 3 : tout est calculé par le code.
 // Règle 4 : le foyer vient de la session.
 
-const SEUIL_ECART = 0.1;
-const MAGASINS_PAR_LIEU = 3;
+const SEUILECART = 0.1;
+const MAGASINSPARLIEU = 3;
 
 type PrixParLieu = { placeType: PlaceType; prix: PrixRetenu };
 
 function prixParLieu(
-  releves: { priceFcfa: number; grams: number; source: PriceSource; observedAt: Date; placeType: PlaceType }[],
+  releves: {
+    priceFcfa: number;
+    grams: number;
+    source: PriceSource;
+    observedAt: Date;
+    placeType: PlaceType;
+  }[],
   maintenant: Date,
 ): PrixParLieu[] {
   const lieux: PlaceType[] = ["market", "supermarket", "shop"];
@@ -125,7 +131,7 @@ export async function ouAcheter(
       prixMajoritaire &&
       prixMajoritaire.placeType !== moinsCher.placeType &&
       (prixMajoritaire.prix.fcfaParKg - moinsCher.prix.fcfaParKg) / moinsCher.prix.fcfaParKg <
-        SEUIL_ECART
+        SEUILECART
     ) {
       article.placeType = lieuMajoritaire;
     } else {
@@ -151,16 +157,16 @@ export async function ouAcheter(
   // Charger les magasins de chaque type de lieu concerné
   const typesUtilises = [...new Set(articles.map((a) => a.placeType))];
   const magasins = await prisma.store.findMany({
-    where: { type: { in: typesUtilises }, neighborhood: { commune: liste.household.neighborhood?.commune } },
+    where: {
+      type: { in: typesUtilises },
+      neighborhood: { commune: liste.household.neighborhood?.commune },
+    },
   });
 
   const magasinsParType = new Map<PlaceType, MagasinAvecDistance[]>();
   for (const type of typesUtilises) {
     const duType = magasins.filter((m) => m.type === type);
-    magasinsParType.set(
-      type,
-      magasinsProches(duType, latRef, lngRef, MAGASINS_PAR_LIEU, maintenant),
-    );
+    magasinsParType.set(type, magasinsProches(duType, latRef, lngRef, MAGASINSPARLIEU, maintenant));
   }
 
   return { lieux: regrouperParLieu(articles, [...magasinsParType.entries()]) };

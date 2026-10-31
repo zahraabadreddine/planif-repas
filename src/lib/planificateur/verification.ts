@@ -72,9 +72,13 @@ function verifierRecette(
     });
   }
   if (!recette.mealTypes.includes(repas.slot)) {
-    problemes.push({ code: "CRENEAU", message: `La recette du ${nomCreneau(repas)} n'est pas prévue pour ce repas.` });
+    problemes.push({
+      code: "CRENEAU",
+      message: `La recette du ${nomCreneau(repas)} n'est pas prévue pour ce repas.`,
+    });
   }
-  const soirDeSemaine = repas.slot === "dinner" && estJourDeSemaine(parametres.weekStart, repas.jour);
+  const soirDeSemaine =
+    repas.slot === "dinner" && estJourDeSemaine(parametres.weekStart, repas.jour);
   if (repas.resteDe === null && soirDeSemaine && recette.minutes > TEMPSMAXSOIRSEMAINE) {
     problemes.push({
       code: "TEMPSDEPASSE",
@@ -99,7 +103,12 @@ function verifierReste(menu: MenuCompose, repas: RepasCompose, personnes: number
     repas.coutFcfa === 0;
   return coherent
     ? []
-    : [{ code: "RESTEINCOHERENT", message: `Le reste du ${nomCreneau(repas)} ne correspond pas au dîner de la veille.` }];
+    : [
+        {
+          code: "RESTEINCOHERENT",
+          message: `Le reste du ${nomCreneau(repas)} ne correspond pas au dîner de la veille.`,
+        },
+      ];
 }
 
 /** Un dîner cuisiné en double doit avoir son reste le lendemain midi. */
@@ -108,7 +117,12 @@ function verifierDouble(menu: MenuCompose, indice: number, personnes: number): P
   if (repas.portions === personnes) return [];
   const reste = menu.repas.some((r) => r.resteDe === indice);
   if (repas.slot === "dinner" && repas.portions === 2 * personnes && reste) return [];
-  return [{ code: "RESTEINCOHERENT", message: `Les portions du ${nomCreneau(repas)} ne correspondent à aucun reste.` }];
+  return [
+    {
+      code: "RESTEINCOHERENT",
+      message: `Les portions du ${nomCreneau(repas)} ne correspondent à aucun reste.`,
+    },
+  ];
 }
 
 function verifierCouts(
@@ -120,12 +134,18 @@ function verifierCouts(
   for (const repas of menu.repas.filter((r) => r.resteDe === null)) {
     const recette = recettes.get(repas.recetteId);
     if (recette && repas.coutFcfa !== recette.coutParPortionFcfa * repas.portions) {
-      problemes.push({ code: "COUTINCORRECT", message: `Le coût du ${nomCreneau(repas)} est incorrect.` });
+      problemes.push({
+        code: "COUTINCORRECT",
+        message: `Le coût du ${nomCreneau(repas)} est incorrect.`,
+      });
     }
   }
   const somme = menu.repas.reduce((total, r) => total + r.coutFcfa, 0);
   if (menu.totalFcfa !== somme) {
-    problemes.push({ code: "COUTINCORRECT", message: "Le total du menu ne correspond pas à ses repas." });
+    problemes.push({
+      code: "COUTINCORRECT",
+      message: "Le total du menu ne correspond pas à ses repas.",
+    });
   }
   if (somme > budgetFcfa) {
     problemes.push({ code: "BUDGETDEPASSE", message: "Le menu dépasse le budget de la semaine." });
@@ -147,7 +167,10 @@ export function verifierMenu(
   menu.repas.forEach((repas, indice) => {
     const recette = parId.get(repas.recetteId);
     if (!recette) {
-      problemes.push({ code: "RECETTEINCONNUE", message: `La recette du ${nomCreneau(repas)} est introuvable.` });
+      problemes.push({
+        code: "RECETTEINCONNUE",
+        message: `La recette du ${nomCreneau(repas)} est introuvable.`,
+      });
       return;
     }
     problemes.push(...verifierRecette(repas, recette, restrictions, parametres));
@@ -156,7 +179,10 @@ export function verifierMenu(
       return;
     }
     if (cuisinees.has(repas.recetteId)) {
-      problemes.push({ code: "RECETTEREPETEE", message: `La recette du ${nomCreneau(repas)} est déjà au menu.` });
+      problemes.push({
+        code: "RECETTEREPETEE",
+        message: `La recette du ${nomCreneau(repas)} est déjà au menu.`,
+      });
     }
     cuisinees.add(repas.recetteId);
     problemes.push(...verifierDouble(menu, indice, parametres.personnes));

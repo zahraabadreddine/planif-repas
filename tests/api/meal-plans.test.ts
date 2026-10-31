@@ -209,7 +209,11 @@ describe("GET /api/meal-plans/current", () => {
     prisma.mealPlan.findFirst.mockResolvedValueOnce(planLu("active"));
     const reponse = await courant();
     expect(reponse.status).toBe(200);
-    expect((await reponse.json()).plan).toMatchObject({ id: MENU, weekStart: LUNDI, status: "active" });
+    expect((await reponse.json()).plan).toMatchObject({
+      id: MENU,
+      weekStart: LUNDI,
+      status: "active",
+    });
     expect(prisma.mealPlan.findFirst.mock.calls[0][0].where.householdId).toBe("f1");
   });
 

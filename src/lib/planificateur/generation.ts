@@ -158,7 +158,7 @@ export async function genererMenu(
 ): Promise<MenuEnregistre> {
   const householdId = exigerFoyer(session);
   const [recettes, membres, contexte] = await Promise.all([
-    chargerRecettes(undefined, true),
+    chargerRecettes(),
     listerMembres(session),
     chargerContexte(householdId, weekStart),
   ]);

@@ -219,9 +219,7 @@ describe("POST /api/meal-plans/:id/shopping-list", () => {
 
   it("déduit le stock du foyer", async () => {
     // 600 g d'aubergine en stock : il reste 400 g, donc 1 tas
-    stockItem.findMany.mockResolvedValue([
-      { ingredientId: "i-aub", quantity: 600, unit: gramme },
-    ]);
+    stockItem.findMany.mockResolvedValue([{ ingredientId: "i-aub", quantity: 600, unit: gramme }]);
     const { list } = await (await POST(requete("POST"), contexte())).json();
     const aubergine = list.items.find((a: { ingredientId: string }) => a.ingredientId === "i-aub");
     expect(aubergine).toMatchObject({ quantity: 1, estimatedPriceFcfa: 500 });
@@ -339,7 +337,10 @@ describe("listeDuMenuActif (page Courses)", () => {
   it("cherche le menu actif du foyer de la session", async () => {
     mealPlan.findFirst.mockResolvedValue(null);
     expect(await listeDuMenuActif(SESSION as never)).toBeNull();
-    expect(mealPlan.findFirst.mock.calls[0][0].where).toEqual({ householdId: "f1", status: "active" });
+    expect(mealPlan.findFirst.mock.calls[0][0].where).toEqual({
+      householdId: "f1",
+      status: "active",
+    });
   });
 
   it("renvoie le menu sans liste quand elle n'est pas encore préparée", async () => {
@@ -352,6 +353,10 @@ describe("listeDuMenuActif (page Courses)", () => {
     const actif = await listeDuMenuActif(SESSION as never);
     expect(actif?.menuId).toBe(MENU);
     expect(actif?.liste?.remainingFcfa).toBe(500);
-    expect(actif?.liste?.items[1]).toMatchObject({ ingredient: "Oignon", unit: "tas", checked: false });
+    expect(actif?.liste?.items[1]).toMatchObject({
+      ingredient: "Oignon",
+      unit: "tas",
+      checked: false,
+    });
   });
 });
