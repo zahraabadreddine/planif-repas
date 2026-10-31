@@ -42,16 +42,26 @@ export async function GET(requete: Request) {
       latRef = foyer.neighborhood.latitude;
       lngRef = foyer.neighborhood.longitude;
     } else {
-      throw new ErreurApi("DONNEESINVALIDES", "Position nécessaire : envoie lat et lng, ou configure ton quartier.");
+      throw new ErreurApi(
+        "DONNEESINVALIDES",
+        "Position nécessaire : envoie lat et lng, ou configure ton quartier.",
+      );
     }
 
-    const where: { type?: "market" | "supermarket" | "shop"; neighborhood?: { commune: string } } = {};
+    const where: { type?: "market" | "supermarket" | "shop"; neighborhood?: { commune: string } } =
+      {};
     if (type) where.type = type;
     if (foyer?.neighborhood) where.neighborhood = { commune: foyer.neighborhood.commune };
 
     const magasins = await prisma.store.findMany({ where });
     const maintenant = new Date();
-    const tries: MagasinAvecDistance[] = magasinsProches(magasins, latRef, lngRef, limit, maintenant);
+    const tries: MagasinAvecDistance[] = magasinsProches(
+      magasins,
+      latRef,
+      lngRef,
+      limit,
+      maintenant,
+    );
 
     return NextResponse.json({ stores: tries });
   } catch (erreur) {

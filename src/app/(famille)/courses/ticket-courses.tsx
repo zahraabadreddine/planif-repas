@@ -81,7 +81,9 @@ export function PreparerListe({ menuId, peutModifier }: { menuId: string; peutMo
         router.refresh();
         return;
       }
-      setErreur(await messageErreur(reponse, "La liste n'a pas pu être préparée. Réessaie plus tard."));
+      setErreur(
+        await messageErreur(reponse, "La liste n'a pas pu être préparée. Réessaie plus tard."),
+      );
     } catch {
       setErreur(HORSLIGNE);
     }
@@ -138,16 +140,15 @@ export function TicketCourses({ listeDeDepart, peutModifier }: Props) {
     changer(article.id, checked);
     setErreur(null);
     try {
-      const reponse = await fetch(
-        `/api/shopping-lists/${listeDeDepart.id}/items/${article.id}`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ checked }),
-        },
-      );
+      const reponse = await fetch(`/api/shopping-lists/${listeDeDepart.id}/items/${article.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ checked }),
+      });
       if (reponse.ok) return;
-      setErreur(await messageErreur(reponse, "L'article n'a pas pu être coché. Réessaie plus tard."));
+      setErreur(
+        await messageErreur(reponse, "L'article n'a pas pu être coché. Réessaie plus tard."),
+      );
     } catch {
       setErreur(HORSLIGNE);
     }
@@ -252,7 +253,9 @@ export function TicketCourses({ listeDeDepart, peutModifier }: Props) {
             ≈ {fcfa(listeDeDepart.estimatedTotalFcfa, false)} F
           </span>
         </div>
-        <p className="text-xs font-bold text-cacao">prix estimé d&apos;après les relevés du marché</p>
+        <p className="text-xs font-bold text-cacao">
+          prix estimé d&apos;après les relevés du marché
+        </p>
         {sansPrix > 0 && (
           <p className="mt-1 text-xs font-bold text-carmin">
             {sansPrix === 1

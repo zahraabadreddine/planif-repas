@@ -9,8 +9,8 @@ export function dateSansHeure(texte: string): Date {
 
 // strictObject : le foyer vient de la session, jamais de la requête.
 export const generationSchema = z.strictObject({
-  weekStart: z
-    .iso.date({ error: "Choisis le lundi de la semaine." })
+  weekStart: z.iso
+    .date({ error: "Choisis le lundi de la semaine." })
     .refine((texte) => dateSansHeure(texte).getUTCDay() === 1, {
       error: "La semaine commence un lundi.",
     }),

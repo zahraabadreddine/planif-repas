@@ -126,9 +126,12 @@ describe("composition du menu", () => {
       id: `chere-${c.id}`,
       principal: `chere-${c.id}`,
     }));
-    const menu = menuDe([...cheres, ...plusieurs(8, { coutParPortionFcfa: 200 })], parametres({
-      budgetFcfa: 11200,
-    }));
+    const menu = menuDe(
+      [...cheres, ...plusieurs(8, { coutParPortionFcfa: 200 })],
+      parametres({
+        budgetFcfa: 11200,
+      }),
+    );
     expect(menu.totalFcfa).toBe(11200);
     expect(menu.repas.some((r) => r.recetteId.startsWith("chere"))).toBe(false);
   });
@@ -151,9 +154,10 @@ describe("composition du menu", () => {
       ok: false,
       code: "BUDGETINSUFFISANT",
     });
-    expect(
-      composerMenu(plusieurs(10, { coutParPortionFcfa: 1000 }), parametres()),
-    ).toEqual({ ok: false, code: "BUDGETINSUFFISANT" });
+    expect(composerMenu(plusieurs(10, { coutParPortionFcfa: 1000 }), parametres())).toEqual({
+      ok: false,
+      code: "BUDGETINSUFFISANT",
+    });
   });
 
   it("refuse avec RECETTESINSUFFISANTES quand il manque des recettes", () => {

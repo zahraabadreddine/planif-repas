@@ -20,7 +20,10 @@ export function texteWhatsApp(liste: ListeEnregistree): string {
     LIEUX.map(({ type, titre }) => {
       const articles = liste.items.filter((a) => a.placeType === type);
       if (articles.length === 0) return null;
-      return `${titre.toUpperCase()}\n` + articles.map((a) => `• ${a.ingredient} : ${quantite(a)}`).join("\n");
+      return (
+        `${titre.toUpperCase()}\n` +
+        articles.map((a) => `• ${a.ingredient} : ${quantite(a)}`).join("\n")
+      );
     })
       .filter(Boolean)
       .join("\n\n")

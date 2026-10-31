@@ -32,13 +32,9 @@ const recette = (partiel: Partial<RecetteANoter> = {}): RecetteANoter => ({
 
 describe("score des recettes", () => {
   it("préfère une portion moins chère que le budget", () => {
-    expect(scoreRecette(recette({ coutParPortionFcfa: 200 }), contexte()).details.budget).toBe(
-      0.5,
-    );
+    expect(scoreRecette(recette({ coutParPortionFcfa: 200 }), contexte()).details.budget).toBe(0.5);
     expect(scoreRecette(recette({ coutParPortionFcfa: 400 }), contexte()).details.budget).toBe(0);
-    expect(scoreRecette(recette({ coutParPortionFcfa: 2000 }), contexte()).details.budget).toBe(
-      -1,
-    );
+    expect(scoreRecette(recette({ coutParPortionFcfa: 2000 }), contexte()).details.budget).toBe(-1);
   });
 
   it("compte la saison des seuls ingrédients saisonniers", () => {
@@ -66,9 +62,7 @@ describe("score des recettes", () => {
   });
 
   it("tient compte des notes de départ et des cuisines préférées", () => {
-    expect(scoreRecette(recette(), contexte({ notes: new Map([["r1", 3]]) })).details.note).toBe(
-      1,
-    );
+    expect(scoreRecette(recette(), contexte({ notes: new Map([["r1", 3]]) })).details.note).toBe(1);
     expect(scoreRecette(recette(), contexte({ notes: new Map([["r1", 1]]) })).details.note).toBe(
       -1,
     );
@@ -95,7 +89,13 @@ describe("ingrédient principal", () => {
   it("prend la viande ou le poisson avant le féculent", () => {
     const r = recette({
       ingredients: [
-        { id: "riz", category: "féculent", seasonalMonths: toutLAnnee, grams: 800, optional: false },
+        {
+          id: "riz",
+          category: "féculent",
+          seasonalMonths: toutLAnnee,
+          grams: 800,
+          optional: false,
+        },
         {
           id: "poulet",
           category: "volaille",
