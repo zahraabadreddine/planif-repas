@@ -6,10 +6,11 @@ import { UmiHead } from "@/components/umi";
 import { SauceBowl } from "@/components/illustrations/assiette";
 import { UrgencyButton } from "@/components/bouton-urgence";
 import { fcfa } from "@/lib/format";
-import { getRecipe, household, shoppingList, stock, weekPlan } from "@/lib/donnees-simulees";
+import { getRecipe, household, shoppingList, weekPlan } from "@/lib/donnees-simulees";
 import { auth } from "@/lib/auth/config";
 import { exigerSession } from "@/lib/auth/garde";
 import { nombreDeNotes } from "@/lib/foyer/notes";
+import { rafraichirPeremption } from "@/lib/stock/peremption";
 
 export default async function HomePage() {
   // Sans foyer décrit, on invite le parent à le faire (EF-03). La garde de session est dans le layout.
@@ -33,7 +34,14 @@ export default async function HomePage() {
 
   const today = weekPlan.find((d) => d.date === household.today)!;
   const dinner = getRecipe(today.meals.find((m) => m.slot === "dinner")!.recipeId)!;
-  const urgent = stock.find((s) => s.icon === "aubergine");
+
+  // EF-15 : rafraîchir les statuts de péremption et récupérer les alertes
+  const alertes =
+    session && !sansFoyer
+      ? (await rafraichirPeremption(session).catch(() => null))?.alertes ?? []
+      : [];
+  const premiereAlerte = alertes[0] ?? null;
+
   const mealsCount = weekPlan.reduce((n, d) => n + d.meals.length, 0);
   const itemsCount = shoppingList.reduce((n, b) => n + b.items.length, 0);
   const left = household.weeklyBudgetFcfa - household.spentFcfa;
@@ -127,8 +135,8 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Post-it : un produit à utiliser vite */}
-      {urgent && (
+      {/* Post-it : alerte péremption (EF-15) */}
+      {premiereAlerte && (
         <Link
           href="/stock"
           className="press paper-shadow relative mt-[18px] flex -rotate-[1.4deg] items-center gap-3 rounded-[3px_3px_10px_3px] bg-or px-3.5 py-3"
@@ -140,12 +148,26 @@ export default async function HomePage() {
           <Aubergine size={46} className="shrink-0 animate-float" />
           <span className="flex-1">
             <span className="block text-[15px] font-extrabold leading-snug">
-              {urgent.quantity} {urgent.name.toLowerCase()} s&apos;ennuient au fond du frigo
+              {premiereAlerte.quantity} {premiereAlerte.unitLabel}{" "}
+              {premiereAlerte.ingredientName.toLowerCase()} à utiliser vite
             </span>
             <span className="block font-hand text-xl font-bold leading-tight text-carmin">
-              à cuisiner avant jeudi&nbsp;!
+              {premiereAlerte.joursRestants === 0
+                ? "c’est aujourd’hui !"
+                : premiereAlerte.joursRestants === 1
+                  ? "plus qu’un jour !"
+                  : `encore ${premiereAlerte.joursRestants} jours !`}
             </span>
           </span>
+        </Link>
+      )}
+      {alertes.length > 1 && (
+        <Link
+          href="/stock"
+          className="mt-1 block text-center font-hand text-lg font-bold text-carmin"
+        >
+          + {alertes.length - 1} autre{alertes.length > 2 ? "s" : ""} produit
+          {alertes.length > 2 ? "s" : ""} à utiliser vite
         </Link>
       )}
 
