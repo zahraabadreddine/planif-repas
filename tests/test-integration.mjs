@@ -131,7 +131,6 @@ async function main() {
   assert("Inscription: status 201", 201, reg.status);
   assert("Inscription: email correct", EMAIL, reg.data?.user?.email);
   assertOk("Inscription: userId retourné", reg.data?.user?.id);
-  const userId = reg.data?.user?.id;
 
   // Doublon
   const dup = await apiJson("POST", "/api/register", {
