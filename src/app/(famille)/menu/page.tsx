@@ -7,7 +7,6 @@ import { HandArrow, HandNote } from "@/components/main-levee";
 import { CheckIcon, ShareIcon } from "@/components/icones";
 import { MealCard } from "@/components/carte-repas";
 import { ChoixRecette } from "@/components/choix-recette";
-import { UrgencyButton } from "@/components/bouton-urgence";
 import { cx, fcfa, whatsappLink } from "@/lib/format";
 import { recipes, getRecipe, household, weekPlan as weekPlanInit } from "@/lib/donnees-simulees";
 import type { MealSlot } from "@/lib/types";
@@ -180,8 +179,6 @@ export default function MenuPage() {
         <CheckIcon size={18} strokeWidth={3} className="text-or" />
         {validation ? "Préparation…" : "C’est bon, on fait les courses"}
       </button>
-      <UrgencyButton variant="round" />
-
       {cible && (
         <ChoixRecette
           slot={cible.slot}

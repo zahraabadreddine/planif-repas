@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { HandNote } from "@/components/main-levee";
-import { UrgencyButton } from "@/components/bouton-urgence";
 import { listeDuMenuActif } from "@/lib/courses/generation";
 import { sessionDeLaPage } from "../foyer/commun";
 import { PreparerListe, TicketCourses } from "./ticket-courses";
@@ -38,8 +37,6 @@ export default async function ShoppingPage() {
       ) : (
         <PreparerListe menuId={actif.menuId} peutModifier={peutModifier} />
       )}
-
-      <UrgencyButton variant="round" />
     </div>
   );
 }

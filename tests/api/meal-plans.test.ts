@@ -260,7 +260,12 @@ describe("POST /api/meal-plans/:id/activate", () => {
     expect(corps.plan.status).toBe("active");
     expect(corps.list).toEqual({ id: "liste1" });
     expect(prisma.mealPlan.updateMany).toHaveBeenCalledWith({
-      where: { householdId: "f1", status: "active", id: { not: MENU } },
+      where: {
+        householdId: "f1",
+        status: "active",
+        weekStart: new Date(`${LUNDI}T00:00:00.000Z`),
+        id: { not: MENU },
+      },
       data: { status: "archived" },
     });
     expect(genererListe).toHaveBeenCalledWith(SESSION, MENU);

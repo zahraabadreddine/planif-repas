@@ -286,7 +286,7 @@ export async function activerMenu(
 
   await prisma.$transaction([
     prisma.mealPlan.updateMany({
-      where: { householdId, status: "active", id: { not: plan.id } },
+      where: { householdId, status: "active", weekStart: plan.weekStart, id: { not: plan.id } },
       data: { status: "archived" },
     }),
     prisma.mealPlan.update({ where: { id: plan.id }, data: { status: "active" } }),

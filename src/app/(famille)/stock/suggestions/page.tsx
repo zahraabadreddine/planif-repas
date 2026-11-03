@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { HandNote, Pin } from "@/components/main-levee";
 import { ChevronLeft, ClockIcon } from "@/components/icones";
-import { UrgencyButton } from "@/components/bouton-urgence";
 import { cx } from "@/lib/format";
 
 type SuggestionRecette = {
@@ -150,8 +149,6 @@ export default function SuggestionsPage() {
           })}
         </section>
       )}
-
-      <UrgencyButton variant="round" />
     </div>
   );
 }

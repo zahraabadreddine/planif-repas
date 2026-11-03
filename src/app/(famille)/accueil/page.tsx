@@ -4,7 +4,6 @@ import { HandNote, Tape } from "@/components/main-levee";
 import { Aubergine } from "@/components/illustrations/aliments";
 import { UmiHead } from "@/components/umi";
 import { SauceBowl } from "@/components/illustrations/assiette";
-import { UrgencyButton } from "@/components/bouton-urgence";
 import { fcfa } from "@/lib/format";
 import { getRecipe, household, shoppingList, weekPlan } from "@/lib/donnees-simulees";
 import { auth } from "@/lib/auth/config";
@@ -259,8 +258,6 @@ export default async function HomePage() {
           />
         </div>
       </section>
-
-      <UrgencyButton />
     </>
   );
 }
