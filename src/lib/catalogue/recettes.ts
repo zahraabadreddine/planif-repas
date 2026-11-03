@@ -17,7 +17,7 @@ import { filtrerCatalogue, type RecetteResume } from "./recherche";
 /** Ville des prix : le pilote se déroule à Abidjan. */
 export const VILLE = "Abidjan";
 
-const avecIngredients = {
+export const avecIngredients = {
   ingredients: {
     include: {
       unit: true,

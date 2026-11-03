@@ -3,7 +3,12 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 import type { SessionVerifiee } from "@/lib/auth/garde";
 import { ErreurApi } from "@/lib/erreurs";
-import { chargerRecettes, lignesPourCout, type LigneRecette } from "@/lib/catalogue/recettes";
+import {
+  avecIngredients,
+  chargerRecettes,
+  lignesPourCout,
+  type LigneRecette,
+} from "@/lib/catalogue/recettes";
 import { coutRecette } from "@/lib/catalogue/cout";
 import { genererListe, type ListeEnregistree } from "@/lib/courses/generation";
 import { listerMembres } from "@/lib/foyer/membres";
@@ -23,7 +28,7 @@ export type RepasEnregistre = {
   servings: number;
   status: MealStatus;
   leftoverFromId: string | null;
-  recipe: { id: string; title: string; minutes: number };
+  recipe: { id: string; title: string; minutes: number; coutFcfa: number };
 };
 
 export type MenuEnregistre = {
@@ -83,6 +88,7 @@ export function versMenu(menu: LigneMenu): MenuEnregistre {
         id: repas.recipe.id,
         title: repas.recipe.title,
         minutes: repas.recipe.prepMinutes + repas.recipe.cookMinutes,
+        coutFcfa: 0,
       },
     })),
   };
@@ -235,6 +241,28 @@ export async function genererMenu(
   return versMenu(enregistre);
 }
 
+async function enrichirAvecCout(menu: MenuEnregistre): Promise<MenuEnregistre> {
+  const ids = [...new Set(menu.meals.map((m) => m.recipe.id))];
+  if (ids.length === 0) return menu;
+  const recettes = await prisma.recipe.findMany({
+    where: { id: { in: ids } },
+    include: avecIngredients,
+  });
+  const parId = new Map(recettes.map((r) => [r.id, r]));
+  const maintenant = new Date();
+  return {
+    ...menu,
+    meals: menu.meals.map((repas) => {
+      const recette = parId.get(repas.recipe.id);
+      const coutFcfa = recette
+        ? coutRecette(lignesPourCout(recette as LigneRecette), recette.servings, maintenant)
+            .totalFcfa
+        : 0;
+      return { ...repas, recipe: { ...repas.recipe, coutFcfa } };
+    }),
+  };
+}
+
 /** Menu actif du foyer, sinon le dernier brouillon, sinon null. */
 export async function lireMenuCourant(session: SessionVerifiee): Promise<MenuEnregistre | null> {
   if (!session.householdId) return null;
@@ -251,7 +279,7 @@ export async function lireMenuCourant(session: SessionVerifiee): Promise<MenuEnr
       include: avecRepas,
       orderBy: { createdAt: "desc" },
     }));
-  return menu ? versMenu(menu) : null;
+  return menu ? enrichirAvecCout(versMenu(menu)) : null;
 }
 
 /** Valide un menu : il devient le seul actif du foyer et sa liste de courses est calculée. */
