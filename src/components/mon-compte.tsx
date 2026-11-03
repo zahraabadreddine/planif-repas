@@ -10,8 +10,12 @@ import { changementMotDePasseSchema, type ChangementMotDePasse } from "@/lib/val
 
 const CHAMPS = ["currentPassword", "newPassword"] as const;
 
-/** Bloc « Mon compte » : changer son mot de passe et se déconnecter (EF-01). */
+/**
+ * Bloc « Mon compte » : changer son mot de passe et se déconnecter (EF-01).
+ * Le formulaire du mot de passe reste replié tant qu'on ne le demande pas, pour garder la page courte.
+ */
 export function MonCompte() {
+  const [ouvert, setOuvert] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
   const [succes, setSucces] = useState(false);
   const {
@@ -50,36 +54,65 @@ export function MonCompte() {
     }
 
     reset();
+    setOuvert(false);
     setSucces(true);
+  }
+
+  function fermer() {
+    reset();
+    setErreur(null);
+    setOuvert(false);
   }
 
   return (
     <section className="paper-shadow mt-6 rounded-[20px_16px_22px_18px] border-[2.5px] border-foret bg-creme p-5">
       <h2 className="font-display text-xl font-semibold text-foret">Mon compte</h2>
 
-      <form onSubmit={handleSubmit(envoyer)} noValidate className="mt-4 flex flex-col gap-4">
-        <ChampFormulaire
-          label="Mot de passe actuel"
-          type="password"
-          autoComplete="current-password"
-          erreur={errors.currentPassword?.message}
-          {...register("currentPassword")}
-        />
-        <ChampFormulaire
-          label="Nouveau mot de passe (8 caractères minimum)"
-          type="password"
-          autoComplete="new-password"
-          erreur={errors.newPassword?.message}
-          {...register("newPassword")}
-        />
-        {erreur && <MessageErreur>{erreur}</MessageErreur>}
-        {succes && (
-          <p role="status" className="text-sm font-bold text-palme">
-            Ton mot de passe a bien été changé.
-          </p>
-        )}
-        <BoutonEnvoi enCours={isSubmitting}>Changer le mot de passe</BoutonEnvoi>
-      </form>
+      {succes && (
+        <p role="status" className="mt-3 text-sm font-bold text-palme">
+          Ton mot de passe a bien été changé.
+        </p>
+      )}
+
+      {ouvert ? (
+        <form onSubmit={handleSubmit(envoyer)} noValidate className="mt-4 flex flex-col gap-4">
+          <ChampFormulaire
+            label="Mot de passe actuel"
+            type="password"
+            autoComplete="current-password"
+            autoFocus
+            erreur={errors.currentPassword?.message}
+            {...register("currentPassword")}
+          />
+          <ChampFormulaire
+            label="Nouveau mot de passe (8 caractères minimum)"
+            type="password"
+            autoComplete="new-password"
+            erreur={errors.newPassword?.message}
+            {...register("newPassword")}
+          />
+          {erreur && <MessageErreur>{erreur}</MessageErreur>}
+          <BoutonEnvoi enCours={isSubmitting}>Changer le mot de passe</BoutonEnvoi>
+          <button
+            type="button"
+            onClick={fermer}
+            className="press -mt-2 h-11 w-full font-extrabold text-cacao"
+          >
+            Annuler
+          </button>
+        </form>
+      ) : (
+        <button
+          type="button"
+          onClick={() => {
+            setSucces(false);
+            setOuvert(true);
+          }}
+          className="press mt-4 h-12 w-full rounded-[16px_12px_18px_14px] border-[2.5px] border-foret font-extrabold text-foret"
+        >
+          Changer mon mot de passe
+        </button>
+      )}
 
       <button
         type="button"

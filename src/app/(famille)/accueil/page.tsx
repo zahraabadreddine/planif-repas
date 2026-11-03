@@ -1,17 +1,47 @@
 import Link from "next/link";
-import { CalendarIcon, CartIcon, FridgeIcon, UserIcon } from "@/components/icones";
+import { ArrowRight, CalendarIcon, CartIcon, FridgeIcon, UserIcon } from "@/components/icones";
 import { HandNote, Tape } from "@/components/main-levee";
 import { Aubergine } from "@/components/illustrations/aliments";
 import { UmiHead } from "@/components/umi";
 import { SauceBowl } from "@/components/illustrations/assiette";
 import { UrgencyButton } from "@/components/bouton-urgence";
 import { fcfa } from "@/lib/format";
-import { getRecipe, household, shoppingList, stock, weekPlan } from "@/lib/donnees-simulees";
+import { getRecipe, household, shoppingList, weekPlan } from "@/lib/donnees-simulees";
+import { auth } from "@/lib/auth/config";
+import { exigerSession } from "@/lib/auth/garde";
+import { nombreDeNotes } from "@/lib/foyer/notes";
+import { rafraichirPeremption } from "@/lib/stock/peremption";
 
-export default function HomePage() {
+export default async function HomePage() {
+  // Sans foyer décrit, on invite le parent à le faire (EF-03). La garde de session est dans le layout.
+  const session = await exigerSession().catch(() => null);
+  const sansFoyer = !session?.householdId;
+  // Foyer décrit mais aucun plat noté : on invite à noter les plats (EF-04).
+  // Une personne en lecture seule ne peut pas noter : pas d'invitation pour elle.
+  const sansNotes =
+    session && !sansFoyer && session.acces !== "view"
+      ? (await nombreDeNotes(session)) === 0
+      : false;
+  // Le nom vient du compte connecté (enregistré à l'inscription) : on garde le premier mot.
+  const prenom = (await auth())?.user?.name?.trim().split(/\s+/)[0];
+  // Date du jour à Abidjan, quel que soit le pays du serveur : « mercredi 14 octobre ».
+  const aujourdhui = new Intl.DateTimeFormat("fr-FR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    timeZone: "Africa/Abidjan",
+  }).format(new Date());
+
   const today = weekPlan.find((d) => d.date === household.today)!;
   const dinner = getRecipe(today.meals.find((m) => m.slot === "dinner")!.recipeId)!;
-  const urgent = stock.find((s) => s.icon === "aubergine");
+
+  // EF-15 : rafraîchir les statuts de péremption et récupérer les alertes
+  const alertes =
+    session && !sansFoyer
+      ? (await rafraichirPeremption(session).catch(() => null))?.alertes ?? []
+      : [];
+  const premiereAlerte = alertes[0] ?? null;
+
   const mealsCount = weekPlan.reduce((n, d) => n + d.meals.length, 0);
   const itemsCount = shoppingList.reduce((n, b) => n + b.items.length, 0);
   const left = household.weeklyBudgetFcfa - household.spentFcfa;
@@ -22,12 +52,19 @@ export default function HomePage() {
       <header className="flex items-start justify-between gap-3">
         <div>
           <HandNote className="text-[21px] text-carmin" tilt={-2}>
-            {household.todayLabel.toLowerCase()}
+            {aujourdhui}
           </HandNote>
           <h1 className="retro mt-1 text-[26px] leading-[1.3]">
-            On mange quoi ce soir,
-            <br />
-            {household.firstName}&nbsp;?
+            On mange quoi ce soir
+            {prenom ? (
+              <>
+                ,
+                <br />
+                {prenom}&nbsp;?
+              </>
+            ) : (
+              <>&nbsp;?</>
+            )}
           </h1>
         </div>
         <Link
@@ -38,6 +75,38 @@ export default function HomePage() {
           <UserIcon size={26} />
         </Link>
       </header>
+
+      {sansFoyer && (
+        <Link
+          href="/foyer"
+          className="press paper-shadow relative mt-5 flex items-center gap-3 rounded-[20px_16px_22px_18px] border-[2.5px] border-foret bg-or p-4 text-foret"
+        >
+          <UmiHead size={44} />
+          <span className="flex-1">
+            <span className="block font-display text-lg font-semibold leading-tight">
+              Décris ton foyer
+            </span>
+            <span className="text-sm font-bold">pour recevoir ton premier menu de la semaine</span>
+          </span>
+          <ArrowRight size={22} strokeWidth={2.8} />
+        </Link>
+      )}
+
+      {sansNotes && (
+        <Link
+          href="/foyer/plats"
+          className="press paper-shadow relative mt-5 flex items-center gap-3 rounded-[20px_16px_22px_18px] border-[2.5px] border-foret bg-or p-4 text-foret"
+        >
+          <UmiHead size={44} />
+          <span className="flex-1">
+            <span className="block font-display text-lg font-semibold leading-tight">
+              Note vos plats
+            </span>
+            <span className="text-sm font-bold">pour des menus à votre goût</span>
+          </span>
+          <ArrowRight size={22} strokeWidth={2.8} />
+        </Link>
+      )}
 
       {/* Repas de ce soir */}
       <section className="wonky-lg relative mt-5 h-[188px] animate-pop bg-palme p-5 text-creme">
@@ -52,7 +121,7 @@ export default function HomePage() {
         </p>
         <div className="relative mt-3.5 flex gap-2">
           <Link
-            href={`/recettes/${dinner.id}`}
+            href="/recettes"
             className="press wonky flex h-11 items-center bg-or px-4 text-sm font-extrabold text-foret"
           >
             Voir la recette
@@ -66,8 +135,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Post-it : un produit à utiliser vite */}
-      {urgent && (
+      {/* Post-it : alerte péremption (EF-15) */}
+      {premiereAlerte && (
         <Link
           href="/stock"
           className="press paper-shadow relative mt-[18px] flex -rotate-[1.4deg] items-center gap-3 rounded-[3px_3px_10px_3px] bg-or px-3.5 py-3"
@@ -79,12 +148,26 @@ export default function HomePage() {
           <Aubergine size={46} className="shrink-0 animate-float" />
           <span className="flex-1">
             <span className="block text-[15px] font-extrabold leading-snug">
-              {urgent.quantity} {urgent.name.toLowerCase()} s&apos;ennuient au fond du frigo
+              {premiereAlerte.quantity} {premiereAlerte.unitLabel}{" "}
+              {premiereAlerte.ingredientName.toLowerCase()} à utiliser vite
             </span>
             <span className="block font-hand text-xl font-bold leading-tight text-carmin">
-              à cuisiner avant jeudi&nbsp;!
+              {premiereAlerte.joursRestants === 0
+                ? "c’est aujourd’hui !"
+                : premiereAlerte.joursRestants === 1
+                  ? "plus qu’un jour !"
+                  : `encore ${premiereAlerte.joursRestants} jours !`}
             </span>
           </span>
+        </Link>
+      )}
+      {alertes.length > 1 && (
+        <Link
+          href="/stock"
+          className="mt-1 block text-center font-hand text-lg font-bold text-carmin"
+        >
+          + {alertes.length - 1} autre{alertes.length > 2 ? "s" : ""} produit
+          {alertes.length > 2 ? "s" : ""} à utiliser vite
         </Link>
       )}
 
@@ -140,6 +223,20 @@ export default function HomePage() {
           </Link>
         </div>
       </div>
+
+      {/* Catalogue des recettes */}
+      <Link
+        href="/recettes"
+        className="press mt-2.5 flex min-h-[60px] items-center justify-between gap-3 rounded-[18px_24px_20px_22px] border-[2.5px] border-foret bg-creme px-4 py-3"
+      >
+        <span>
+          <span className="block font-display text-[17px] font-semibold leading-tight">
+            Toutes les recettes
+          </span>
+          <span className="font-hand text-[17px] font-bold text-carmin">garba, taboulé, dal…</span>
+        </span>
+        <ArrowRight size={22} strokeWidth={2.8} />
+      </Link>
 
       {/* Budget, en simple ligne */}
       <section className="mt-4 w-[220px]" aria-label="Budget de la semaine">

@@ -1,14 +1,19 @@
-import { notFound } from "next/navigation";
-import { getRecipe, recipes } from "@/lib/donnees-simulees";
+import { notFound, redirect } from "next/navigation";
+import { exigerSession } from "@/lib/auth/garde";
+import { lireRecette } from "@/lib/catalogue/recettes";
+import { ErreurApi } from "@/lib/erreurs";
 import { RecipeView } from "./vue-recette";
 
-export function generateStaticParams() {
-  return recipes.map((r) => ({ id: r.id }));
-}
-
+/** Fiche d'une recette validée du catalogue (EF-20). */
 export default async function RecipePage({ params }: { params: Promise<{ id: string }> }) {
+  const session = await exigerSession().catch((erreur: unknown) => {
+    if (erreur instanceof ErreurApi) return null;
+    throw erreur;
+  });
+  if (!session) redirect("/connexion");
+
   const { id } = await params;
-  const recipe = getRecipe(id);
-  if (!recipe) notFound();
-  return <RecipeView recipe={recipe} />;
+  const recette = await lireRecette(session, id);
+  if (!recette) notFound();
+  return <RecipeView recipe={recette} />;
 }

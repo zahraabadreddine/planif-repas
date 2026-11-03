@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(./docs/*.pdf)",
+      "Read(./docs/texte/**)",
+      "Read(./prisma/migrations/**)",
+      "Read(./tsconfig.tsbuildinfo)",
+      "Read(./*.xlsx)",
+      "Read(./package-lock.json)",
+      "Read(./node_modules/**)",
+      "Read(./.next/**)",
+      "Read(./playwright-report/**)",
+      "Read(./test-results/**)",
+      "Read(./coverage/**)"
+    ]
+  }
+}
