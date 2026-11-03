@@ -86,11 +86,13 @@ describe("données de départ du catalogue", () => {
 });
 
 describe("validation des recettes", () => {
-  it("ne valide aucune recette encore à relire par une cuisinière d'origine", () => {
+  // Choix de l'équipe (bc67053) : ces recettes sont proposées au menu, mais leur
+  // référence garde la mention « à valider » tant qu'une cuisinière ne les a pas relues.
+  it("garde la mention « à valider » sur les recettes sans source signée, tout en les proposant", () => {
     const aRelire = recettesDepart.filter((r) => r.reference.includes("à valider"));
     expect(aRelire).toHaveLength(17);
     for (const recette of aRelire) {
-      expect(recette.validated, recette.title).toBe(false);
+      expect(recette.validated, recette.title).toBe(true);
     }
   });
 

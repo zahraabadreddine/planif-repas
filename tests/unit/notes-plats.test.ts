@@ -38,8 +38,15 @@ describe("plats proposés à la notation", () => {
   });
 
   it("propose d'abord les recettes validées dans chaque cuisine", () => {
-    const plats = platsANoter(recettes, [], new Map(), ["libanaise"]);
-    expect(plats[0].title).toBe("Taboulé");
+    // Houmous est le premier plat libanais par ordre alphabétique, sauf s'il n'est pas validé.
+    const avecHoumousNonValide = recettes.map((r) =>
+      r.title === "Houmous" ? { ...r, validated: false } : r,
+    );
+    const libanais = platsANoter(avecHoumousNonValide, [], new Map(), ["libanaise"]).filter(
+      (p) => p.cuisine === "libanaise",
+    );
+    expect(libanais[0].title).not.toBe("Houmous");
+    expect(libanais.at(-1)?.title).toBe("Houmous");
   });
 
   it("garde toutes les recettes compatibles, sans doublon", () => {
