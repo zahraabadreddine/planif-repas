@@ -87,7 +87,7 @@ export function gererErreur(erreur: unknown): NextResponse<CorpsErreur> {
   if (erreur instanceof ErreurApi) return reponseErreur(erreur.code, erreur.message, erreur.champs);
   console.error(
     "Erreur inattendue dans une route API",
-    erreur instanceof Error ? erreur.stack : erreur,
+    erreur instanceof Error ? erreur.message : String(erreur),
   );
   return reponseErreur("ERREURSERVEUR");
 }

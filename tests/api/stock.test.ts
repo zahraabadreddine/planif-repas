@@ -52,6 +52,8 @@ const tomate = {
 };
 const tas = { id: UNIT_ID, label: "tas", gramsEquivalent: 300 };
 
+const txClient = { stockItem, stockMovement, ingredient, marketUnit };
+
 beforeEach(() => {
   for (const mock of [
     stockItem.findMany,
@@ -71,6 +73,12 @@ beforeEach(() => {
   stockItem.updateMany.mockResolvedValue({ count: 0 });
   ingredient.findMany.mockResolvedValue([tomate]);
   marketUnit.findMany.mockResolvedValue([tas]);
+  $transaction.mockImplementation((arg: unknown) => {
+    if (typeof arg === "function") {
+      return (arg as (tx: typeof txClient) => Promise<unknown>)(txClient);
+    }
+    return Promise.resolve(arg);
+  });
 });
 
 // ─── GET /api/stock ───
