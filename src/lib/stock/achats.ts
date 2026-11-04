@@ -137,25 +137,27 @@ export async function declarerAchats(
     } else {
       const statut = expiresAt && joursAvant(expiresAt) <= 2 ? "useSoon" : "ok";
 
-      const nouveau = await prisma.stockItem.create({
-        data: {
-          householdId,
-          ingredientId: article.ingredientId,
-          unitId: article.unitId,
-          quantity: article.quantity,
-          location: article.location,
-          expiresAt,
-          status: statut,
-        },
-      });
-
-      await prisma.stockMovement.create({
-        data: {
-          stockItemId: nouveau.id,
-          type: "purchase",
-          quantity: article.quantity,
-          grams,
-        },
+      const nouveau = await prisma.$transaction(async (tx) => {
+        const item = await tx.stockItem.create({
+          data: {
+            householdId,
+            ingredientId: article.ingredientId,
+            unitId: article.unitId,
+            quantity: article.quantity,
+            location: article.location,
+            expiresAt,
+            status: statut,
+          },
+        });
+        await tx.stockMovement.create({
+          data: {
+            stockItemId: item.id,
+            type: "purchase",
+            quantity: article.quantity,
+            grams,
+          },
+        });
+        return item;
       });
 
       resultats.push({

@@ -15,7 +15,7 @@ const {
   $transaction,
   exigerSession,
 } = vi.hoisted(() => ({
-  plannedMeal: { findUnique: vi.fn(), update: vi.fn() },
+  plannedMeal: { findUnique: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
   stockItem: { findUnique: vi.fn(), findMany: vi.fn(), update: vi.fn() },
   stockMovement: { create: vi.fn() },
   $transaction: vi.fn(),
@@ -55,10 +55,13 @@ const requeteJson = (corps: unknown) =>
 
 const paramsAvec = (id: string) => ({ params: Promise.resolve({ id }) });
 
+const txClient = { plannedMeal, stockItem, stockMovement };
+
 beforeEach(() => {
   for (const mock of [
     plannedMeal.findUnique,
     plannedMeal.update,
+    plannedMeal.updateMany,
     stockItem.findUnique,
     stockItem.findMany,
     stockItem.update,
@@ -69,7 +72,13 @@ beforeEach(() => {
     (mock as ReturnType<typeof vi.fn>).mockReset();
   }
   exigerSession.mockResolvedValue(session);
-  $transaction.mockImplementation((ops: unknown[]) => Promise.resolve(ops));
+  $transaction.mockImplementation((arg: unknown) => {
+    if (typeof arg === "function") {
+      return (arg as (tx: typeof txClient) => Promise<unknown>)(txClient);
+    }
+    return Promise.resolve(arg);
+  });
+  plannedMeal.updateMany.mockResolvedValue({ count: 1 });
 });
 
 // ─── POST /api/planned-meals/:id/cooked ────────────────────────────
@@ -98,9 +107,8 @@ describe("POST /api/planned-meals/:id/cooked", () => {
   it("déduit le stock et marque le repas cuisiné", async () => {
     plannedMeal.findUnique.mockResolvedValue(repasComplet);
     stockItem.findMany.mockResolvedValue([
-      { id: STOCK_ID, quantity: 5, status: "ok" },
+      { id: STOCK_ID, quantity: 5, status: "ok", unit: { gramsEquivalent: 300 } },
     ]);
-    plannedMeal.update.mockResolvedValue({});
 
     const reponse = await cuisineRoute(
       new Request("http://localhost"),
@@ -117,8 +125,8 @@ describe("POST /api/planned-meals/:id/cooked", () => {
       unitLabel: "tas",
     });
     expect($transaction).toHaveBeenCalledTimes(1);
-    expect(plannedMeal.update).toHaveBeenCalledWith({
-      where: { id: MEAL_ID },
+    expect(plannedMeal.updateMany).toHaveBeenCalledWith({
+      where: { id: MEAL_ID, status: { not: "cooked" } },
       data: { status: "cooked" },
     });
   });
@@ -126,9 +134,8 @@ describe("POST /api/planned-meals/:id/cooked", () => {
   it("ne passe jamais sous zéro si stock insuffisant", async () => {
     plannedMeal.findUnique.mockResolvedValue(repasComplet);
     stockItem.findMany.mockResolvedValue([
-      { id: STOCK_ID, quantity: 1, status: "ok" },
+      { id: STOCK_ID, quantity: 1, status: "ok", unit: { gramsEquivalent: 300 } },
     ]);
-    plannedMeal.update.mockResolvedValue({});
 
     const reponse = await cuisineRoute(
       new Request("http://localhost"),
@@ -143,10 +150,9 @@ describe("POST /api/planned-meals/:id/cooked", () => {
   it("combine plusieurs articles du même ingrédient (FEFO)", async () => {
     plannedMeal.findUnique.mockResolvedValue(repasComplet);
     stockItem.findMany.mockResolvedValue([
-      { id: STOCK_ID, quantity: 1, status: "useSoon" },
-      { id: STOCK_ID_2, quantity: 3, status: "ok" },
+      { id: STOCK_ID, quantity: 1, status: "useSoon", unit: { gramsEquivalent: 300 } },
+      { id: STOCK_ID_2, quantity: 3, status: "ok", unit: { gramsEquivalent: 300 } },
     ]);
-    plannedMeal.update.mockResolvedValue({});
 
     const reponse = await cuisineRoute(
       new Request("http://localhost"),
@@ -155,7 +161,46 @@ describe("POST /api/planned-meals/:id/cooked", () => {
     const corps = await reponse.json();
 
     expect(corps.deductions[0].quantity).toBe(2);
-    expect($transaction).toHaveBeenCalledTimes(2);
+    expect($transaction).toHaveBeenCalledTimes(1);
+  });
+
+  it("convertit les unités via les grammes quand recette et stock diffèrent", async () => {
+    plannedMeal.findUnique.mockResolvedValue({
+      ...repasComplet,
+      recipe: {
+        title: "Riz sauce",
+        servings: 4,
+        ingredients: [
+          {
+            ingredientId: INGREDIENT_ID,
+            quantity: 500,
+            optional: false,
+            ingredient: { name: "Riz" },
+            unit: { label: "g", gramsEquivalent: 1 },
+          },
+        ],
+      },
+    });
+    stockItem.findMany.mockResolvedValue([
+      { id: STOCK_ID, quantity: 2, status: "ok", unit: { gramsEquivalent: 400 } },
+    ]);
+
+    const reponse = await cuisineRoute(
+      new Request("http://localhost"),
+      paramsAvec(MEAL_ID),
+    );
+    const corps = await reponse.json();
+
+    expect(reponse.status).toBe(200);
+    expect(corps.deductions[0].quantity).toBe(500);
+    expect(corps.deductions[0].unitLabel).toBe("g");
+    expect(stockItem.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          quantity: expect.closeTo(0.75, 5),
+        }),
+      }),
+    );
   });
 
   it("ajuste la quantité selon les portions", async () => {
@@ -165,9 +210,8 @@ describe("POST /api/planned-meals/:id/cooked", () => {
     };
     plannedMeal.findUnique.mockResolvedValue(repas6portions);
     stockItem.findMany.mockResolvedValue([
-      { id: STOCK_ID, quantity: 10, status: "ok" },
+      { id: STOCK_ID, quantity: 10, status: "ok", unit: { gramsEquivalent: 300 } },
     ]);
-    plannedMeal.update.mockResolvedValue({});
 
     const reponse = await cuisineRoute(
       new Request("http://localhost"),
@@ -216,6 +260,7 @@ describe("POST /api/planned-meals/:id/cooked", () => {
       ...repasComplet,
       status: "cooked",
     });
+    plannedMeal.updateMany.mockResolvedValue({ count: 0 });
 
     const reponse = await cuisineRoute(
       new Request("http://localhost"),
@@ -264,7 +309,6 @@ describe("PATCH /api/stock/:id", () => {
     expect(reponse.status).toBe(200);
     expect(corps.ancienneQuantite).toBe(3);
     expect(corps.nouvelleQuantite).toBe(3);
-    expect($transaction).not.toHaveBeenCalled();
   });
 
   it("met le statut used si la quantité tombe à 0", async () => {

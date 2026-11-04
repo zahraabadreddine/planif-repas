@@ -5,7 +5,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { HandNote, Pin } from "@/components/main-levee";
 import { ArrowRight } from "@/components/icones";
 import { StockIllustration } from "@/components/illustrations/aliments";
-import { UrgencyButton } from "@/components/bouton-urgence";
 import { cx, expiryLabel } from "@/lib/format";
 import type { StockIcon } from "@/lib/types";
 
@@ -381,8 +380,6 @@ export default function FridgePage() {
         </span>
         <ArrowRight />
       </Link>
-
-      <UrgencyButton variant="round" />
     </div>
   );
 }

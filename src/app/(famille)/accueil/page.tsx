@@ -4,13 +4,14 @@ import { HandNote, Tape } from "@/components/main-levee";
 import { Aubergine } from "@/components/illustrations/aliments";
 import { UmiHead } from "@/components/umi";
 import { SauceBowl } from "@/components/illustrations/assiette";
-import { UrgencyButton } from "@/components/bouton-urgence";
 import { fcfa } from "@/lib/format";
-import { getRecipe, household, shoppingList, weekPlan } from "@/lib/donnees-simulees";
+import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth/config";
 import { exigerSession } from "@/lib/auth/garde";
 import { nombreDeNotes } from "@/lib/foyer/notes";
 import { rafraichirPeremption } from "@/lib/stock/peremption";
+import { lireMenuCourant } from "@/lib/planificateur/generation";
+import { listeDuMenuActif } from "@/lib/courses/generation";
 
 export default async function HomePage() {
   // Sans foyer décrit, on invite le parent à le faire (EF-03). La garde de session est dans le layout.
@@ -32,8 +33,28 @@ export default async function HomePage() {
     timeZone: "Africa/Abidjan",
   }).format(new Date());
 
-  const today = weekPlan.find((d) => d.date === household.today)!;
-  const dinner = getRecipe(today.meals.find((m) => m.slot === "dinner")!.recipeId)!;
+  // Menu courant et liste de courses (données réelles)
+  const menu = session && !sansFoyer ? await lireMenuCourant(session) : null;
+  const listeInfo = session && !sansFoyer ? await listeDuMenuActif(session) : null;
+  const foyer = session?.householdId
+    ? await prisma.household.findUnique({
+        where: { id: session.householdId },
+        select: { weeklyBudgetFcfa: true },
+      })
+    : null;
+
+  // Repas de ce soir (Abidjan = UTC+0, toISOString donne la bonne date)
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const dinerCeSoir =
+    menu?.meals.find((m) => m.date === todayIso && m.slot === "dinner") ?? null;
+
+  // Compteurs et budget
+  const mealsCount = menu?.meals.length ?? 0;
+  const itemsCount = listeInfo?.liste?.items.length ?? 0;
+  const budgetTotal = foyer?.weeklyBudgetFcfa ?? 0;
+  const budgetEstime = menu?.estimatedCostFcfa ?? 0;
+  const reste = Math.max(0, budgetTotal - budgetEstime);
+  const budgetPct = budgetTotal > 0 ? Math.round((budgetEstime / budgetTotal) * 100) : 0;
 
   // EF-15 : rafraîchir les statuts de péremption et récupérer les alertes
   const alertes =
@@ -41,11 +62,6 @@ export default async function HomePage() {
       ? (await rafraichirPeremption(session).catch(() => null))?.alertes ?? []
       : [];
   const premiereAlerte = alertes[0] ?? null;
-
-  const mealsCount = weekPlan.reduce((n, d) => n + d.meals.length, 0);
-  const itemsCount = shoppingList.reduce((n, b) => n + b.items.length, 0);
-  const left = household.weeklyBudgetFcfa - household.spentFcfa;
-  const budgetPct = Math.round((household.spentFcfa / household.weeklyBudgetFcfa) * 100);
 
   return (
     <>
@@ -109,31 +125,53 @@ export default async function HomePage() {
       )}
 
       {/* Repas de ce soir */}
-      <section className="wonky-lg relative mt-5 h-[188px] animate-pop bg-palme p-5 text-creme">
-        <Tape className="-top-[11px] left-[26px] -rotate-[5deg]" />
-        <SauceBowl size={156} className="absolute -right-1.5 top-[18px] animate-float" />
-        <HandNote className="relative text-2xl text-or">ce soir&nbsp;→</HandNote>
-        <h2 className="relative mt-1.5 max-w-[180px] font-display text-[27px] font-semibold leading-[1.02]">
-          {dinner.name}
-        </h2>
-        <p className="relative mt-2 text-sm font-bold opacity-90">
-          {dinner.minutes} min · pour {dinner.servings} · {fcfa(dinner.costFcfa, false)} F
-        </p>
-        <div className="relative mt-3.5 flex gap-2">
-          <Link
-            href="/recettes"
-            className="press wonky flex h-11 items-center bg-or px-4 text-sm font-extrabold text-foret"
-          >
-            Voir la recette
-          </Link>
-          <Link
-            href="/chat"
-            className="flex h-11 items-center px-2 text-sm font-extrabold underline decoration-wavy underline-offset-[5px]"
-          >
-            changer
-          </Link>
-        </div>
-      </section>
+      {dinerCeSoir ? (
+        <section className="wonky-lg relative mt-5 h-[188px] animate-pop bg-palme p-5 text-creme">
+          <Tape className="-top-[11px] left-[26px] -rotate-[5deg]" />
+          <SauceBowl size={156} className="absolute -right-1.5 top-[18px] animate-float" />
+          <HandNote className="relative text-2xl text-or">ce soir&nbsp;→</HandNote>
+          <h2 className="relative mt-1.5 max-w-[180px] font-display text-[27px] font-semibold leading-[1.02]">
+            {dinerCeSoir.recipe.title}
+          </h2>
+          <p className="relative mt-2 text-sm font-bold opacity-90">
+            {dinerCeSoir.recipe.minutes} min · pour {dinerCeSoir.servings} ·{" "}
+            {fcfa(dinerCeSoir.recipe.coutFcfa, false)} F
+          </p>
+          <div className="relative mt-3.5 flex gap-2">
+            <Link
+              href={`/recettes/${dinerCeSoir.recipe.id}`}
+              className="press wonky flex h-11 items-center bg-or px-4 text-sm font-extrabold text-foret"
+            >
+              Voir la recette
+            </Link>
+            <Link
+              href="/chat"
+              className="flex h-11 items-center px-2 text-sm font-extrabold underline decoration-wavy underline-offset-[5px]"
+            >
+              changer
+            </Link>
+          </div>
+        </section>
+      ) : (
+        !sansFoyer && (
+          <section className="wonky-lg relative mt-5 h-[188px] animate-pop bg-palme p-5 text-creme">
+            <Tape className="-top-[11px] left-[26px] -rotate-[5deg]" />
+            <SauceBowl size={156} className="absolute -right-1.5 top-[18px] animate-float" />
+            <HandNote className="relative text-2xl text-or">ce soir&nbsp;→</HandNote>
+            <h2 className="relative mt-1.5 max-w-[200px] font-display text-[27px] font-semibold leading-[1.02]">
+              Pas de repas prévu
+            </h2>
+            <div className="relative mt-5 flex gap-2">
+              <Link
+                href="/chat"
+                className="press wonky flex h-11 items-center bg-or px-4 text-sm font-extrabold text-foret"
+              >
+                Demander un menu à Umi
+              </Link>
+            </div>
+          </section>
+        )
+      )}
 
       {/* Post-it : alerte péremption (EF-15) */}
       {premiereAlerte && (
@@ -153,10 +191,10 @@ export default async function HomePage() {
             </span>
             <span className="block font-hand text-xl font-bold leading-tight text-carmin">
               {premiereAlerte.joursRestants === 0
-                ? "c’est aujourd’hui !"
+                ? "c'est aujourd'hui !"
                 : premiereAlerte.joursRestants === 1
-                  ? "plus qu’un jour !"
-                  : `encore ${premiereAlerte.joursRestants} jours !`}
+                  ? "plus qu'un jour !"
+                  : `encore ${premiereAlerte.joursRestants} jours !`}
             </span>
           </span>
         </Link>
@@ -239,28 +277,28 @@ export default async function HomePage() {
       </Link>
 
       {/* Budget, en simple ligne */}
-      <section className="mt-4 w-[220px]" aria-label="Budget de la semaine">
-        <div className="flex items-baseline justify-between text-[13px] font-extrabold">
-          <span>
-            {fcfa(household.spentFcfa, false)} F sur {fcfa(household.weeklyBudgetFcfa, false)}
-          </span>
-          <span className="font-hand text-lg text-palme">reste {fcfa(left, false)}</span>
-        </div>
-        <div
-          className="mt-1 h-2.5 overflow-hidden rounded-[6px_10px_8px_6px] bg-sable"
-          role="progressbar"
-          aria-valuenow={budgetPct}
-          aria-valuemin={0}
-          aria-valuemax={100}
-        >
+      {budgetTotal > 0 && (
+        <section className="mt-4 w-[220px]" aria-label="Budget de la semaine">
+          <div className="flex items-baseline justify-between text-[13px] font-extrabold">
+            <span>
+              ≈ {fcfa(budgetEstime, false)} F sur {fcfa(budgetTotal, false)}
+            </span>
+            <span className="font-hand text-lg text-palme">reste {fcfa(reste, false)}</span>
+          </div>
           <div
-            className="h-full animate-grow rounded-[6px_10px_8px_6px] bg-palme"
-            style={{ width: `${budgetPct}%` }}
-          />
-        </div>
-      </section>
-
-      <UrgencyButton />
+            className="mt-1 h-2.5 overflow-hidden rounded-[6px_10px_8px_6px] bg-sable"
+            role="progressbar"
+            aria-valuenow={Math.min(budgetPct, 100)}
+            aria-valuemin={0}
+            aria-valuemax={100}
+          >
+            <div
+              className="h-full animate-grow rounded-[6px_10px_8px_6px] bg-palme"
+              style={{ width: `${Math.min(budgetPct, 100)}%` }}
+            />
+          </div>
+        </section>
+      )}
     </>
   );
 }
