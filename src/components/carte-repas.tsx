@@ -34,21 +34,21 @@ export function MealCard({ recipe, slot, tag, delay = 0, onChanger }: Props) {
         {recipe.minutes} min · {fcfa(recipe.costFcfa, false)} F
       </p>
       <div className="mt-1.5 flex items-center gap-3.5">
-        <Link href="/recettes" className="flex h-9 items-center gap-1 text-sm font-extrabold">
+        <Link href="/recettes" className="flex h-11 items-center gap-1 text-sm font-extrabold">
           La recette <ArrowRight size={16} strokeWidth={2.8} />
         </Link>
         {onChanger ? (
           <button
             type="button"
             onClick={onChanger}
-            className="flex h-9 items-center gap-0.5 text-[13px] font-extrabold text-carmin underline decoration-wavy underline-offset-4"
+            className="flex h-11 items-center gap-0.5 text-[13px] font-extrabold text-carmin underline decoration-wavy underline-offset-4"
           >
             <SwapIcon size={14} /> changer
           </button>
         ) : (
           <Link
             href="/chat"
-            className="flex h-9 items-center text-[13px] font-extrabold text-carmin underline decoration-wavy underline-offset-4"
+            className="flex h-11 items-center text-[13px] font-extrabold text-carmin underline decoration-wavy underline-offset-4"
           >
             changer
           </Link>
