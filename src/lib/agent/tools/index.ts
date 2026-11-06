@@ -12,6 +12,9 @@ import { generateWeekPlan } from "./generate-week-plan";
 import { proposeMealChange } from "./propose-meal-change";
 import { recordPurchase } from "./record-purchase";
 import { planEmergency } from "./plan-emergency";
+import { buildShoppingList } from "./build-shopping-list";
+import { recordMealFeedback } from "./record-meal-feedback";
+import { rememberPreference } from "./remember-preference";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const liste: OutilAgent<any>[] = [
@@ -26,6 +29,9 @@ const liste: OutilAgent<any>[] = [
   proposeMealChange,
   recordPurchase,
   planEmergency,
+  buildShoppingList,
+  recordMealFeedback,
+  rememberPreference,
 ];
 
 export const OUTILS = new Map<string, OutilAgent>(
