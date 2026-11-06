@@ -23,7 +23,7 @@ const schema = z
 
 type Input = z.infer<typeof schema>;
 
-async function executer(session: SessionVerifiee, input: Input) {
+async function executer(session: SessionVerifiee, input: Input, _contexte: unknown) {
   if (input.listeId) {
     const resultat = await ouAcheter(session, input.listeId);
     const lieux = input.typeLieu

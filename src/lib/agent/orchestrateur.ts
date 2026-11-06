@@ -199,7 +199,7 @@ async function boucleReelle(
       return { texte, tokensIn, tokensOut };
     }
 
-    const resultatsOutils = await traiterAppelsOutils(session, reponse.content, table);
+    const resultatsOutils = await traiterAppelsOutils(session, reponse.content, table, conversationId);
     messagesCourants = [
       ...messagesCourants,
       { role: "assistant", content: reponse.content },
@@ -227,6 +227,7 @@ async function traiterAppelsOutils(
   session: SessionVerifiee,
   contenu: Anthropic.Messages.ContentBlock[],
   _table: TableSurnoms,
+  conversationId: string,
 ): Promise<Anthropic.Messages.ToolResultBlockParam[]> {
   const resultats: Anthropic.Messages.ToolResultBlockParam[] = [];
   for (const bloc of contenu) {
@@ -243,7 +244,7 @@ async function traiterAppelsOutils(
     }
     try {
       const input = outil.schema.parse(bloc.input);
-      const resultat = await outil.executer(session, input);
+      const resultat = await outil.executer(session, input, { conversationId });
       resultats.push({
         type: "tool_result",
         tool_use_id: bloc.id,
@@ -294,7 +295,7 @@ async function boucleSimulee(
       if (!outil) continue;
       try {
         const input = outil.schema.parse(appel.input);
-        const resultat = await outil.executer(session, input);
+        const resultat = await outil.executer(session, input, { conversationId });
         await enregistrerMessage(conversationId, "tool", JSON.stringify({
           toolUseId: appel.id,
           nom: appel.nom,

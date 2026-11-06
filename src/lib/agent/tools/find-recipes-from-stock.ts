@@ -12,7 +12,7 @@ const schema = z
 
 type Input = z.infer<typeof schema>;
 
-async function executer(session: SessionVerifiee, input: Input) {
+async function executer(session: SessionVerifiee, input: Input, _contexte: unknown) {
   const [stock, { recettes }] = await Promise.all([
     lireStock(session),
     listerCatalogue(session, {}),
