@@ -7,6 +7,11 @@ import { getStock } from "./get-stock";
 import { searchRecipes } from "./search-recipes";
 import { findRecipesFromStock } from "./find-recipes-from-stock";
 import { findWhereToBuy } from "./find-where-to-buy";
+import { proposeProfileUpdate } from "./propose-profile-update";
+import { generateWeekPlan } from "./generate-week-plan";
+import { proposeMealChange } from "./propose-meal-change";
+import { recordPurchase } from "./record-purchase";
+import { planEmergency } from "./plan-emergency";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const liste: OutilAgent<any>[] = [
@@ -16,6 +21,11 @@ const liste: OutilAgent<any>[] = [
   searchRecipes,
   findRecipesFromStock,
   findWhereToBuy,
+  proposeProfileUpdate,
+  generateWeekPlan,
+  proposeMealChange,
+  recordPurchase,
+  planEmergency,
 ];
 
 export const OUTILS = new Map<string, OutilAgent>(
@@ -84,6 +94,9 @@ function extraireType(schema: z.ZodType): Record<string, unknown> {
   }
   if (typeName === "ZodEffects") {
     return extraireType(def.schema as z.ZodType);
+  }
+  if (typeName === "ZodNullable") {
+    return extraireType(def.innerType as z.ZodType);
   }
   return { type: "object" };
 }

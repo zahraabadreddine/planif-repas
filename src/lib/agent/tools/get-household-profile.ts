@@ -5,7 +5,9 @@ import type { OutilAgent } from "./types";
 
 const schema = z.object({}).strict();
 
-async function executer(session: SessionVerifiee) {
+type Input = z.infer<typeof schema>;
+
+async function executer(session: SessionVerifiee, _input: Input, _contexte: unknown) {
   const { contexte } = await construireContexte(session);
   return { profil: contexte.profil };
 }
