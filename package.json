@@ -17,6 +17,7 @@
     "seed": "node prisma/seed.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.4.0",
     "@hookform/resolvers": "^5.9.1",
     "@prisma/client": "^6.19.3",
     "bcryptjs": "^3.0.3",
