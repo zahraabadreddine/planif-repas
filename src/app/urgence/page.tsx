@@ -1,11 +1,8 @@
 import { exigerSession } from "@/lib/auth/garde";
 import { listerMembres } from "@/lib/foyer/membres";
-import {
-  restrictionsDuFoyer,
-  incompatibilites,
-} from "@/lib/planificateur/filtres";
-import { chargerRecettes } from "@/lib/catalogue/recettes";
-import UrgenceInteractif, { type OptionUrgence } from "./urgence-interactif";
+import { restrictionsDuFoyer } from "@/lib/planificateur/filtres";
+import { suggestionsUrgence } from "@/lib/urgence/suggestion";
+import UrgenceInteractif, { type OptionUrgenceClient } from "./urgence-interactif";
 
 const MAX_MINUTES = 30;
 
@@ -14,31 +11,15 @@ export default async function UrgencePage() {
   const membres = await listerMembres(session);
   const restrictions = restrictionsDuFoyer(membres);
 
-  const recettes = await chargerRecettes();
-  const options: OptionUrgence[] = recettes
-    .map((r) => ({
-      recette: r,
-      total: r.prepMinutes + r.cookMinutes,
-    }))
-    .filter(({ total }) => total <= MAX_MINUTES)
-    .filter(
-      ({ recette }) =>
-        incompatibilites(
-          recette.ingredients.map((l) => l.ingredient),
-          restrictions,
-        ).length === 0,
-    )
-    .sort((a, b) => a.total - b.total)
-    .map(({ recette, total }) => ({
-      recipeId: recette.id,
-      name: recette.title,
-      minutes: total,
-      uses: recette.ingredients
-        .filter((l) => !l.optional)
-        .slice(0, 3)
-        .map((l) => l.ingredient.name.toLowerCase())
-        .join(", "),
-    }));
+  const suggestions = await suggestionsUrgence(session, MAX_MINUTES);
+
+  const options: OptionUrgenceClient[] = suggestions.map((s) => ({
+    recipeId: s.id,
+    name: s.title,
+    minutes: s.totalMinutes,
+    useSoon: s.utiliseUseSoon,
+    portions: s.servings,
+  }));
 
   const allergies = [
     ...new Set(restrictions.filter((r) => r.type === "allergy").map((r) => r.value)),
