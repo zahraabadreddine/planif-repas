@@ -129,7 +129,7 @@ export async function accepterProposition(
       resultat = await appliquerPurchase(session, payload);
       break;
     case "emergency":
-      resultat = await appliquerEmergency(payload);
+      resultat = await appliquerEmergency(session, payload);
       break;
     default:
       throw new ErreurApi("DONNEESINVALIDES", "Type de proposition inconnu.");
@@ -214,11 +214,54 @@ async function appliquerPurchase(
 }
 
 async function appliquerEmergency(
+  session: SessionVerifiee,
   payload: Record<string, unknown>,
 ): Promise<Record<string, unknown>> {
   const options = payload.options as Array<{ recetteId: string; titre: string }>;
+  if (!options || options.length === 0) {
+    throw new ErreurApi("DONNEESINVALIDES", "Aucune option d'urgence.");
+  }
+
+  const householdId = session.householdId;
+  if (!householdId) throw new ErreurApi("FOYERMANQUANT");
+
+  const aujourdhui = new Date();
+  aujourdhui.setHours(0, 0, 0, 0);
+  const demain = new Date(aujourdhui);
+  demain.setDate(demain.getDate() + 1);
+
+  const plan = await prisma.mealPlan.findFirst({
+    where: { householdId, status: "active" },
+    include: { meals: { include: { recipe: { select: { id: true, title: true } } } } },
+    orderBy: { weekStart: "desc" },
+  });
+
+  if (!plan) {
+    throw new ErreurApi("DONNEESINVALIDES", "Aucun menu actif. Génère d'abord un menu.");
+  }
+
+  const repasCeSoir = plan.meals.find(
+    (m) =>
+      m.slot === "dinner" &&
+      m.status === "planned" &&
+      m.date.getTime() >= aujourdhui.getTime() &&
+      m.date.getTime() < demain.getTime(),
+  );
+
+  if (!repasCeSoir) {
+    throw new ErreurApi("DONNEESINVALIDES", "Aucun dîner prévu ce soir à remplacer.");
+  }
+
+  const ancienneRecette = repasCeSoir.recipe.title;
+  const recetteChoisie = options[0];
+
+  const { menu, liste } = await remplacerRepas(session, repasCeSoir.id, recetteChoisie.recetteId);
+
   return {
-    message: "Choix enregistré.",
-    options: options?.map((o) => o.titre) ?? [],
+    message: `${recetteChoisie.titre} remplace le dîner de ce soir. « ${ancienneRecette} » peut être décalé à demain.`,
+    menuId: menu.id,
+    listeId: liste?.id ?? null,
+    ancienneRecette,
+    nouvelleRecette: recetteChoisie.titre,
   };
 }
