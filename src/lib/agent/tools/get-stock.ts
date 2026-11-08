@@ -7,7 +7,7 @@ const schema = z.object({}).strict();
 
 type Input = z.infer<typeof schema>;
 
-async function executer(session: SessionVerifiee, _input: Input, _contexte: unknown) {
+async function executer(session: SessionVerifiee, input: Input, contexte: unknown) {
   const articles = await lireStock(session);
   return {
     total: articles.length,

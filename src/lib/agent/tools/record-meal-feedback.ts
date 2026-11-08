@@ -32,7 +32,7 @@ type Input = z.infer<typeof schema>;
 async function executer(
   session: SessionVerifiee,
   input: Input,
-  _contexte: ContexteOutil,
+  contexte: ContexteOutil,
 ) {
   const repas = await prisma.plannedMeal.findUnique({
     where: { id: input.plannedMealId },

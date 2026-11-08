@@ -7,7 +7,7 @@ const schema = z.object({}).strict();
 
 type Input = z.infer<typeof schema>;
 
-async function executer(session: SessionVerifiee, _input: Input, _contexte: unknown) {
+async function executer(session: SessionVerifiee, input: Input, outilContexte: unknown) {
   const { contexte } = await construireContexte(session);
   return { profil: contexte.profil };
 }

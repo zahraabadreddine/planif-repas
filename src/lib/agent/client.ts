@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 
-// Wrapper SDK Anthropic (§10). Le simulateur s'active quand ANTHROPIC_API_KEY est vide.
+// Wrapper SDK Anthropic (§10). Le simulateur s'active quand ANTHROPICAPIKEY est vide.
 
 export const MODELE_CONVERSATION = "claude-sonnet-5-5";
 export const MODELE_SIMPLE = "claude-haiku-4-5-20251001";
@@ -12,13 +12,13 @@ let clientSingleton: Anthropic | null = null;
 
 export function creerClient(): Anthropic {
   if (clientSingleton) return clientSingleton;
-  clientSingleton = new Anthropic();
+  clientSingleton = new Anthropic({ apiKey: process.env.ANTHROPICAPIKEY });
   return clientSingleton;
 }
 
 /** Vrai si l'API Anthropic est configurée (clé non vide). */
 export function apiDisponible(): boolean {
-  return (process.env.ANTHROPIC_API_KEY ?? "").length > 0;
+  return (process.env.ANTHROPICAPIKEY ?? "").length > 0;
 }
 
 // --- Simulateur pour les tests ---

@@ -29,7 +29,7 @@ type Input = z.infer<typeof schema>;
 async function executer(
   session: SessionVerifiee,
   input: Input,
-  _contexte: ContexteOutil,
+  contexte: ContexteOutil,
 ) {
   if (!session.householdId) throw new ErreurApi("FOYERMANQUANT");
 

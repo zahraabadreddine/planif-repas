@@ -20,7 +20,7 @@ const schema = z
 
 type Input = z.infer<typeof schema>;
 
-async function executer(session: SessionVerifiee, input: Input, _contexte: unknown) {
+async function executer(session: SessionVerifiee, input: Input, contexte: unknown) {
   const filtres: Filtres = {};
   if (input.texte) filtres.q = input.texte;
   if (input.cuisine) filtres.cuisine = input.cuisine as Filtres["cuisine"];
