@@ -14,7 +14,7 @@ type Input = z.infer<typeof schema>;
 async function executer(
   session: SessionVerifiee,
   input: Input,
-  _contexte: ContexteOutil,
+  contexte: ContexteOutil,
 ) {
   const liste = await genererListe(session, input.mealPlanId);
 

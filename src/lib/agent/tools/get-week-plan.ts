@@ -15,7 +15,7 @@ const schema = z
 
 type Input = z.infer<typeof schema>;
 
-async function executer(session: SessionVerifiee, _input: Input, _contexte: unknown) {
+async function executer(session: SessionVerifiee, input: Input, contexte: unknown) {
   const menu = await lireMenuCourant(session);
   if (!menu) return { menu: null, message: "Aucun menu en cours." };
   return { menu };
