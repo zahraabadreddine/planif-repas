@@ -83,9 +83,9 @@ export type ChatMessage =
 
 export type AgentProposal = {
   id: string;
+  type?: string;
   title: string;
-  label: string; // ex : jeudi soir
-  recipeId: string;
+  label: string;
   summary: string;
   status: "pending" | "accepted" | "rejected";
 };
