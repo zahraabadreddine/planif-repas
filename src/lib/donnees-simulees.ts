@@ -461,7 +461,6 @@ export const initialChat: ChatMessage[] = [
       id: "p1",
       label: "jeudi soir",
       title: "Riz sauté œufs & aubergines",
-      recipeId: "riz-saute-aubergines",
       summary: "20 min · 1 900 F · avec tes aubergines",
       status: "pending",
     },

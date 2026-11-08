@@ -5,22 +5,11 @@ import { useEffect, useRef, useState } from "react";
 import { HandNote, Tape } from "@/components/main-levee";
 import { ChevronLeft, SendIcon } from "@/components/icones";
 import { UmiHead } from "@/components/umi";
-import { Plate } from "@/components/illustrations/assiette";
 import { UrgencyButton } from "@/components/bouton-urgence";
 import { cx } from "@/lib/format";
-import { chatSuggestions, getRecipe, initialChat } from "@/lib/donnees-simulees";
 import type { AgentProposal, ChatMessage } from "@/lib/types";
 
-// Réponses simulées tant que le backend (POST /api/chat/messages, flux SSE) n'est pas branché.
-const FAKE_REPLIES: Record<string, string> = {
-  "Vider le frigo":
-    "Avec ton poisson, tes aubergines et ton gombo, tu peux faire une sauce claire ou un riz sauté. Je te montre ?",
-  "Moins cher":
-    "Si on remplace le kédjénou par un riz sauce tomate, tu gardes environ 2 000 F cette semaine.",
-  "Une idée pour dimanche":
-    "Dimanche, poulet braisé & attiéké en famille, c'est déjà prévu. On le garde ?",
-};
-const DEFAULT_REPLY = "D'accord, je regarde ton menu et ton frigo et je reviens vers toi.";
+const SUGGESTIONS = ["Vider le frigo", "Moins cher", "Une idée pour dimanche"];
 
 const SUGGESTION_STYLE = [
   "bg-rose text-puce -rotate-2 rounded-[12px_16px_14px_10px]",
@@ -32,44 +21,86 @@ let idCounter = 100;
 const newId = () => `m${idCounter++}`;
 
 export default function AssistantPage() {
-  const [messages, setMessages] = useState<ChatMessage[]>(initialChat);
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    { id: "m0", from: "agent", kind: "text", text: "Bonsoir ! Je suis Umi, ton assistante cuisine. Dis-moi ce qui se passe 🍲" },
+  ]);
   const [draft, setDraft] = useState("");
   const [typing, setTyping] = useState(false);
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [erreur, setErreur] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages, typing]);
 
-  /** Affiche la réponse d'Umi lettre par lettre, comme un flux */
-  function streamAgentReply(text: string) {
-    setTyping(true);
-    const id = newId();
-    setTimeout(() => {
-      setTyping(false);
-      setMessages((prev) => [...prev, { id, from: "agent", kind: "text", text: "" }]);
-      let i = 0;
-      const timer = setInterval(() => {
-        i += 2;
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === id && m.kind === "text" ? { ...m, text: text.slice(0, i) } : m,
-          ),
-        );
-        if (i >= text.length) clearInterval(timer);
-      }, 18);
-    }, 900);
-  }
-
-  function send(text: string) {
+  async function send(text: string) {
     const clean = text.trim();
-    if (!clean) return;
-    setMessages((prev) => [...prev, { id: newId(), from: "user", kind: "text", text: clean }]);
+    if (!clean || typing) return;
     setDraft("");
-    streamAgentReply(FAKE_REPLIES[clean] ?? DEFAULT_REPLY);
+    setErreur(null);
+
+    setMessages((prev) => [...prev, { id: newId(), from: "user", kind: "text", text: clean }]);
+    setTyping(true);
+
+    try {
+      const res = await fetch("/api/chat/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: clean,
+          conversationId,
+        }),
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.message ?? `Erreur ${res.status}`);
+      }
+
+      const data = await res.json();
+      setConversationId(data.conversationId);
+
+      if (data.reponse) {
+        setMessages((prev) => [
+          ...prev,
+          { id: newId(), from: "agent", kind: "text", text: data.reponse },
+        ]);
+      }
+
+      if (data.propositions?.length > 0) {
+        for (const p of data.propositions) {
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: newId(),
+              from: "agent",
+              kind: "proposal",
+              proposal: {
+                id: p.id,
+                type: p.type,
+                title: p.title,
+                label: p.label,
+                summary: p.summary,
+                status: "pending",
+              },
+            },
+          ]);
+        }
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Une erreur est survenue.";
+      setErreur(msg);
+      setMessages((prev) => [
+        ...prev,
+        { id: newId(), from: "agent", kind: "text", text: "Désolée, je n'ai pas pu répondre. Réessaie dans un instant." },
+      ]);
+    } finally {
+      setTyping(false);
+    }
   }
 
-  function answerProposal(proposalId: string, status: AgentProposal["status"]) {
+  async function answerProposal(proposalId: string, status: "accepted" | "rejected") {
     setMessages((prev) =>
       prev.map((m) =>
         m.kind === "proposal" && m.proposal.id === proposalId
@@ -77,11 +108,45 @@ export default function AssistantPage() {
           : m,
       ),
     );
-    streamAgentReply(
-      status === "accepted"
-        ? "C'est noté. J'envoie la recette à ta fille sur WhatsApp ?"
-        : "D'accord, je ne touche à rien. Dis-moi ce que tu veux changer : un plat sans riz, moins cher, plus rapide ?",
-    );
+
+    setTyping(true);
+    const action = status === "accepted" ? "accept" : "reject";
+
+    try {
+      const res = await fetch(`/api/chat/proposals/${proposalId}/${action}`, {
+        method: "POST",
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.message ?? `Erreur ${res.status}`);
+      }
+
+      const data = await res.json();
+      const replyText =
+        status === "accepted"
+          ? data.resultat
+            ? "C'est fait ! La modification a été appliquée."
+            : "C'est noté, c'est validé !"
+          : "D'accord, je ne touche à rien. Dis-moi ce que tu veux changer.";
+
+      setMessages((prev) => [
+        ...prev,
+        { id: newId(), from: "agent", kind: "text", text: replyText },
+      ]);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Erreur";
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.kind === "proposal" && m.proposal.id === proposalId
+            ? { ...m, proposal: { ...m.proposal, status: "pending" } }
+            : m,
+        ),
+      );
+      setErreur(msg);
+    } finally {
+      setTyping(false);
+    }
   }
 
   return (
@@ -108,9 +173,16 @@ export default function AssistantPage() {
 
       <div className="flex flex-col gap-2.5 pt-3.5" aria-live="polite">
         <HandNote className="self-center text-[17px] text-cacao" tilt={0}>
-          mardi, 18 h 04
+          Conversation
         </HandNote>
-        {messages.map((m, i) =>
+
+        {erreur && (
+          <p className="self-center rounded-lg bg-carmin/10 px-3 py-1.5 text-center text-[13px] font-bold text-carmin">
+            {erreur}
+          </p>
+        )}
+
+        {messages.map((m) =>
           m.kind === "proposal" ? (
             <ProposalCard key={m.id} proposal={m.proposal} onAnswer={answerProposal} />
           ) : (
@@ -122,7 +194,6 @@ export default function AssistantPage() {
                   ? "self-end rounded-[22px_18px_4px_22px] bg-palme font-bold text-creme"
                   : "self-start rounded-[18px_22px_22px_4px] bg-sable font-semibold",
               )}
-              style={{ animationDelay: i < initialChat.length ? `${i * 150}ms` : undefined }}
             >
               {m.text}
             </p>
@@ -147,17 +218,18 @@ export default function AssistantPage() {
         <div ref={bottomRef} className="h-8" />
       </div>
 
-      {/* Zone de saisie, au-dessus de la barre de navigation */}
       <div className="fixed bottom-[98px] left-1/2 z-30 w-full max-w-[430px] -translate-x-1/2 bg-gradient-to-t from-creme from-80% to-transparent px-3 pt-3">
         <div className="mb-2.5 flex flex-wrap gap-2 px-1">
-          {chatSuggestions.map((s, i) => (
+          {SUGGESTIONS.map((s, i) => (
             <button
               key={s}
               type="button"
               onClick={() => send(s)}
+              disabled={typing}
               className={cx(
                 "press h-[38px] px-3 text-[13px] font-extrabold",
                 SUGGESTION_STYLE[i % SUGGESTION_STYLE.length],
+                typing && "opacity-50",
               )}
             >
               {s}
@@ -180,12 +252,14 @@ export default function AssistantPage() {
             onChange={(e) => setDraft(e.target.value)}
             placeholder="Dis-moi ce qui se passe…"
             autoComplete="off"
-            className="h-[54px] min-w-0 flex-1 rounded-[16px_20px_18px_14px] border-2 border-foret bg-white px-4 text-[15px] font-semibold placeholder:text-cacao/60"
+            disabled={typing}
+            className="h-[54px] min-w-0 flex-1 rounded-[16px_20px_18px_14px] border-2 border-foret bg-white px-4 text-[15px] font-semibold placeholder:text-cacao/60 disabled:opacity-60"
           />
           <button
             type="submit"
             aria-label="Envoyer"
-            className="press blob flex h-[54px] w-[54px] shrink-0 items-center justify-center bg-sirop text-puce"
+            disabled={typing}
+            className="press blob flex h-[54px] w-[54px] shrink-0 items-center justify-center bg-sirop text-puce disabled:opacity-60"
           >
             <SendIcon />
           </button>
@@ -195,27 +269,22 @@ export default function AssistantPage() {
   );
 }
 
-/** La proposition d'Umi, présentée comme une fiche recette scotchée */
 function ProposalCard({
   proposal,
   onAnswer,
 }: {
   proposal: AgentProposal;
-  onAnswer: (id: string, status: AgentProposal["status"]) => void;
+  onAnswer: (id: string, status: "accepted" | "rejected") => void;
 }) {
-  const recipe = getRecipe(proposal.recipeId);
   return (
     <div className="paper-shadow relative mt-2 w-[296px] max-w-full -rotate-1 animate-slide-up self-start rounded-md bg-white px-3.5 pb-3 pt-3.5">
       <Tape color="bg-lagon" className="-top-3 left-[110px] rotate-3" />
-      <div className="flex items-center gap-3">
-        {recipe && <Plate colors={recipe.colors} size={62} className="shrink-0 animate-float" />}
-        <div>
-          <p className="font-hand text-lg font-bold leading-none text-carmin">{proposal.label}</p>
-          <p className="mt-0.5 font-display text-lg font-semibold leading-tight">
-            {proposal.title}
-          </p>
-          <p className="mt-0.5 text-[13px] font-bold text-cacao">{proposal.summary}</p>
-        </div>
+      <div>
+        <p className="font-hand text-lg font-bold leading-none text-carmin">{proposal.label}</p>
+        <p className="mt-0.5 font-display text-lg font-semibold leading-tight">
+          {proposal.title}
+        </p>
+        <p className="mt-0.5 text-[13px] font-bold text-cacao">{proposal.summary}</p>
       </div>
       {proposal.status === "pending" ? (
         <div className="mt-3 flex gap-2 border-t-2 border-dashed border-sable pt-2.5">
