@@ -1,4 +1,5 @@
 import type { ProposalType } from "@prisma/client";
+import { z } from "zod";
 import { prisma } from "@/lib/db";
 import type { SessionVerifiee } from "@/lib/auth/garde";
 import { ErreurApi } from "@/lib/erreurs";
@@ -7,8 +8,53 @@ import { activerMenu } from "@/lib/planificateur/generation";
 import { remplacerRepas } from "@/lib/planificateur/modification";
 import { declarerAchats } from "@/lib/stock/achats";
 import type { ArticleAchat } from "@/lib/validation/stock";
-import type { Cuisine } from "@/lib/validation/foyer";
+import { CUISINES, type Cuisine } from "@/lib/validation/foyer";
 import type { Prisma } from "@prisma/client";
+
+const valeursCuisines = CUISINES.map((c) => c.valeur) as [Cuisine, ...Cuisine[]];
+
+const profileUpdatePayload = z.object({
+  name: z.string().min(1).max(50).optional(),
+  weeklyBudgetFcfa: z.number().int().positive().optional(),
+  cuisinesPreferred: z.array(z.enum(valeursCuisines)).optional(),
+  shoppingDay: z.number().int().min(1).max(7).nullable().optional(),
+});
+
+const weekPlanPayload = z.object({
+  menuId: z.string().uuid("Identifiant du menu manquant."),
+});
+
+const mealChangePayload = z.object({
+  repasId: z.string().uuid("Identifiant du repas manquant."),
+  nouvelleRecetteId: z.string().uuid("Identifiant de la recette manquant."),
+});
+
+const purchasePayload = z.object({
+  items: z
+    .array(
+      z.object({
+        ingredientId: z.string().uuid(),
+        unitId: z.string().uuid(),
+        quantity: z.number().positive(),
+        location: z.enum(["fridge", "freezer", "pantry"]),
+      }),
+    )
+    .min(1, "Aucun article à enregistrer."),
+});
+
+const emergencyPayload = z.object({
+  options: z
+    .array(z.object({ recetteId: z.string(), titre: z.string() }))
+    .optional(),
+});
+
+function validerPayload<T>(schema: z.ZodType<T>, payload: unknown): T {
+  const resultat = schema.safeParse(payload);
+  if (!resultat.success) {
+    throw new ErreurApi("DONNEESINVALIDES", "Contenu de la proposition invalide.");
+  }
+  return resultat.data;
+}
 
 const EXPIRATION_HEURES = 24;
 
@@ -111,25 +157,25 @@ export async function accepterProposition(
   id: string,
 ): Promise<{ id: string; status: "accepted"; resultat: Record<string, unknown> }> {
   const proposition = await chargerProposition(session, id);
-  const payload = proposition.payload as Record<string, unknown>;
+  const payload = proposition.payload;
 
   let resultat: Record<string, unknown>;
 
   switch (proposition.type) {
     case "profileUpdate":
-      resultat = await appliquerProfileUpdate(session, payload);
+      resultat = await appliquerProfileUpdate(session, validerPayload(profileUpdatePayload, payload));
       break;
     case "weekPlan":
-      resultat = await appliquerWeekPlan(session, payload);
+      resultat = await appliquerWeekPlan(session, validerPayload(weekPlanPayload, payload));
       break;
     case "mealChange":
-      resultat = await appliquerMealChange(session, payload);
+      resultat = await appliquerMealChange(session, validerPayload(mealChangePayload, payload));
       break;
     case "purchase":
-      resultat = await appliquerPurchase(session, payload);
+      resultat = await appliquerPurchase(session, validerPayload(purchasePayload, payload));
       break;
     case "emergency":
-      resultat = await appliquerEmergency(session, payload);
+      resultat = await appliquerEmergency(session, validerPayload(emergencyPayload, payload));
       break;
     default:
       throw new ErreurApi("DONNEESINVALIDES", "Type de proposition inconnu.");
@@ -145,17 +191,17 @@ export async function accepterProposition(
 
 async function appliquerProfileUpdate(
   session: SessionVerifiee,
-  payload: Record<string, unknown>,
+  payload: z.infer<typeof profileUpdatePayload>,
 ): Promise<Record<string, unknown>> {
   const foyer = await lireFoyer(session);
   if (!foyer) throw new ErreurApi("FOYERMANQUANT");
 
   const donnees = {
-    name: (payload.name as string) ?? foyer.name,
-    weeklyBudgetFcfa: (payload.weeklyBudgetFcfa as number) ?? foyer.weeklyBudgetFcfa,
-    cuisinesPreferred: (payload.cuisinesPreferred as Cuisine[]) ?? foyer.cuisinesPreferred,
+    name: payload.name ?? foyer.name,
+    weeklyBudgetFcfa: payload.weeklyBudgetFcfa ?? foyer.weeklyBudgetFcfa,
+    cuisinesPreferred: payload.cuisinesPreferred ?? foyer.cuisinesPreferred,
     shoppingDay: payload.shoppingDay !== undefined
-      ? (payload.shoppingDay as number | null)
+      ? payload.shoppingDay
       : foyer.shoppingDay,
   };
 
@@ -165,44 +211,25 @@ async function appliquerProfileUpdate(
 
 async function appliquerWeekPlan(
   session: SessionVerifiee,
-  payload: Record<string, unknown>,
+  payload: z.infer<typeof weekPlanPayload>,
 ): Promise<Record<string, unknown>> {
-  const menuId = payload.menuId as string;
-  if (!menuId) throw new ErreurApi("DONNEESINVALIDES", "Identifiant du menu manquant.");
-
-  const { menu, liste } = await activerMenu(session, menuId);
+  const { menu, liste } = await activerMenu(session, payload.menuId);
   return { menuId: menu.id, listeId: liste.id };
 }
 
 async function appliquerMealChange(
   session: SessionVerifiee,
-  payload: Record<string, unknown>,
+  payload: z.infer<typeof mealChangePayload>,
 ): Promise<Record<string, unknown>> {
-  const repasId = payload.repasId as string;
-  const recetteId = payload.nouvelleRecetteId as string;
-  if (!repasId || !recetteId) {
-    throw new ErreurApi("DONNEESINVALIDES", "Identifiants manquants pour le remplacement.");
-  }
-
-  const { menu } = await remplacerRepas(session, repasId, recetteId);
+  const { menu } = await remplacerRepas(session, payload.repasId, payload.nouvelleRecetteId);
   return { menuId: menu.id };
 }
 
 async function appliquerPurchase(
   session: SessionVerifiee,
-  payload: Record<string, unknown>,
+  payload: z.infer<typeof purchasePayload>,
 ): Promise<Record<string, unknown>> {
-  const items = payload.items as Array<{
-    ingredientId: string;
-    unitId: string;
-    quantity: number;
-    location: "fridge" | "freezer" | "pantry";
-  }>;
-  if (!items || items.length === 0) {
-    throw new ErreurApi("DONNEESINVALIDES", "Aucun article à enregistrer.");
-  }
-
-  const articles: ArticleAchat[] = items.map((i) => ({
+  const articles: ArticleAchat[] = payload.items.map((i) => ({
     ingredientId: i.ingredientId,
     unitId: i.unitId,
     quantity: i.quantity,
@@ -215,9 +242,9 @@ async function appliquerPurchase(
 
 async function appliquerEmergency(
   session: SessionVerifiee,
-  payload: Record<string, unknown>,
+  payload: z.infer<typeof emergencyPayload>,
 ): Promise<Record<string, unknown>> {
-  const options = payload.options as Array<{ recetteId: string; titre: string }>;
+  const options = payload.options;
   if (!options || options.length === 0) {
     throw new ErreurApi("DONNEESINVALIDES", "Aucune option d'urgence.");
   }

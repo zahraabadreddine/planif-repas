@@ -8,17 +8,18 @@ import { RunningClock } from "@/components/illustrations/personnages";
 import { UmiHead } from "@/components/umi";
 import { cx } from "@/lib/format";
 
-export type OptionUrgence = {
+export type OptionUrgenceClient = {
   recipeId: string;
   name: string;
   minutes: number;
-  uses: string;
+  useSoon: boolean;
+  portions: number;
 };
 
 type Props = {
   membres: number;
   restrictionsTexte: string;
-  options: OptionUrgence[];
+  options: OptionUrgenceClient[];
 };
 
 const TIMES = [10, 15, 20, 30];
@@ -50,15 +51,43 @@ function HandCircle() {
   );
 }
 
+function texteRecetteWhatsApp(name: string, minutes: number, portions: number): string {
+  return `Mode urgence 🚀\n\nCe soir : ${name}\n⏱ ${minutes} min · ${portions} pers.\n\nEnvoyé depuis Umi`;
+}
+
+function whatsappLien(text: string): string {
+  return `https://wa.me/?text=${encodeURIComponent(text)}`;
+}
+
 export default function UrgenceInteractif({ membres, restrictionsTexte, options: toutesOptions }: Props) {
   const [minutes, setMinutes] = useState(15);
   const [people, setPeople] = useState(membres);
   const [picked, setPicked] = useState(0);
+  const [enCours, setEnCours] = useState(false);
+  const [resultat, setResultat] = useState<{ ancienneRecette: string; nom: string } | null>(null);
 
   const options = toutesOptions
     .filter((o) => o.minutes <= minutes)
     .sort((a, b) => a.minutes - b.minutes);
   const choice = options[Math.min(picked, options.length - 1)] ?? null;
+
+  async function confirmerChoix() {
+    if (!choice || enCours) return;
+    setEnCours(true);
+    try {
+      const res = await fetch("/api/emergency", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ recipeId: choice.recipeId }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setResultat({ ancienneRecette: data.ancienneRecette, nom: choice.name });
+      }
+    } finally {
+      setEnCours(false);
+    }
+  }
 
   return (
     <main className="relative min-h-dvh bg-sirop text-foret">
@@ -102,6 +131,7 @@ export default function UrgenceInteractif({ membres, restrictionsTexte, options:
                   onClick={() => {
                     setMinutes(t);
                     setPicked(0);
+                    setResultat(null);
                   }}
                   className={cx(
                     "press flex h-[50px] w-[52px] flex-col items-center justify-center font-display leading-none transition-colors",
@@ -158,7 +188,10 @@ export default function UrgenceInteractif({ membres, restrictionsTexte, options:
                 key={o.recipeId}
                 type="button"
                 aria-pressed={active}
-                onClick={() => setPicked(i)}
+                onClick={() => {
+                  setPicked(i);
+                  setResultat(null);
+                }}
                 className={cx(
                   "press wonky flex w-full animate-slide-up items-center gap-3 px-3 py-2.5 text-left transition-colors",
                   active ? "-rotate-[0.8deg] bg-or" : "bg-transparent",
@@ -174,7 +207,8 @@ export default function UrgenceInteractif({ membres, restrictionsTexte, options:
                     {o.name}
                   </span>
                   <span className="mt-0.5 block text-[13px] font-bold text-cacao">
-                    pour {people} · {o.uses}
+                    pour {people} · {o.minutes} min
+                    {o.useSoon && " · à utiliser vite"}
                   </span>
                 </span>
                 <span className="shrink-0 font-display text-[15px] font-semibold">
@@ -197,17 +231,51 @@ export default function UrgenceInteractif({ membres, restrictionsTexte, options:
           </HandNote>
         )}
 
+        {resultat && (
+          <div className="mt-4 rounded-[18px] bg-palme/10 p-4">
+            <p className="font-display text-[17px] font-semibold text-palme">
+              C&apos;est parti pour {resultat.nom.toLowerCase()}&nbsp;!
+            </p>
+            <p className="mt-1 text-sm font-bold text-cacao">
+              « {resultat.ancienneRecette} » peut être décalé à demain.
+            </p>
+          </div>
+        )}
+
         {choice && (
           <div className="fixed bottom-7 left-1/2 flex w-[calc(100%-40px)] max-w-[390px] -translate-x-1/2 flex-col gap-1.5">
-            <Link
-              href={`/recettes/${choice.recipeId}`}
-              className="press flex h-[58px] items-center justify-center rounded-[18px_22px_20px_16px] bg-foret font-display text-lg font-semibold text-or shadow-[0_5px_0_#9F350B]"
-            >
-              On part sur {choice.name.toLowerCase()}
-            </Link>
-            <Link href="/chat" className="p-2.5 text-center text-sm font-extrabold text-foret">
-              Rien ne te tente&nbsp;? Un garba ou un alloco à côté, ça marche aussi.
-            </Link>
+            {resultat ? (
+              <>
+                <a
+                  href={whatsappLien(texteRecetteWhatsApp(choice.name, choice.minutes, people))}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="press flex h-[58px] items-center justify-center rounded-[18px_22px_20px_16px] bg-[#25D366] font-display text-lg font-semibold text-white shadow-[0_5px_0_#128C7E]"
+                >
+                  Envoyer sur WhatsApp
+                </a>
+                <Link
+                  href={`/recettes/${choice.recipeId}`}
+                  className="p-2.5 text-center text-sm font-extrabold text-foret"
+                >
+                  Voir la recette
+                </Link>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={confirmerChoix}
+                  disabled={enCours}
+                  className="press flex h-[58px] items-center justify-center rounded-[18px_22px_20px_16px] bg-foret font-display text-lg font-semibold text-or shadow-[0_5px_0_#9F350B] disabled:opacity-60"
+                >
+                  {enCours ? "Un instant…" : `On part sur ${choice.name.toLowerCase()}`}
+                </button>
+                <Link href="/chat" className="p-2.5 text-center text-sm font-extrabold text-foret">
+                  Rien ne te tente&nbsp;? Un garba ou un alloco à côté, ça marche aussi.
+                </Link>
+              </>
+            )}
           </div>
         )}
       </section>
