@@ -5,10 +5,7 @@ import { correctionSchema } from "@/lib/validation/stock";
 import { corrigerStock } from "@/lib/stock/correction";
 import { gererErreur } from "@/lib/erreurs";
 
-export async function PATCH(
-  requete: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function PATCH(requete: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await exigerEcriture();
     const { id } = await params;

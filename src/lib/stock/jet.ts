@@ -43,8 +43,8 @@ export async function declarerJet(
       data: {
         stockItemId: article.id,
         type: "thrown",
-        quantity: retiree,
-        grams,
+        quantity: -retiree,
+        grams: -grams,
       },
     });
     await tx.stockItem.update({

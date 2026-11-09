@@ -35,10 +35,7 @@ export async function donnerRetour(
   if (!repas) throw new ErreurApi("INTROUVABLE");
   if (repas.mealPlan.householdId !== householdId) throw new ErreurApi("INTERDIT");
   if (repas.status !== "cooked") {
-    throw new ErreurApi(
-      "DONNEESINVALIDES",
-      "Ce repas n'a pas encore été cuisiné.",
-    );
+    throw new ErreurApi("DONNEESINVALIDES", "Ce repas n'a pas encore été cuisiné.");
   }
 
   const mealFeedback = await prisma.mealFeedback.create({
@@ -64,10 +61,7 @@ export async function donnerRetour(
   };
 }
 
-async function rememberPreference(
-  householdId: string,
-  recipeId: string,
-): Promise<string | null> {
+async function rememberPreference(householdId: string, recipeId: string): Promise<string | null> {
   const feedbacks = await prisma.mealFeedback.findMany({
     where: {
       plannedMeal: {

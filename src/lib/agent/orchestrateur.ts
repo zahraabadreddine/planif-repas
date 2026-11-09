@@ -1,4 +1,4 @@
-import type Anthropic from "@anthropic-ai/sdk";
+import Anthropic from "@anthropic-ai/sdk";
 import type { SessionVerifiee } from "@/lib/auth/garde";
 import { prisma } from "@/lib/db";
 import { ErreurApi } from "@/lib/erreurs";
@@ -35,6 +35,8 @@ export async function orchestrer(
   mode: "chat" | "emergency" | "onboarding" = "chat",
 ): Promise<ResultatOrchestration> {
   if (!session.householdId) throw new ErreurApi("FOYERMANQUANT");
+
+  await verifierQuotaIA(session.householdId);
 
   const { contexte, table } = await construireContexte(session);
   const messageAnonyme = remplacerSurnoms(messageUtilisateur, table);
@@ -82,6 +84,101 @@ export async function orchestrer(
     tokensIn,
     tokensOut,
   };
+}
+
+export type EvenementStream =
+  | { type: "status"; status: string }
+  | { type: "text"; delta: string }
+  | { type: "done"; conversationId: string; tokensIn: number; tokensOut: number }
+  | { type: "error"; message: string };
+
+export async function orchestrerStream(
+  session: SessionVerifiee,
+  conversationId: string | null,
+  messageUtilisateur: string,
+  envoyer: (evt: EvenementStream) => void,
+  mode: "chat" | "emergency" | "onboarding" = "chat",
+): Promise<void> {
+  try {
+    if (!session.householdId) throw new ErreurApi("FOYERMANQUANT");
+
+    await verifierQuotaIA(session.householdId);
+
+    envoyer({ type: "status", status: "thinking" });
+
+    const { contexte, table } = await construireContexte(session);
+    const messageAnonyme = remplacerSurnoms(messageUtilisateur, table);
+
+    const conv = conversationId
+      ? await chargerConversation(session, conversationId)
+      : await creerConversation(session, mode);
+
+    await enregistrerMessage(conv.id, "user", messageAnonyme);
+
+    const historique = await chargerHistorique(conv.id);
+    const messagesApi = construireMessagesApi(historique);
+
+    const systeme = [
+      PROMPT_SYSTEME,
+      "",
+      "Contexte actuel du foyer :",
+      formaterContextePourPrompt(contexte),
+    ].join("\n");
+
+    let texteComplet: string;
+    let tokensIn = 0;
+    let tokensOut = 0;
+
+    if (estSimule()) {
+      const r = await boucleSimulee(session, conv.id, messagesApi, table);
+      texteComplet = r.texte;
+      envoyer({ type: "text", delta: texteComplet });
+    } else {
+      const r = await boucleReelleStream(session, conv.id, systeme, messagesApi, table, envoyer);
+      texteComplet = r.texte;
+      tokensIn = r.tokensIn;
+      tokensOut = r.tokensOut;
+    }
+
+    const reponseFinale = restaurerSurnoms(texteComplet, table);
+    await enregistrerMessage(conv.id, "assistant", reponseFinale, {
+      model: MODELE_CONVERSATION,
+      tokensIn,
+      tokensOut,
+    });
+
+    envoyer({ type: "done", conversationId: conv.id, tokensIn, tokensOut });
+  } catch (err) {
+    if (err instanceof ErreurApi) {
+      envoyer({ type: "error", message: err.message });
+    } else {
+      envoyer({ type: "error", message: "Un problème est survenu. Réessaie plus tard." });
+    }
+  }
+}
+
+// --- Quota IA (ENF-18) ---
+
+const QUOTA_JOURNALIER = Number(process.env.AI_DAILY_QUOTA) || 100;
+
+async function verifierQuotaIA(householdId: string) {
+  const debutJournee = new Date();
+  debutJournee.setHours(0, 0, 0, 0);
+
+  const count = await prisma.message.count({
+    where: {
+      conversation: { householdId },
+      role: "user",
+      createdAt: { gte: debutJournee },
+    },
+  });
+
+  if (count >= QUOTA_JOURNALIER) {
+    throw new ErreurApi(
+      "QUOTAATTEINT",
+      "Tu as atteint la limite de messages pour aujourd'hui. Réessaie demain !",
+    );
+  }
 }
 
 // --- Conversations ---
@@ -199,7 +296,12 @@ async function boucleReelle(
       return { texte, tokensIn, tokensOut };
     }
 
-    const resultatsOutils = await traiterAppelsOutils(session, reponse.content, table, conversationId);
+    const resultatsOutils = await traiterAppelsOutils(
+      session,
+      reponse.content,
+      table,
+      conversationId,
+    );
     messagesCourants = [
       ...messagesCourants,
       { role: "assistant", content: reponse.content },
@@ -208,16 +310,124 @@ async function boucleReelle(
 
     for (const r of resultatsOutils) {
       if (r.type === "tool_result") {
-        await enregistrerMessage(conversationId, "tool", JSON.stringify({
-          toolUseId: r.tool_use_id,
-          content: r.content,
-        }));
+        await enregistrerMessage(
+          conversationId,
+          "tool",
+          JSON.stringify({
+            toolUseId: r.tool_use_id,
+            content: r.content,
+          }),
+        );
       }
     }
   }
 
   return {
     texte: "J'ai atteint la limite de recherches pour ce message. Peux-tu reformuler ta demande ?",
+    tokensIn,
+    tokensOut,
+  };
+}
+
+async function boucleReelleStream(
+  session: SessionVerifiee,
+  conversationId: string,
+  systeme: string,
+  messages: Anthropic.Messages.MessageParam[],
+  table: TableSurnoms,
+  envoyer: (evt: EvenementStream) => void,
+): Promise<{ texte: string; tokensIn: number; tokensOut: number }> {
+  const client = creerClient();
+  const outils = outilsAnthropicSchema();
+  let tokensIn = 0;
+  let tokensOut = 0;
+  let messagesCourants = [...messages];
+  let texteAccumule = "";
+
+  for (let tour = 0; tour < MAX_TOURS_OUTILS; tour++) {
+    let reponse: Anthropic.Messages.Message;
+    try {
+      const stream = client.messages.stream({
+        model: MODELE_CONVERSATION,
+        max_tokens: 1024,
+        system: [{ type: "text", text: systeme, cache_control: { type: "ephemeral" } }],
+        tools: outils,
+        messages: messagesCourants,
+      });
+
+      stream.on("text", (delta) => {
+        texteAccumule += delta;
+        envoyer({ type: "text", delta: restaurerSurnoms(delta, table) });
+      });
+
+      reponse = await stream.finalMessage();
+    } catch {
+      if (tour === 0) {
+        try {
+          const stream = client.messages.stream({
+            model: MODELE_CONVERSATION,
+            max_tokens: 1024,
+            system: [{ type: "text", text: systeme, cache_control: { type: "ephemeral" } }],
+            tools: outils,
+            messages: messagesCourants,
+          });
+          stream.on("text", (delta) => {
+            texteAccumule += delta;
+            envoyer({ type: "text", delta: restaurerSurnoms(delta, table) });
+          });
+          reponse = await stream.finalMessage();
+        } catch {
+          throw new ErreurApi("ERREURSERVEUR", "L'assistant est momentanément indisponible.");
+        }
+      } else {
+        throw new ErreurApi("ERREURSERVEUR", "L'assistant est momentanément indisponible.");
+      }
+    }
+
+    tokensIn += reponse.usage.input_tokens;
+    tokensOut += reponse.usage.output_tokens;
+
+    if (reponse.stop_reason === "end_turn" || reponse.stop_reason !== "tool_use") {
+      return { texte: texteAccumule, tokensIn, tokensOut };
+    }
+
+    const resultatsOutils = await traiterAppelsOutils(
+      session,
+      reponse.content,
+      table,
+      conversationId,
+    );
+
+    for (const bloc of reponse.content) {
+      if (bloc.type === "tool_use") {
+        envoyer({ type: "status", status: `tool:${bloc.name}` });
+      }
+    }
+
+    messagesCourants = [
+      ...messagesCourants,
+      { role: "assistant", content: reponse.content },
+      { role: "user", content: resultatsOutils },
+    ];
+
+    for (const r of resultatsOutils) {
+      if (r.type === "tool_result") {
+        await enregistrerMessage(
+          conversationId,
+          "tool",
+          JSON.stringify({
+            toolUseId: r.tool_use_id,
+            content: r.content,
+          }),
+        );
+      }
+    }
+  }
+
+  return {
+    texte:
+      texteAccumule ||
+      "J'ai atteint la limite de recherches pour ce message. Peux-tu reformuler ta demande ?",
     tokensIn,
     tokensOut,
   };
@@ -296,17 +506,25 @@ async function boucleSimulee(
       try {
         const input = outil.schema.parse(appel.input);
         const resultat = await outil.executer(session, input, { conversationId });
-        await enregistrerMessage(conversationId, "tool", JSON.stringify({
-          toolUseId: appel.id,
-          nom: appel.nom,
-          resultat,
-        }));
+        await enregistrerMessage(
+          conversationId,
+          "tool",
+          JSON.stringify({
+            toolUseId: appel.id,
+            nom: appel.nom,
+            resultat,
+          }),
+        );
       } catch {
-        await enregistrerMessage(conversationId, "tool", JSON.stringify({
-          toolUseId: appel.id,
-          nom: appel.nom,
-          erreur: "Échec de l'outil en simulation",
-        }));
+        await enregistrerMessage(
+          conversationId,
+          "tool",
+          JSON.stringify({
+            toolUseId: appel.id,
+            nom: appel.nom,
+            erreur: "Échec de l'outil en simulation",
+          }),
+        );
       }
     }
 

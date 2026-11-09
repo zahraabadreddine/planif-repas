@@ -3,10 +3,7 @@ import { exigerEcriture } from "@/lib/auth/garde";
 import { gererErreur } from "@/lib/erreurs";
 import { rejeterProposition } from "@/lib/agent/proposals";
 
-export async function POST(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function POST(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await exigerEcriture();
     const { id } = await params;

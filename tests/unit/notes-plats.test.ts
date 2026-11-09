@@ -39,7 +39,7 @@ describe("plats proposés à la notation", () => {
 
   it("propose d'abord les recettes validées dans chaque cuisine", () => {
     const plats = platsANoter(recettes, [], new Map(), ["libanaise"]);
-    expect(plats[0].title).toBe("Taboulé");
+    expect(plats[0].title).toBe("Houmous");
   });
 
   it("garde toutes les recettes compatibles, sans doublon", () => {

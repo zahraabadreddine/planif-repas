@@ -77,9 +77,7 @@ export default function AdminUtilisateursPage() {
           >
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <p className="truncate font-display font-semibold text-foret">
-                  {u.fullName}
-                </p>
+                <p className="truncate font-display font-semibold text-foret">{u.fullName}</p>
                 <p className="text-sm text-cacao">
                   {u.email} · {u.role} · inscrit le{" "}
                   {new Date(u.createdAt).toLocaleDateString("fr-FR")}
@@ -112,9 +110,7 @@ export default function AdminUtilisateursPage() {
                 >
                   Confirmer
                 </button>
-                {resetMsg && (
-                  <span className="text-sm font-bold text-cacao">{resetMsg}</span>
-                )}
+                {resetMsg && <span className="text-sm font-bold text-cacao">{resetMsg}</span>}
               </div>
             )}
           </div>

@@ -80,16 +80,11 @@ export const magasinSchema = z.object({
   address: z.string().trim().min(1).max(200),
   latitude: z.number().min(-90).max(90),
   longitude: z.number().min(-180).max(180),
-  openingHours: z
-    .record(z.string(), z.string())
-    .nullable()
-    .default(null),
+  openingHours: z.record(z.string(), z.string()).nullable().default(null),
 });
 
 export type MagasinAdmin = z.infer<typeof magasinSchema>;
 
 export const resetPasswordSchema = z.object({
-  newPassword: z
-    .string()
-    .min(8, "Le nouveau mot de passe doit faire au moins 8 caractères."),
+  newPassword: z.string().min(8, "Le nouveau mot de passe doit faire au moins 8 caractères."),
 });

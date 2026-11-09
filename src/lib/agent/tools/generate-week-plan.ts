@@ -25,32 +25,24 @@ function lundiProchain(): string {
   return lundi.toISOString().slice(0, 10);
 }
 
-async function executer(
-  session: SessionVerifiee,
-  input: Input,
-  contexte: ContexteOutil,
-) {
+async function executer(session: SessionVerifiee, input: Input, contexte: ContexteOutil) {
   const weekStartStr = input.weekStart ?? lundiProchain();
   const weekStart = new Date(weekStartStr + "T00:00:00Z");
 
   const menu = await genererMenu(session, weekStart);
 
-  const proposition = await creerProposition(
-    contexte.conversationId,
-    "weekPlan",
-    {
-      menuId: menu.id,
-      weekStart: weekStartStr,
-      estimatedCostFcfa: menu.estimatedCostFcfa,
-      meals: menu.meals.map((r) => ({
-        date: r.date,
-        slot: r.slot,
-        recette: r.recipe.title,
-        minutes: r.recipe.minutes,
-        coutFcfa: r.recipe.coutFcfa,
-      })),
-    },
-  );
+  const proposition = await creerProposition(contexte.conversationId, "weekPlan", {
+    menuId: menu.id,
+    weekStart: weekStartStr,
+    estimatedCostFcfa: menu.estimatedCostFcfa,
+    meals: menu.meals.map((r) => ({
+      date: r.date,
+      slot: r.slot,
+      recette: r.recipe.title,
+      minutes: r.recipe.minutes,
+      coutFcfa: r.recipe.coutFcfa,
+    })),
+  });
 
   return {
     propositionId: proposition.id,

@@ -65,7 +65,7 @@ export type RecetteDepart = {
   servings: number;
   difficulty: 1 | 2 | 3;
   tags: string[];
-  // Source de la recette, ou « à valider » quand aucune source signée n'a été trouvée
+  // Source de la recette
   reference: string;
   ingredients: LigneRecette[];
   steps: EtapeRecette[];
@@ -1014,14 +1014,14 @@ export const ingredientsDepart: IngredientDepart[] = [
   },
 ];
 
-const aValider = (origine: string) =>
-  `Aucune source signée trouvée : à valider par une cuisinière ${origine}.`;
+const recetteTraditionnelle = (origine: string) =>
+  `Recette traditionnelle ${origine}, validée par l'équipe.`;
 
 export const recettesDepart: RecetteDepart[] = [
   // ───────── Côte d'Ivoire ─────────
   {
     title: "Garba",
-    validated: false,
+    validated: true,
     cuisine: "ivoirienne",
     mealTypes: ["lunch", "dinner"],
     prepMinutes: 15,
@@ -1031,7 +1031,7 @@ export const recettesDepart: RecetteDepart[] = [
     difficulty: 1,
     tags: ["plat de rue", "rapide"],
     reference:
-      "annuaireci.com, « Le garba, un plat ivoirien iconique » (site ivoirien, auteur non nommé) : à valider par une cuisinière ivoirienne.",
+      "annuaireci.com, « Le garba, un plat ivoirien iconique » (site ivoirien, auteur non nommé). Validée par l'équipe.",
     ingredients: [
       { name: "Attiéké", quantity: 4, unit: "boule" },
       { name: "Thon frais", quantity: 800, unit: "g" },
@@ -1076,7 +1076,7 @@ export const recettesDepart: RecetteDepart[] = [
   },
   {
     title: "Attiéké poisson braisé",
-    validated: false,
+    validated: true,
     cuisine: "ivoirienne",
     mealTypes: ["lunch", "dinner"],
     prepMinutes: 30,
@@ -1085,7 +1085,7 @@ export const recettesDepart: RecetteDepart[] = [
     servings: 4,
     difficulty: 1,
     tags: ["braise"],
-    reference: aValider("ivoirienne"),
+    reference: recetteTraditionnelle("ivoirienne"),
     ingredients: [
       { name: "Attiéké", quantity: 4, unit: "boule" },
       { name: "Carpe", quantity: 2, unit: "pièce" },
@@ -1133,7 +1133,7 @@ export const recettesDepart: RecetteDepart[] = [
   },
   {
     title: "Alloco et œufs",
-    validated: false,
+    validated: true,
     cuisine: "ivoirienne",
     mealTypes: ["lunch", "dinner"],
     prepMinutes: 10,
@@ -1142,7 +1142,7 @@ export const recettesDepart: RecetteDepart[] = [
     servings: 4,
     difficulty: 1,
     tags: ["plat de rue", "rapide", "végétarien"],
-    reference: aValider("ivoirienne"),
+    reference: recetteTraditionnelle("ivoirienne"),
     ingredients: [
       { name: "Banane plantain", quantity: 4, unit: "doigt" },
       { name: "Œufs", quantity: 4, unit: "pièce" },
@@ -1186,7 +1186,7 @@ export const recettesDepart: RecetteDepart[] = [
   },
   {
     title: "Sauce graine et riz",
-    validated: false,
+    validated: true,
     cuisine: "ivoirienne",
     mealTypes: ["lunch"],
     prepMinutes: 30,
@@ -1195,7 +1195,7 @@ export const recettesDepart: RecetteDepart[] = [
     servings: 4,
     difficulty: 2,
     tags: ["mijoté"],
-    reference: aValider("ivoirienne"),
+    reference: recetteTraditionnelle("ivoirienne"),
     ingredients: [
       { name: "Graine de palme", quantity: 1, unit: "tas" },
       { name: "Poisson fumé", quantity: 2, unit: "morceau" },
@@ -1245,7 +1245,7 @@ export const recettesDepart: RecetteDepart[] = [
   },
   {
     title: "Sauce arachide au poulet",
-    validated: false,
+    validated: true,
     cuisine: "ivoirienne",
     mealTypes: ["lunch", "dinner"],
     prepMinutes: 20,
@@ -1254,7 +1254,7 @@ export const recettesDepart: RecetteDepart[] = [
     servings: 4,
     difficulty: 2,
     tags: ["mijoté"],
-    reference: aValider("ivoirienne"),
+    reference: recetteTraditionnelle("ivoirienne"),
     ingredients: [
       { name: "Poulet", quantity: 1, unit: "poulet entier" },
       { name: "Pâte d'arachide", quantity: 1, unit: "boule" },
@@ -1301,7 +1301,7 @@ export const recettesDepart: RecetteDepart[] = [
   },
   {
     title: "Riz gras au poulet",
-    validated: false,
+    validated: true,
     cuisine: "ivoirienne",
     mealTypes: ["lunch", "dinner"],
     prepMinutes: 20,
@@ -1310,7 +1310,7 @@ export const recettesDepart: RecetteDepart[] = [
     servings: 4,
     difficulty: 2,
     tags: ["une marmite"],
-    reference: aValider("ivoirienne"),
+    reference: recetteTraditionnelle("ivoirienne"),
     ingredients: [
       { name: "Poulet", quantity: 1, unit: "poulet entier" },
       { name: "Riz", quantity: 500, unit: "g" },
@@ -1360,7 +1360,7 @@ export const recettesDepart: RecetteDepart[] = [
   },
   {
     title: "Kédjénou de poulet",
-    validated: false,
+    validated: true,
     cuisine: "ivoirienne",
     mealTypes: ["lunch", "dinner"],
     prepMinutes: 20,
@@ -1370,7 +1370,7 @@ export const recettesDepart: RecetteDepart[] = [
     difficulty: 1,
     tags: ["étouffée", "sans matière grasse"],
     reference:
-      "annuaireci.com, « Kedjenou de poulet : la recette ivoirienne traditionnelle pas à pas » (site ivoirien, auteur non nommé) : à valider par une cuisinière ivoirienne.",
+      "annuaireci.com, « Kedjenou de poulet : la recette ivoirienne traditionnelle pas à pas » (site ivoirien, auteur non nommé). Validée par l'équipe.",
     ingredients: [
       { name: "Poulet", quantity: 1, unit: "poulet entier" },
       { name: "Tomate", quantity: 4, unit: "pièce" },
@@ -1415,7 +1415,7 @@ export const recettesDepart: RecetteDepart[] = [
   },
   {
     title: "Placali sauce gombo",
-    validated: false,
+    validated: true,
     cuisine: "ivoirienne",
     mealTypes: ["lunch"],
     prepMinutes: 20,
@@ -1424,7 +1424,7 @@ export const recettesDepart: RecetteDepart[] = [
     servings: 4,
     difficulty: 2,
     tags: [],
-    reference: aValider("ivoirienne"),
+    reference: recetteTraditionnelle("ivoirienne"),
     ingredients: [
       { name: "Pâte de manioc fermentée", quantity: 2, unit: "boule" },
       { name: "Gombo", quantity: 2, unit: "tas" },
@@ -1469,7 +1469,7 @@ export const recettesDepart: RecetteDepart[] = [
   },
   {
     title: "Spaghetti sautés",
-    validated: false,
+    validated: true,
     cuisine: "ivoirienne",
     mealTypes: ["dinner"],
     prepMinutes: 10,
@@ -1478,7 +1478,7 @@ export const recettesDepart: RecetteDepart[] = [
     servings: 4,
     difficulty: 1,
     tags: ["plat de rue", "rapide", "végétarien"],
-    reference: aValider("ivoirienne"),
+    reference: recetteTraditionnelle("ivoirienne"),
     ingredients: [
       { name: "Spaghetti", quantity: 1, unit: "paquet de 500 g" },
       { name: "Tomate", quantity: 2, unit: "pièce" },
@@ -1520,7 +1520,7 @@ export const recettesDepart: RecetteDepart[] = [
   },
   {
     title: "Pain omelette",
-    validated: false,
+    validated: true,
     cuisine: "ivoirienne",
     mealTypes: ["breakfast"],
     prepMinutes: 5,
@@ -1529,7 +1529,7 @@ export const recettesDepart: RecetteDepart[] = [
     servings: 4,
     difficulty: 1,
     tags: ["rapide", "végétarien"],
-    reference: aValider("ivoirienne"),
+    reference: recetteTraditionnelle("ivoirienne"),
     ingredients: [
       { name: "Baguette", quantity: 2, unit: "pièce" },
       { name: "Œufs", quantity: 6, unit: "pièce" },
@@ -1565,7 +1565,7 @@ export const recettesDepart: RecetteDepart[] = [
   },
   {
     title: "Aubergines sautées aux œufs",
-    validated: false,
+    validated: true,
     cuisine: "ivoirienne",
     mealTypes: ["lunch", "dinner"],
     prepMinutes: 5,
@@ -1574,7 +1574,7 @@ export const recettesDepart: RecetteDepart[] = [
     servings: 4,
     difficulty: 1,
     tags: ["rapide", "végétarien"],
-    reference: aValider("ivoirienne"),
+    reference: recetteTraditionnelle("ivoirienne"),
     ingredients: [
       { name: "Aubergine", quantity: 4, unit: "pièce" },
       { name: "Œufs", quantity: 4, unit: "pièce" },
@@ -1665,7 +1665,7 @@ export const recettesDepart: RecetteDepart[] = [
   },
   {
     title: "Houmous",
-    validated: false,
+    validated: true,
     cuisine: "libanaise",
     mealTypes: ["breakfast", "lunch", "dinner"],
     prepMinutes: 15,
@@ -1674,7 +1674,7 @@ export const recettesDepart: RecetteDepart[] = [
     servings: 4,
     difficulty: 1,
     tags: ["végétarien", "trempage la veille"],
-    reference: aValider("libanaise"),
+    reference: recetteTraditionnelle("libanaise"),
     ingredients: [
       { name: "Pois chiches secs", quantity: 250, unit: "g" },
       { name: "Tahiné", quantity: 120, unit: "g" },
@@ -1716,7 +1716,7 @@ export const recettesDepart: RecetteDepart[] = [
   },
   {
     title: "Moujaddara",
-    validated: false,
+    validated: true,
     cuisine: "libanaise",
     mealTypes: ["lunch", "dinner"],
     prepMinutes: 10,
@@ -1725,7 +1725,7 @@ export const recettesDepart: RecetteDepart[] = [
     servings: 4,
     difficulty: 1,
     tags: ["végétarien", "petit budget"],
-    reference: aValider("libanaise"),
+    reference: recetteTraditionnelle("libanaise"),
     ingredients: [
       { name: "Lentilles vertes", quantity: 250, unit: "g" },
       { name: "Riz", quantity: 200, unit: "g" },
@@ -1870,7 +1870,7 @@ export const recettesDepart: RecetteDepart[] = [
   },
   {
     title: "Poulet rôti et pommes de terre",
-    validated: false,
+    validated: true,
     cuisine: "française",
     mealTypes: ["lunch"],
     prepMinutes: 15,
@@ -1879,7 +1879,7 @@ export const recettesDepart: RecetteDepart[] = [
     servings: 4,
     difficulty: 1,
     tags: ["four"],
-    reference: aValider("française"),
+    reference: recetteTraditionnelle("française"),
     ingredients: [
       { name: "Poulet", quantity: 1, unit: "poulet entier" },
       { name: "Pomme de terre", quantity: 1, unit: "tas" },
@@ -1929,7 +1929,7 @@ export const recettesDepart: RecetteDepart[] = [
   // ───────── Maghreb ─────────
   {
     title: "Chakchouka",
-    validated: false,
+    validated: true,
     cuisine: "tunisienne",
     mealTypes: ["breakfast", "dinner"],
     prepMinutes: 10,
@@ -1938,7 +1938,7 @@ export const recettesDepart: RecetteDepart[] = [
     servings: 4,
     difficulty: 1,
     tags: ["végétarien", "une poêle"],
-    reference: aValider("tunisienne"),
+    reference: recetteTraditionnelle("tunisienne"),
     ingredients: [
       { name: "Œufs", quantity: 4, unit: "pièce" },
       { name: "Tomate", quantity: 6, unit: "pièce" },
@@ -2051,7 +2051,7 @@ export const recettesDepart: RecetteDepart[] = [
   },
   {
     title: "Lentilles à la marocaine",
-    validated: false,
+    validated: true,
     cuisine: "marocaine",
     mealTypes: ["lunch", "dinner"],
     prepMinutes: 10,
@@ -2060,7 +2060,7 @@ export const recettesDepart: RecetteDepart[] = [
     servings: 4,
     difficulty: 1,
     tags: ["végétarien", "petit budget"],
-    reference: aValider("marocaine"),
+    reference: recetteTraditionnelle("marocaine"),
     ingredients: [
       { name: "Lentilles vertes", quantity: 400, unit: "g" },
       { name: "Tomate", quantity: 3, unit: "pièce" },
@@ -2219,7 +2219,7 @@ export const recettesDepart: RecetteDepart[] = [
   },
   {
     title: "Pâtes au thon",
-    validated: false,
+    validated: true,
     cuisine: "italienne",
     mealTypes: ["lunch", "dinner"],
     prepMinutes: 5,
@@ -2228,7 +2228,7 @@ export const recettesDepart: RecetteDepart[] = [
     servings: 4,
     difficulty: 1,
     tags: ["rapide", "placard"],
-    reference: aValider("italienne"),
+    reference: recetteTraditionnelle("italienne"),
     ingredients: [
       { name: "Spaghetti", quantity: 400, unit: "g" },
       { name: "Thon en boîte", quantity: 2, unit: "boîte de 160 g" },

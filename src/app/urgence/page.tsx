@@ -26,14 +26,11 @@ export default async function UrgencePage() {
   ];
   const regimes = [
     ...new Set(
-      restrictions
-        .filter((r) => r.type === "diet")
-        .map((r) => r.value.replace(/-/g, " ")),
+      restrictions.filter((r) => r.type === "diet").map((r) => r.value.replace(/-/g, " ")),
     ),
   ];
   const parties = [...allergies.map((a) => `sans ${a}`), ...regimes];
-  const restrictionsTexte =
-    parties.length > 0 ? `${parties.join(", ")}, promis` : "";
+  const restrictionsTexte = parties.length > 0 ? `${parties.join(", ")}, promis` : "";
 
   return (
     <UrgenceInteractif

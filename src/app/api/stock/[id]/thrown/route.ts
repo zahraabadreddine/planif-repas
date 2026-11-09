@@ -5,10 +5,7 @@ import { jetSchema } from "@/lib/validation/stock";
 import { declarerJet } from "@/lib/stock/jet";
 import { gererErreur } from "@/lib/erreurs";
 
-export async function POST(
-  requete: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function POST(requete: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await exigerEcriture();
     const { id } = await params;

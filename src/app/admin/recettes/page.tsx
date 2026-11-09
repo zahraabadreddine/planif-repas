@@ -51,10 +51,7 @@ export default function AdminRecettesPage() {
         overline="Administration"
         title="Recettes"
         right={
-          <Link
-            href="/admin"
-            className="text-sm font-bold text-palme underline"
-          >
+          <Link href="/admin" className="text-sm font-bold text-palme underline">
             Retour
           </Link>
         }
@@ -76,16 +73,15 @@ export default function AdminRecettesPage() {
             <div className="min-w-0">
               <p className="truncate font-display font-semibold text-foret">{rec.title}</p>
               <p className="text-sm text-cacao">
-                {rec.cuisine} · {rec.prepMinutes + rec.cookMinutes} min · difficulté {rec.difficulty}
+                {rec.cuisine} · {rec.prepMinutes + rec.cookMinutes} min · difficulté{" "}
+                {rec.difficulty}
               </p>
             </div>
             <div className="flex shrink-0 gap-2">
               <button
                 onClick={() => basculerValidation(rec)}
                 className={`rounded-lg px-3 py-1.5 text-sm font-bold ${
-                  rec.validated
-                    ? "bg-palme text-creme"
-                    : "border-2 border-cacao text-cacao"
+                  rec.validated ? "bg-palme text-creme" : "border-2 border-cacao text-cacao"
                 }`}
               >
                 {rec.validated ? "Validée" : "Valider"}

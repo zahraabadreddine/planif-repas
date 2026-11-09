@@ -33,8 +33,18 @@ type RepasCible = { mealId: string; slot: SlotUI; currentId: string };
 const JOURS_COURTS = ["LUN", "MAR", "MER", "JEU", "VEN", "SAM", "DIM"];
 const JOURS_LONGS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
 const MOIS = [
-  "janv.", "févr.", "mars", "avr.", "mai", "juin",
-  "juil.", "août", "sept.", "oct.", "nov.", "déc.",
+  "janv.",
+  "févr.",
+  "mars",
+  "avr.",
+  "mai",
+  "juin",
+  "juil.",
+  "août",
+  "sept.",
+  "oct.",
+  "nov.",
+  "déc.",
 ];
 
 function labelSemaine(weekStart: string): string {
@@ -115,9 +125,7 @@ export function MenuInteractif({ menu, weeklyBudgetFcfa, peutModifier }: Props) 
 
   const shareText =
     `Menu de la semaine (${labelSemaine(menu.weekStart)})\n` +
-    jours
-      .map((j) => `${j.label} : ${j.meals.map((m) => m.recipe.title).join(" / ")}`)
-      .join("\n");
+    jours.map((j) => `${j.label} : ${j.meals.map((m) => m.recipe.title).join(" / ")}`).join("\n");
 
   async function ouvrirChoix(repas: RepasEnregistre) {
     setCible({ mealId: repas.id, slot: repas.slot as SlotUI, currentId: repas.recipe.id });

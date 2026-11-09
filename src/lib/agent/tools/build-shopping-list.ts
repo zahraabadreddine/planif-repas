@@ -11,11 +11,7 @@ const schema = z
 
 type Input = z.infer<typeof schema>;
 
-async function executer(
-  session: SessionVerifiee,
-  input: Input,
-  contexte: ContexteOutil,
-) {
+async function executer(session: SessionVerifiee, input: Input, contexte: ContexteOutil) {
   const liste = await genererListe(session, input.mealPlanId);
 
   return {
@@ -30,8 +26,7 @@ async function executer(
       prixEstimeFcfa: a.estimatedPriceFcfa,
       lieu: a.placeType,
     })),
-    message:
-      "La liste de courses a été générée. Tu peux la consulter et la partager sur WhatsApp.",
+    message: "La liste de courses a été générée. Tu peux la consulter et la partager sur WhatsApp.",
   };
 }
 

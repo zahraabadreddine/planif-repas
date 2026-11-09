@@ -11,11 +11,7 @@ const schema = z
       .min(1)
       .max(100)
       .describe("Clé de la préférence (ex : « aime-poisson », « eviter-piment »)"),
-    value: z
-      .string()
-      .min(1)
-      .max(500)
-      .describe("Valeur de la préférence"),
+    value: z.string().min(1).max(500).describe("Valeur de la préférence"),
     explanation: z
       .string()
       .min(1)
@@ -26,11 +22,7 @@ const schema = z
 
 type Input = z.infer<typeof schema>;
 
-async function executer(
-  session: SessionVerifiee,
-  input: Input,
-  contexte: ContexteOutil,
-) {
+async function executer(session: SessionVerifiee, input: Input, contexte: ContexteOutil) {
   if (!session.householdId) throw new ErreurApi("FOYERMANQUANT");
 
   const existante = await prisma.learnedPreference.findFirst({

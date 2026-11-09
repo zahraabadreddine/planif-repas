@@ -43,9 +43,7 @@ const purchasePayload = z.object({
 });
 
 const emergencyPayload = z.object({
-  options: z
-    .array(z.object({ recetteId: z.string(), titre: z.string() }))
-    .optional(),
+  options: z.array(z.object({ recetteId: z.string(), titre: z.string() })).optional(),
 });
 
 function validerPayload<T>(schema: z.ZodType<T>, payload: unknown): T {
@@ -141,10 +139,11 @@ export async function rejeterProposition(
   id: string,
 ): Promise<{ id: string; status: "rejected" }> {
   const proposition = await chargerProposition(session, id);
-  await prisma.agentProposal.update({
-    where: { id: proposition.id },
+  const { count } = await prisma.agentProposal.updateMany({
+    where: { id: proposition.id, status: "pending" },
     data: { status: "rejected" },
   });
+  if (count === 0) throw new ErreurApi("DONNEESINVALIDES", "Cette proposition a déjà été traitée.");
   return { id: proposition.id, status: "rejected" };
 }
 
@@ -163,7 +162,10 @@ export async function accepterProposition(
 
   switch (proposition.type) {
     case "profileUpdate":
-      resultat = await appliquerProfileUpdate(session, validerPayload(profileUpdatePayload, payload));
+      resultat = await appliquerProfileUpdate(
+        session,
+        validerPayload(profileUpdatePayload, payload),
+      );
       break;
     case "weekPlan":
       resultat = await appliquerWeekPlan(session, validerPayload(weekPlanPayload, payload));
@@ -181,10 +183,11 @@ export async function accepterProposition(
       throw new ErreurApi("DONNEESINVALIDES", "Type de proposition inconnu.");
   }
 
-  await prisma.agentProposal.update({
-    where: { id: proposition.id },
+  const { count } = await prisma.agentProposal.updateMany({
+    where: { id: proposition.id, status: "pending" },
     data: { status: "accepted" },
   });
+  if (count === 0) throw new ErreurApi("DONNEESINVALIDES", "Cette proposition a déjà été traitée.");
 
   return { id: proposition.id, status: "accepted", resultat };
 }
@@ -200,9 +203,7 @@ async function appliquerProfileUpdate(
     name: payload.name ?? foyer.name,
     weeklyBudgetFcfa: payload.weeklyBudgetFcfa ?? foyer.weeklyBudgetFcfa,
     cuisinesPreferred: payload.cuisinesPreferred ?? foyer.cuisinesPreferred,
-    shoppingDay: payload.shoppingDay !== undefined
-      ? payload.shoppingDay
-      : foyer.shoppingDay,
+    shoppingDay: payload.shoppingDay !== undefined ? payload.shoppingDay : foyer.shoppingDay,
   };
 
   const { foyer: mis } = await enregistrerFoyer(session, donnees);

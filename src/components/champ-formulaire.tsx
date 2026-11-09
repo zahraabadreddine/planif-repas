@@ -50,15 +50,22 @@ export function MessageErreur({ children }: { children: React.ReactNode }) {
 export function BoutonEnvoi({
   enCours,
   children,
+  variante,
 }: {
   enCours: boolean;
   children: React.ReactNode;
+  variante?: "default" | "danger";
 }) {
   return (
     <button
       type="submit"
       disabled={enCours}
-      className="press flex h-[58px] w-full items-center justify-center gap-2.5 rounded-[18px_22px_20px_16px] bg-foret font-display text-xl font-semibold text-or shadow-[0_6px_0_#411102] disabled:opacity-60"
+      className={cx(
+        "press flex h-[58px] w-full items-center justify-center gap-2.5 rounded-[18px_22px_20px_16px] font-display text-xl font-semibold disabled:opacity-60",
+        variante === "danger"
+          ? "bg-carmin text-creme shadow-[0_6px_0_#6b0f0f]"
+          : "bg-foret text-or shadow-[0_6px_0_#411102]",
+      )}
     >
       {enCours ? "Un instant…" : children}
     </button>

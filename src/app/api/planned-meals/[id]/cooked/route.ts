@@ -3,10 +3,7 @@ import { exigerEcriture } from "@/lib/auth/garde";
 import { marquerCuisine } from "@/lib/stock/cuisson";
 import { gererErreur } from "@/lib/erreurs";
 
-export async function POST(
-  _requete: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function POST(_requete: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await exigerEcriture();
     const { id } = await params;

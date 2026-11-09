@@ -63,9 +63,7 @@ function recetteFaisable(
  * Les allergènes sont filtrés par le code (règle §3.2).
  * Les quantités sont calculées par le code (règle §3.3).
  */
-export async function suggererRecettes(
-  session: SessionVerifiee,
-): Promise<SuggestionRecette[]> {
+export async function suggererRecettes(session: SessionVerifiee): Promise<SuggestionRecette[]> {
   const householdId = session.householdId;
   if (!householdId) throw new ErreurApi("FOYERMANQUANT");
 
