@@ -54,6 +54,14 @@ export async function marquerCuisine(
 
     const deductions: ResultatCuisson["deductions"] = [];
 
+    if (repas.leftoverFromId) {
+      return {
+        plannedMealId: repas.id,
+        recipeName: repas.recipe.title,
+        deductions,
+      };
+    }
+
     for (const ri of repas.recipe.ingredients) {
       const quantiteRecette = ri.quantity * (repas.servings / repas.recipe.servings);
       const gramsNecessaires = quantiteRecette * ri.unit.gramsEquivalent;
