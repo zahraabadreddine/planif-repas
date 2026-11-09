@@ -43,6 +43,9 @@ export default function AssistantPage() {
     setMessages((prev) => [...prev, { id: newId(), from: "user", kind: "text", text: clean }]);
     setTyping(true);
 
+    const agentMsgId = newId();
+    let agentTextStarted = false;
+
     try {
       const res = await fetch("/api/chat/messages", {
         method: "POST",
@@ -53,48 +56,101 @@ export default function AssistantPage() {
         }),
       });
 
-      if (!res.ok) {
-        const body = await res.json().catch(() => null);
-        throw new Error(body?.message ?? `Erreur ${res.status}`);
+      if (!res.body) throw new Error("Pas de flux de réponse.");
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const parts = buffer.split("\n\n");
+        buffer = parts.pop() ?? "";
+
+        for (const part of parts) {
+          const eventMatch = part.match(/^event:\s*(.+)/m);
+          const dataMatch = part.match(/^data:\s*(.+)/m);
+          if (!eventMatch || !dataMatch) continue;
+
+          const eventType = eventMatch[1].trim();
+          let payload: Record<string, unknown>;
+          try {
+            payload = JSON.parse(dataMatch[1]);
+          } catch {
+            continue;
+          }
+
+          if (eventType === "text") {
+            const delta = payload.delta as string;
+            if (!agentTextStarted) {
+              agentTextStarted = true;
+              setMessages((prev) => [
+                ...prev,
+                { id: agentMsgId, from: "agent", kind: "text", text: delta },
+              ]);
+            } else {
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.id === agentMsgId && m.kind === "text"
+                    ? { ...m, text: m.text + delta }
+                    : m,
+                ),
+              );
+            }
+          } else if (eventType === "done") {
+            setConversationId(payload.conversationId as string);
+          } else if (eventType === "proposals") {
+            const propositions = payload.propositions as Array<{
+              id: string;
+              type: string;
+              title: string;
+              label: string;
+              summary: string;
+            }>;
+            if (propositions?.length > 0) {
+              for (const p of propositions) {
+                setMessages((prev) => [
+                  ...prev,
+                  {
+                    id: newId(),
+                    from: "agent",
+                    kind: "proposal",
+                    proposal: {
+                      id: p.id,
+                      type: p.type,
+                      title: p.title,
+                      label: p.label,
+                      summary: p.summary,
+                      status: "pending",
+                    },
+                  },
+                ]);
+              }
+            }
+          } else if (eventType === "error") {
+            throw new Error((payload.message as string) ?? "Erreur inconnue.");
+          }
+        }
       }
 
-      const data = await res.json();
-      setConversationId(data.conversationId);
-
-      if (data.reponse) {
+      if (!agentTextStarted) {
         setMessages((prev) => [
           ...prev,
-          { id: newId(), from: "agent", kind: "text", text: data.reponse },
+          { id: agentMsgId, from: "agent", kind: "text", text: "Je n'ai pas pu formuler de réponse. Réessaie." },
         ]);
-      }
-
-      if (data.propositions?.length > 0) {
-        for (const p of data.propositions) {
-          setMessages((prev) => [
-            ...prev,
-            {
-              id: newId(),
-              from: "agent",
-              kind: "proposal",
-              proposal: {
-                id: p.id,
-                type: p.type,
-                title: p.title,
-                label: p.label,
-                summary: p.summary,
-                status: "pending",
-              },
-            },
-          ]);
-        }
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Une erreur est survenue.";
       setErreur(msg);
-      setMessages((prev) => [
-        ...prev,
-        { id: newId(), from: "agent", kind: "text", text: "Désolée, je n'ai pas pu répondre. Réessaie dans un instant." },
-      ]);
+      if (!agentTextStarted) {
+        setMessages((prev) => [
+          ...prev,
+          { id: agentMsgId, from: "agent", kind: "text", text: "Désolée, je n'ai pas pu répondre. Réessaie dans un instant." },
+        ]);
+      }
     } finally {
       setTyping(false);
     }
