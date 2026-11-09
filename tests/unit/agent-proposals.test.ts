@@ -4,6 +4,7 @@ const mocks = vi.hoisted(() => ({
   agentProposalCreate: vi.fn(),
   agentProposalFindUnique: vi.fn(),
   agentProposalUpdate: vi.fn(),
+  mealPlanFindFirst: vi.fn(),
   lireFoyer: vi.fn(),
   enregistrerFoyer: vi.fn(),
   activerMenu: vi.fn(),
@@ -17,6 +18,9 @@ vi.mock("@/lib/db", () => ({
       create: mocks.agentProposalCreate,
       findUnique: mocks.agentProposalFindUnique,
       update: mocks.agentProposalUpdate,
+    },
+    mealPlan: {
+      findFirst: mocks.mealPlanFindFirst,
     },
   },
 }));
@@ -247,7 +251,10 @@ describe("accepterProposition", () => {
     ]);
   });
 
-  it("applique emergency : renvoie les options", async () => {
+  it("applique emergency : remplace le dîner du soir", async () => {
+    const aujourdhui = new Date();
+    aujourdhui.setHours(0, 0, 0, 0);
+
     mockProposition("emergency", {
       options: [
         { recetteId: "r-1", titre: "Attiéké poisson" },
@@ -255,10 +262,30 @@ describe("accepterProposition", () => {
       ],
     });
 
+    mocks.mealPlanFindFirst.mockResolvedValue({
+      id: "plan-1",
+      meals: [
+        {
+          id: "meal-1",
+          slot: "dinner",
+          status: "planned",
+          date: aujourdhui,
+          recipe: { id: "old-r", title: "Foutou banane" },
+        },
+      ],
+    });
+
+    mocks.remplacerRepas.mockResolvedValue({
+      menu: { id: "plan-1" },
+      liste: { id: "liste-1" },
+    });
+
     const result = await accepterProposition(SESSION, "prop-1");
 
     expect(result.status).toBe("accepted");
-    expect(result.resultat.options).toEqual(["Attiéké poisson", "Riz sauce"]);
+    expect(result.resultat.ancienneRecette).toBe("Foutou banane");
+    expect(result.resultat.nouvelleRecette).toBe("Attiéké poisson");
+    expect(mocks.remplacerRepas).toHaveBeenCalledWith(SESSION, "meal-1", "r-1");
   });
 
   it("refuse un type inconnu", async () => {
