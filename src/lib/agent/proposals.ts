@@ -141,10 +141,11 @@ export async function rejeterProposition(
   id: string,
 ): Promise<{ id: string; status: "rejected" }> {
   const proposition = await chargerProposition(session, id);
-  await prisma.agentProposal.update({
-    where: { id: proposition.id },
+  const { count } = await prisma.agentProposal.updateMany({
+    where: { id: proposition.id, status: "pending" },
     data: { status: "rejected" },
   });
+  if (count === 0) throw new ErreurApi("DONNEESINVALIDES", "Cette proposition a déjà été traitée.");
   return { id: proposition.id, status: "rejected" };
 }
 
@@ -181,10 +182,11 @@ export async function accepterProposition(
       throw new ErreurApi("DONNEESINVALIDES", "Type de proposition inconnu.");
   }
 
-  await prisma.agentProposal.update({
-    where: { id: proposition.id },
+  const { count } = await prisma.agentProposal.updateMany({
+    where: { id: proposition.id, status: "pending" },
     data: { status: "accepted" },
   });
+  if (count === 0) throw new ErreurApi("DONNEESINVALIDES", "Cette proposition a déjà été traitée.");
 
   return { id: proposition.id, status: "accepted", resultat };
 }

@@ -83,8 +83,8 @@ export async function marquerCuisine(
           data: {
             stockItemId: item.id,
             type: "cooked",
-            quantity: quantiteARetirer,
-            grams: gramsARetirer,
+            quantity: -quantiteARetirer,
+            grams: -gramsARetirer,
             reference: repas.id,
           },
         });

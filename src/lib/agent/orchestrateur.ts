@@ -36,6 +36,8 @@ export async function orchestrer(
 ): Promise<ResultatOrchestration> {
   if (!session.householdId) throw new ErreurApi("FOYERMANQUANT");
 
+  await verifierQuotaIA(session.householdId);
+
   const { contexte, table } = await construireContexte(session);
   const messageAnonyme = remplacerSurnoms(messageUtilisateur, table);
 
@@ -82,6 +84,30 @@ export async function orchestrer(
     tokensIn,
     tokensOut,
   };
+}
+
+// --- Quota IA (ENF-18) ---
+
+const QUOTA_JOURNALIER = Number(process.env.AI_DAILY_QUOTA) || 100;
+
+async function verifierQuotaIA(householdId: string) {
+  const debutJournee = new Date();
+  debutJournee.setHours(0, 0, 0, 0);
+
+  const count = await prisma.message.count({
+    where: {
+      conversation: { householdId },
+      role: "user",
+      createdAt: { gte: debutJournee },
+    },
+  });
+
+  if (count >= QUOTA_JOURNALIER) {
+    throw new ErreurApi(
+      "QUOTAATTEINT",
+      "Tu as atteint la limite de messages pour aujourd'hui. Réessaie demain !",
+    );
+  }
 }
 
 // --- Conversations ---

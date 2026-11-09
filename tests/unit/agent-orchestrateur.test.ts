@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   messageCreate: vi.fn(),
   learnedPreferenceFindMany: vi.fn(),
   householdFindUnique: vi.fn(),
+  agentMessageCount: vi.fn(),
   lireFoyer: vi.fn(),
   listerMembres: vi.fn(),
   lireStock: vi.fn(),
@@ -18,7 +19,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/lib/db", () => ({
   prisma: {
     conversation: { create: mocks.conversationCreate, findUnique: mocks.conversationFindUnique },
-    message: { findMany: mocks.messageFindMany, create: mocks.messageCreate },
+    message: { findMany: mocks.messageFindMany, create: mocks.messageCreate, count: mocks.agentMessageCount },
     learnedPreference: { findMany: mocks.learnedPreferenceFindMany },
     household: { findUnique: mocks.householdFindUnique },
   },
@@ -83,6 +84,7 @@ beforeEach(() => {
   mocks.conversationFindUnique.mockResolvedValue({ id: "conv-1", householdId: "h1" });
   mocks.messageFindMany.mockResolvedValue([]);
   mocks.messageCreate.mockResolvedValue({ id: "msg-1" });
+  mocks.agentMessageCount.mockResolvedValue(0);
 });
 
 // --- Tests du registre d'outils ---

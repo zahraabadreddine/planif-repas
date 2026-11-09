@@ -4,6 +4,7 @@ const mocks = vi.hoisted(() => ({
   agentProposalCreate: vi.fn(),
   agentProposalFindUnique: vi.fn(),
   agentProposalUpdate: vi.fn(),
+  agentProposalUpdateMany: vi.fn(),
   mealPlanFindFirst: vi.fn(),
   lireFoyer: vi.fn(),
   enregistrerFoyer: vi.fn(),
@@ -18,6 +19,7 @@ vi.mock("@/lib/db", () => ({
       create: mocks.agentProposalCreate,
       findUnique: mocks.agentProposalFindUnique,
       update: mocks.agentProposalUpdate,
+      updateMany: mocks.agentProposalUpdateMany,
     },
     mealPlan: {
       findFirst: mocks.mealPlanFindFirst,
@@ -163,13 +165,13 @@ describe("rejeterProposition", () => {
       payload: {},
       conversation: { householdId: "h1" },
     });
-    mocks.agentProposalUpdate.mockResolvedValue({});
+    mocks.agentProposalUpdateMany.mockResolvedValue({ count: 1 });
 
     const result = await rejeterProposition(SESSION, "prop-1");
 
     expect(result).toEqual({ id: "prop-1", status: "rejected" });
-    expect(mocks.agentProposalUpdate).toHaveBeenCalledWith({
-      where: { id: "prop-1" },
+    expect(mocks.agentProposalUpdateMany).toHaveBeenCalledWith({
+      where: { id: "prop-1", status: "pending" },
       data: { status: "rejected" },
     });
   });
@@ -185,7 +187,7 @@ describe("accepterProposition", () => {
       payload,
       conversation: { householdId: "h1" },
     });
-    mocks.agentProposalUpdate.mockResolvedValue({});
+    mocks.agentProposalUpdateMany.mockResolvedValue({ count: 1 });
   }
 
   it("applique profileUpdate : fusionne avec le foyer existant", async () => {
