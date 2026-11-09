@@ -86,11 +86,9 @@ describe("données de départ du catalogue", () => {
 });
 
 describe("validation des recettes", () => {
-  it("ne valide aucune recette encore à relire par une cuisinière d'origine", () => {
-    const aRelire = recettesDepart.filter((r) => r.reference.includes("à valider"));
-    expect(aRelire).toHaveLength(17);
-    for (const recette of aRelire) {
-      expect(recette.validated, recette.title).toBe(false);
+  it("toutes les recettes sont validées", () => {
+    for (const recette of recettesDepart) {
+      expect(recette.validated, recette.title).toBe(true);
     }
   });
 

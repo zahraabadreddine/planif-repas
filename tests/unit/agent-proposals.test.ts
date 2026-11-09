@@ -210,34 +210,41 @@ describe("accepterProposition", () => {
   });
 
   it("applique weekPlan : active le menu", async () => {
-    mockProposition("weekPlan", { menuId: "menu-1" });
+    const menuId = "a0a0a0a0-b1b1-4c2c-8d3d-e4e4e4e4e4e4";
+    const listeId = "b1b1b1b1-c2c2-4d3d-8e4e-f5f5f5f5f5f5";
+    mockProposition("weekPlan", { menuId });
     mocks.activerMenu.mockResolvedValue({
-      menu: { id: "menu-1" },
-      liste: { id: "liste-1" },
+      menu: { id: menuId },
+      liste: { id: listeId },
     });
 
     const result = await accepterProposition(SESSION, "prop-1");
 
     expect(result.status).toBe("accepted");
-    expect(result.resultat).toEqual({ menuId: "menu-1", listeId: "liste-1" });
-    expect(mocks.activerMenu).toHaveBeenCalledWith(SESSION, "menu-1");
+    expect(result.resultat).toEqual({ menuId, listeId });
+    expect(mocks.activerMenu).toHaveBeenCalledWith(SESSION, menuId);
   });
 
   it("applique mealChange : remplace le repas", async () => {
-    mockProposition("mealChange", { repasId: "repas-1", nouvelleRecetteId: "rec-2" });
-    mocks.remplacerRepas.mockResolvedValue({ menu: { id: "menu-1" } });
+    const repasId = "c2c2c2c2-d3d3-4e4e-8f5f-a0a0a0a0a0a0";
+    const recetteId = "d3d3d3d3-e4e4-4f5f-8a0a-b1b1b1b1b1b1";
+    const menuId = "a0a0a0a0-b1b1-4c2c-8d3d-e4e4e4e4e4e4";
+    mockProposition("mealChange", { repasId, nouvelleRecetteId: recetteId });
+    mocks.remplacerRepas.mockResolvedValue({ menu: { id: menuId } });
 
     const result = await accepterProposition(SESSION, "prop-1");
 
     expect(result.status).toBe("accepted");
-    expect(result.resultat).toEqual({ menuId: "menu-1" });
-    expect(mocks.remplacerRepas).toHaveBeenCalledWith(SESSION, "repas-1", "rec-2");
+    expect(result.resultat).toEqual({ menuId });
+    expect(mocks.remplacerRepas).toHaveBeenCalledWith(SESSION, repasId, recetteId);
   });
 
   it("applique purchase : déclare les achats", async () => {
+    const ingId = "e4e4e4e4-f5f5-4a0a-8b1b-c2c2c2c2c2c2";
+    const unitId = "f5f5f5f5-a0a0-4b1b-8c2c-d3d3d3d3d3d3";
     mockProposition("purchase", {
       items: [
-        { ingredientId: "ing-1", unitId: "u-1", quantity: 3, location: "fridge" },
+        { ingredientId: ingId, unitId, quantity: 3, location: "fridge" },
       ],
     });
     mocks.declarerAchats.mockResolvedValue([{ id: "sm-1" }]);
@@ -247,7 +254,7 @@ describe("accepterProposition", () => {
     expect(result.status).toBe("accepted");
     expect(result.resultat).toEqual({ articles: 1 });
     expect(mocks.declarerAchats).toHaveBeenCalledWith(SESSION, [
-      { ingredientId: "ing-1", unitId: "u-1", quantity: 3, location: "fridge" },
+      { ingredientId: ingId, unitId, quantity: 3, location: "fridge" },
     ]);
   });
 

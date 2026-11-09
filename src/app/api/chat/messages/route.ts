@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { exigerSession } from "@/lib/auth/garde";
+import { exigerEcriture } from "@/lib/auth/garde";
 import { gererErreur, ErreurApi } from "@/lib/erreurs";
 import { orchestrer } from "@/lib/agent/orchestrateur";
 import { prisma } from "@/lib/db";
@@ -13,7 +13,7 @@ const corpsSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await exigerSession();
+    const session = await exigerEcriture();
     if (!session.householdId) throw new ErreurApi("FOYERMANQUANT");
 
     const corps = corpsSchema.parse(await request.json());
