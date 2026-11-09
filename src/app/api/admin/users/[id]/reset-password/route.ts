@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
 import { exigerAdmin } from "@/lib/auth/garde";
+import { hacherMotDePasse } from "@/lib/auth/motdepasse";
 import { ErreurApi, gererErreur } from "@/lib/erreurs";
 import { resetPasswordSchema } from "@/lib/validation/admin";
 
@@ -18,7 +18,7 @@ export async function POST(requete: Request, { params }: Params) {
     if (!utilisateur) throw new ErreurApi("INTROUVABLE");
 
     const { newPassword } = resetPasswordSchema.parse(await requete.json());
-    const hash = await bcrypt.hash(newPassword, 12);
+    const hash = await hacherMotDePasse(newPassword);
 
     await prisma.user.update({
       where: { id },

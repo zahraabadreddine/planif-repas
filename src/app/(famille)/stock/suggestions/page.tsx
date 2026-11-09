@@ -71,9 +71,7 @@ export default function SuggestionsPage() {
       )}
 
       {erreur && (
-        <p className="mt-8 text-center font-hand text-xl font-bold text-carmin">
-          {erreur}
-        </p>
+        <p className="mt-8 text-center font-hand text-xl font-bold text-carmin">{erreur}</p>
       )}
 
       {!chargement && !erreur && suggestions.length === 0 && (
@@ -113,12 +111,7 @@ export default function SuggestionsPage() {
                   </span>
                 )}
 
-                <h2
-                  className={cx(
-                    "font-display text-lg font-bold leading-tight",
-                    style.ink,
-                  )}
-                >
+                <h2 className={cx("font-display text-lg font-bold leading-tight", style.ink)}>
                   {recette.title}
                 </h2>
 

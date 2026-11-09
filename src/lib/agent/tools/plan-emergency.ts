@@ -6,11 +6,7 @@ import type { ContexteOutil, OutilAgent } from "./types";
 
 const schema = z
   .object({
-    maxMinutes: z
-      .number()
-      .int()
-      .positive()
-      .describe("Temps maximum disponible en minutes"),
+    maxMinutes: z.number().int().positive().describe("Temps maximum disponible en minutes"),
     nbPersonnes: z
       .number()
       .int()
@@ -22,16 +18,8 @@ const schema = z
 
 type Input = z.infer<typeof schema>;
 
-async function executer(
-  session: SessionVerifiee,
-  input: Input,
-  contexte: ContexteOutil,
-) {
-  const options = await suggestionsUrgence(
-    session,
-    input.maxMinutes,
-    input.nbPersonnes,
-  );
+async function executer(session: SessionVerifiee, input: Input, contexte: ContexteOutil) {
+  const options = await suggestionsUrgence(session, input.maxMinutes, input.nbPersonnes);
 
   if (options.length === 0) {
     return {
@@ -40,19 +28,15 @@ async function executer(
     };
   }
 
-  const proposition = await creerProposition(
-    contexte.conversationId,
-    "emergency",
-    {
-      maxMinutes: input.maxMinutes,
-      options: options.map((o) => ({
-        recetteId: o.id,
-        titre: o.title,
-        totalMinutes: o.totalMinutes,
-        utiliseUseSoon: o.utiliseUseSoon,
-      })),
-    },
-  );
+  const proposition = await creerProposition(contexte.conversationId, "emergency", {
+    maxMinutes: input.maxMinutes,
+    options: options.map((o) => ({
+      recetteId: o.id,
+      titre: o.title,
+      totalMinutes: o.totalMinutes,
+      utiliseUseSoon: o.utiliseUseSoon,
+    })),
+  });
 
   return {
     propositionId: proposition.id,

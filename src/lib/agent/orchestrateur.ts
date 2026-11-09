@@ -134,9 +134,7 @@ export async function orchestrerStream(
       texteComplet = r.texte;
       envoyer({ type: "text", delta: texteComplet });
     } else {
-      const r = await boucleReelleStream(
-        session, conv.id, systeme, messagesApi, table, envoyer,
-      );
+      const r = await boucleReelleStream(session, conv.id, systeme, messagesApi, table, envoyer);
       texteComplet = r.texte;
       tokensIn = r.tokensIn;
       tokensOut = r.tokensOut;
@@ -298,7 +296,12 @@ async function boucleReelle(
       return { texte, tokensIn, tokensOut };
     }
 
-    const resultatsOutils = await traiterAppelsOutils(session, reponse.content, table, conversationId);
+    const resultatsOutils = await traiterAppelsOutils(
+      session,
+      reponse.content,
+      table,
+      conversationId,
+    );
     messagesCourants = [
       ...messagesCourants,
       { role: "assistant", content: reponse.content },
@@ -307,10 +310,14 @@ async function boucleReelle(
 
     for (const r of resultatsOutils) {
       if (r.type === "tool_result") {
-        await enregistrerMessage(conversationId, "tool", JSON.stringify({
-          toolUseId: r.tool_use_id,
-          content: r.content,
-        }));
+        await enregistrerMessage(
+          conversationId,
+          "tool",
+          JSON.stringify({
+            toolUseId: r.tool_use_id,
+            content: r.content,
+          }),
+        );
       }
     }
   }
@@ -384,7 +391,12 @@ async function boucleReelleStream(
       return { texte: texteAccumule, tokensIn, tokensOut };
     }
 
-    const resultatsOutils = await traiterAppelsOutils(session, reponse.content, table, conversationId);
+    const resultatsOutils = await traiterAppelsOutils(
+      session,
+      reponse.content,
+      table,
+      conversationId,
+    );
 
     for (const bloc of reponse.content) {
       if (bloc.type === "tool_use") {
@@ -400,16 +412,22 @@ async function boucleReelleStream(
 
     for (const r of resultatsOutils) {
       if (r.type === "tool_result") {
-        await enregistrerMessage(conversationId, "tool", JSON.stringify({
-          toolUseId: r.tool_use_id,
-          content: r.content,
-        }));
+        await enregistrerMessage(
+          conversationId,
+          "tool",
+          JSON.stringify({
+            toolUseId: r.tool_use_id,
+            content: r.content,
+          }),
+        );
       }
     }
   }
 
   return {
-    texte: texteAccumule || "J'ai atteint la limite de recherches pour ce message. Peux-tu reformuler ta demande ?",
+    texte:
+      texteAccumule ||
+      "J'ai atteint la limite de recherches pour ce message. Peux-tu reformuler ta demande ?",
     tokensIn,
     tokensOut,
   };
@@ -488,17 +506,25 @@ async function boucleSimulee(
       try {
         const input = outil.schema.parse(appel.input);
         const resultat = await outil.executer(session, input, { conversationId });
-        await enregistrerMessage(conversationId, "tool", JSON.stringify({
-          toolUseId: appel.id,
-          nom: appel.nom,
-          resultat,
-        }));
+        await enregistrerMessage(
+          conversationId,
+          "tool",
+          JSON.stringify({
+            toolUseId: appel.id,
+            nom: appel.nom,
+            resultat,
+          }),
+        );
       } catch {
-        await enregistrerMessage(conversationId, "tool", JSON.stringify({
-          toolUseId: appel.id,
-          nom: appel.nom,
-          erreur: "Échec de l'outil en simulation",
-        }));
+        await enregistrerMessage(
+          conversationId,
+          "tool",
+          JSON.stringify({
+            toolUseId: appel.id,
+            nom: appel.nom,
+            erreur: "Échec de l'outil en simulation",
+          }),
+        );
       }
     }
 

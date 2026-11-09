@@ -15,21 +15,13 @@ const articleSchema = z.object({
 
 const schema = z
   .object({
-    items: z
-      .array(articleSchema)
-      .min(1)
-      .max(50)
-      .describe("Articles achetés"),
+    items: z.array(articleSchema).min(1).max(50).describe("Articles achetés"),
   })
   .strict();
 
 type Input = z.infer<typeof schema>;
 
-async function executer(
-  session: SessionVerifiee,
-  input: Input,
-  contexte: ContexteOutil,
-) {
+async function executer(session: SessionVerifiee, input: Input, contexte: ContexteOutil) {
   const ingredientIds = input.items.map((i) => i.ingredientId);
   const ingredients = await prisma.ingredient.findMany({
     where: { id: { in: ingredientIds } },
@@ -43,11 +35,9 @@ async function executer(
     ingredientNom: noms.get(item.ingredientId) ?? "Inconnu",
   }));
 
-  const proposition = await creerProposition(
-    contexte.conversationId,
-    "purchase",
-    { items: articlesResumes },
-  );
+  const proposition = await creerProposition(contexte.conversationId, "purchase", {
+    items: articlesResumes,
+  });
 
   return {
     propositionId: proposition.id,
@@ -59,8 +49,7 @@ async function executer(
       quantite: a.quantity,
       emplacement: a.location,
     })),
-    message:
-      "J'ai préparé l'enregistrement de tes achats. Confirme pour mettre à jour le stock.",
+    message: "J'ai préparé l'enregistrement de tes achats. Confirme pour mettre à jour le stock.",
   };
 }
 

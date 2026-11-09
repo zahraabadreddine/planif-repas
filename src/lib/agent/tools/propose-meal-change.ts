@@ -7,20 +7,13 @@ import type { ContexteOutil, OutilAgent } from "./types";
 const schema = z
   .object({
     repasId: z.string().uuid().describe("Identifiant du repas à remplacer"),
-    recetteId: z
-      .string()
-      .uuid()
-      .describe("Identifiant de la nouvelle recette"),
+    recetteId: z.string().uuid().describe("Identifiant de la nouvelle recette"),
   })
   .strict();
 
 type Input = z.infer<typeof schema>;
 
-async function executer(
-  session: SessionVerifiee,
-  input: Input,
-  contexte: ContexteOutil,
-) {
+async function executer(session: SessionVerifiee, input: Input, contexte: ContexteOutil) {
   const [repas, recette] = await Promise.all([
     prisma.plannedMeal.findUnique({
       where: { id: input.repasId },
@@ -42,17 +35,13 @@ async function executer(
     return { erreur: "Recette introuvable ou non validée." };
   }
 
-  const proposition = await creerProposition(
-    contexte.conversationId,
-    "mealChange",
-    {
-      repasId: input.repasId,
-      ancienneRecette: repas.recipe.title,
-      nouvelleRecetteId: recette.id,
-      nouvelleRecette: recette.title,
-      minutes: recette.prepMinutes + recette.cookMinutes,
-    },
-  );
+  const proposition = await creerProposition(contexte.conversationId, "mealChange", {
+    repasId: input.repasId,
+    ancienneRecette: repas.recipe.title,
+    nouvelleRecetteId: recette.id,
+    nouvelleRecette: recette.title,
+    minutes: recette.prepMinutes + recette.cookMinutes,
+  });
 
   return {
     propositionId: proposition.id,

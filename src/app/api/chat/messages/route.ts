@@ -2,10 +2,7 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 import { exigerEcriture } from "@/lib/auth/garde";
 import { ErreurApi } from "@/lib/erreurs";
-import {
-  orchestrerStream,
-  type EvenementStream,
-} from "@/lib/agent/orchestrateur";
+import { orchestrerStream, type EvenementStream } from "@/lib/agent/orchestrateur";
 import { prisma } from "@/lib/db";
 
 const corpsSchema = z.object({
@@ -31,9 +28,7 @@ export async function POST(request: NextRequest) {
         corps = corpsSchema.parse(await request.json());
       } catch (err) {
         const message =
-          err instanceof ErreurApi
-            ? err.message
-            : "Les informations envoyées ne sont pas valides.";
+          err instanceof ErreurApi ? err.message : "Les informations envoyées ne sont pas valides.";
         controller.enqueue(formaterSSE("error", { message }));
         controller.close();
         return;
@@ -79,12 +74,7 @@ export async function POST(request: NextRequest) {
   });
 }
 
-function formaterProposition(p: {
-  id: string;
-  type: string;
-  payload: unknown;
-  status: string;
-}) {
+function formaterProposition(p: { id: string; type: string; payload: unknown; status: string }) {
   const data = p.payload as Record<string, unknown>;
 
   switch (p.type) {

@@ -31,7 +31,7 @@ export default function PreferencesPage() {
     let annule = false;
     async function chargerDonnees() {
       try {
-        const res = await fetch("/api/preferences");
+        const res = await fetch("/api/household/learned");
         if (annule) return;
         if (!res.ok) {
           const body = await res.json().catch(() => null);
@@ -48,13 +48,15 @@ export default function PreferencesPage() {
       }
     }
     chargerDonnees();
-    return () => { annule = true; };
+    return () => {
+      annule = true;
+    };
   }, [recharger]);
 
   async function basculerActif(id: string, actif: boolean) {
     setEnCours(id);
     try {
-      const res = await fetch("/api/preferences", {
+      const res = await fetch("/api/household/learned", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, active: actif }),
@@ -75,7 +77,7 @@ export default function PreferencesPage() {
   async function supprimer(id: string) {
     setEnCours(id);
     try {
-      const res = await fetch(`/api/preferences?id=${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/household/learned?id=${id}`, { method: "DELETE" });
       if (!res.ok) {
         const body = await res.json().catch(() => null);
         throw new Error(body?.message ?? `Erreur ${res.status}`);
@@ -232,9 +234,7 @@ function PreferenceCard({
           disabled={loading}
           className={cx(
             "press h-11 flex-1 rounded-[12px_16px_14px_12px] text-[14px] font-extrabold",
-            pref.active
-              ? "bg-sable text-foret"
-              : "bg-palme text-creme",
+            pref.active ? "bg-sable text-foret" : "bg-palme text-creme",
           )}
         >
           {pref.active ? "Désactiver" : "Réactiver"}

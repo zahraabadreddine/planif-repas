@@ -121,6 +121,89 @@ export function MonCompte() {
       >
         Se déconnecter
       </button>
+
+      <SupprimerCompte />
     </section>
+  );
+}
+
+function SupprimerCompte() {
+  const [ouvert, setOuvert] = useState(false);
+  const [motDePasse, setMotDePasse] = useState("");
+  const [erreur, setErreur] = useState<string | null>(null);
+  const [enCours, setEnCours] = useState(false);
+
+  async function supprimer(e: React.FormEvent) {
+    e.preventDefault();
+    if (!motDePasse.trim() || enCours) return;
+    setErreur(null);
+    setEnCours(true);
+
+    try {
+      const res = await fetch("/api/account", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: motDePasse }),
+      });
+
+      if (!res.ok) {
+        const corps = (await res.json().catch(() => null)) as CorpsErreur | null;
+        setErreur(
+          corps?.error.champs?.password ?? corps?.error.message ?? "Un problème est survenu.",
+        );
+        return;
+      }
+
+      await signOut({ callbackUrl: "/connexion" });
+    } catch {
+      setErreur("Pas de connexion internet. Réessaie dans un instant.");
+    } finally {
+      setEnCours(false);
+    }
+  }
+
+  if (!ouvert) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOuvert(true)}
+        className="mt-6 w-full text-center text-sm font-bold text-cacao/60 underline underline-offset-4"
+      >
+        Supprimer mon compte
+      </button>
+    );
+  }
+
+  return (
+    <div className="mt-6 rounded-[14px_18px_16px_12px] border-2 border-dashed border-carmin/40 bg-carmin/5 p-4">
+      <p className="text-sm font-bold text-carmin">
+        Cette action est irréversible. Toutes tes données seront supprimées.
+      </p>
+      <form onSubmit={supprimer} className="mt-3 flex flex-col gap-3">
+        <ChampFormulaire
+          label="Confirme ton mot de passe"
+          type="password"
+          autoComplete="current-password"
+          autoFocus
+          value={motDePasse}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMotDePasse(e.target.value)}
+        />
+        {erreur && <MessageErreur>{erreur}</MessageErreur>}
+        <BoutonEnvoi enCours={enCours} variante="danger">
+          Supprimer définitivement
+        </BoutonEnvoi>
+        <button
+          type="button"
+          onClick={() => {
+            setOuvert(false);
+            setMotDePasse("");
+            setErreur(null);
+          }}
+          className="press -mt-1 h-11 w-full font-extrabold text-cacao"
+        >
+          Annuler
+        </button>
+      </form>
+    </div>
   );
 }

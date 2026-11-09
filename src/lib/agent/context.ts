@@ -34,7 +34,12 @@ export type ContexteMoment = {
   date: string;
   jour: string;
   menu: MenuEnregistre | null;
-  aConsommerVite: { ingredient: string; quantite: number; unite: string; peremption: string | null }[];
+  aConsommerVite: {
+    ingredient: string;
+    quantite: number;
+    unite: string;
+    peremption: string | null;
+  }[];
 };
 
 export type ContexteAgent = {
@@ -123,9 +128,7 @@ function echapperRegex(texte: string): string {
 
 const listeDeTextes = z.array(z.string()).catch([]);
 
-const JOURS_SEMAINE = [
-  "dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi",
-];
+const JOURS_SEMAINE = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
 
 export async function construireContexte(session: SessionVerifiee): Promise<{
   contexte: ContexteAgent;
@@ -183,7 +186,7 @@ export async function construireContexte(session: SessionVerifiee): Promise<{
     }));
 
   const jourCourses = foyer?.shoppingDay
-    ? JOURS.find((j) => j.valeur === foyer.shoppingDay)?.libelle ?? null
+    ? (JOURS.find((j) => j.valeur === foyer.shoppingDay)?.libelle ?? null)
     : null;
 
   const contexte: ContexteAgent = {
@@ -238,7 +241,8 @@ export function formaterContextePourPrompt(contexte: ContexteAgent): string {
       const details: string[] = [m.trancheAge];
       if (m.ageAnnees !== null) details.push(`${m.ageAnnees} ans`);
       if (m.allergies.length > 0) details.push(`allergies : ${m.allergies.join(", ")}`);
-      if (m.autresAllergies.length > 0) details.push(`autres allergies : ${m.autresAllergies.join(", ")}`);
+      if (m.autresAllergies.length > 0)
+        details.push(`autres allergies : ${m.autresAllergies.join(", ")}`);
       if (m.regimes.length > 0) details.push(`régimes : ${m.regimes.join(", ")}`);
       lignes.push(`- ${m.libelle} (${details.join(" ; ")})`);
     }
@@ -265,7 +269,9 @@ export function formaterContextePourPrompt(contexte: ContexteAgent): string {
     lignes.push("");
     lignes.push(`Menu en cours (semaine du ${moment.menu.weekStart}, ${moment.menu.status}) :`);
     for (const repas of moment.menu.meals) {
-      lignes.push(`- ${repas.date} ${repas.slot} : ${repas.recipe.title} (${repas.recipe.minutes} min, ${repas.recipe.coutFcfa} FCFA)`);
+      lignes.push(
+        `- ${repas.date} ${repas.slot} : ${repas.recipe.title} (${repas.recipe.minutes} min, ${repas.recipe.coutFcfa} FCFA)`,
+      );
     }
   }
 

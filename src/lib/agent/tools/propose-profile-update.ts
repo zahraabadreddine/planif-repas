@@ -14,10 +14,7 @@ const schema = z
       .max(BUDGETMAX)
       .optional()
       .describe("Nouveau budget hebdomadaire en FCFA"),
-    cuisinesPreferred: z
-      .array(z.string())
-      .optional()
-      .describe("Cuisines préférées du foyer"),
+    cuisinesPreferred: z.array(z.string()).optional().describe("Cuisines préférées du foyer"),
     shoppingDay: z
       .number()
       .int()
@@ -39,25 +36,15 @@ const schema = z
 
 type Input = z.infer<typeof schema>;
 
-async function executer(
-  session: SessionVerifiee,
-  input: Input,
-  contexte: ContexteOutil,
-) {
+async function executer(session: SessionVerifiee, input: Input, contexte: ContexteOutil) {
   const changements: Record<string, unknown> = {};
   if (input.name !== undefined) changements.name = input.name;
-  if (input.weeklyBudgetFcfa !== undefined)
-    changements.weeklyBudgetFcfa = input.weeklyBudgetFcfa;
+  if (input.weeklyBudgetFcfa !== undefined) changements.weeklyBudgetFcfa = input.weeklyBudgetFcfa;
   if (input.cuisinesPreferred !== undefined)
     changements.cuisinesPreferred = input.cuisinesPreferred;
-  if (input.shoppingDay !== undefined)
-    changements.shoppingDay = input.shoppingDay;
+  if (input.shoppingDay !== undefined) changements.shoppingDay = input.shoppingDay;
 
-  const proposition = await creerProposition(
-    contexte.conversationId,
-    "profileUpdate",
-    changements,
-  );
+  const proposition = await creerProposition(contexte.conversationId, "profileUpdate", changements);
 
   return {
     propositionId: proposition.id,
@@ -65,8 +52,7 @@ async function executer(
     statut: proposition.status,
     expireA: proposition.expiresAt,
     changements,
-    message:
-      "J'ai préparé la modification du profil. Confirme pour l'appliquer.",
+    message: "J'ai préparé la modification du profil. Confirme pour l'appliquer.",
   };
 }
 

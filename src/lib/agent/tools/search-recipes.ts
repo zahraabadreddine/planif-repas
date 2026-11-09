@@ -11,10 +11,7 @@ const schema = z
     cuisine: z.string().optional().describe("Type de cuisine (ivoirienne, africaine…)"),
     sansCuisson: z.boolean().optional().describe("Recettes sans cuisson uniquement"),
     maxCoutFcfa: z.number().int().positive().optional().describe("Coût maximum en FCFA"),
-    ingredients: z
-      .array(z.string())
-      .optional()
-      .describe("Ingrédients souhaités dans la recette"),
+    ingredients: z.array(z.string()).optional().describe("Ingrédients souhaités dans la recette"),
   })
   .strict();
 

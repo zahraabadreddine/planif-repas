@@ -45,8 +45,7 @@ export default async function HomePage() {
 
   // Repas de ce soir (Abidjan = UTC+0, toISOString donne la bonne date)
   const todayIso = new Date().toISOString().slice(0, 10);
-  const dinerCeSoir =
-    menu?.meals.find((m) => m.date === todayIso && m.slot === "dinner") ?? null;
+  const dinerCeSoir = menu?.meals.find((m) => m.date === todayIso && m.slot === "dinner") ?? null;
 
   // Compteurs et budget
   const mealsCount = menu?.meals.length ?? 0;
@@ -59,7 +58,7 @@ export default async function HomePage() {
   // EF-15 : rafraîchir les statuts de péremption et récupérer les alertes
   const alertes =
     session && !sansFoyer
-      ? (await rafraichirPeremption(session).catch(() => null))?.alertes ?? []
+      ? ((await rafraichirPeremption(session).catch(() => null))?.alertes ?? [])
       : [];
   const premiereAlerte = alertes[0] ?? null;
 

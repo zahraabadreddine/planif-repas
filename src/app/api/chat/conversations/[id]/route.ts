@@ -3,10 +3,7 @@ import { exigerSession } from "@/lib/auth/garde";
 import { gererErreur, ErreurApi } from "@/lib/erreurs";
 import { prisma } from "@/lib/db";
 
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await exigerSession();
     if (!session.householdId) throw new ErreurApi("FOYERMANQUANT");

@@ -199,3 +199,104 @@ export async function remplacerRepas(
   if (!enregistre) throw new ErreurApi("ERREURSERVEUR");
   return { menu: versMenu(enregistre), liste };
 }
+
+// ---------------------------------------------------------------------------
+// Déplacement d'un repas (EF-07) : changer la date et/ou le créneau.
+// ---------------------------------------------------------------------------
+
+type Creneau = "breakfast" | "lunch" | "dinner";
+
+export async function deplacerRepas(
+  session: SessionVerifiee,
+  repasId: string,
+  nouvelleDate?: string,
+  nouveauSlot?: Creneau,
+): Promise<RepasRemplace> {
+  const householdId = exigerFoyer(session);
+  const cible = await prisma.plannedMeal.findFirst({
+    where: { id: repasId, mealPlan: { householdId } },
+    include: { mealPlan: { include: { meals: true } } },
+  });
+  if (!cible) throw new ErreurApi("INTROUVABLE");
+  const plan = cible.mealPlan;
+  if (plan.status === "archived") throw new ErreurApi("MENUARCHIVE");
+
+  const dateFinale = nouvelleDate ? new Date(nouvelleDate + "T00:00:00Z") : cible.date;
+  const slotFinal = nouveauSlot ?? cible.slot;
+
+  const debut = plan.weekStart.getTime();
+  const fin = debut + 7 * MSPARJOUR;
+  if (dateFinale.getTime() < debut || dateFinale.getTime() >= fin) {
+    throw new ErreurApi("DONNEESINVALIDES", "La date doit rester dans la semaine du menu.");
+  }
+
+  const conflit = plan.meals.find(
+    (r) => r.id !== repasId && r.date.getTime() === dateFinale.getTime() && r.slot === slotFinal,
+  );
+  if (conflit) {
+    throw new ErreurApi("DONNEESINVALIDES", "Un repas occupe déjà ce créneau.");
+  }
+
+  await prisma.plannedMeal.update({
+    where: { id: repasId },
+    data: { date: dateFinale, slot: slotFinal },
+  });
+
+  const liste = plan.status === "active" ? await genererListe(session, plan.id) : null;
+  const enregistre = await prisma.mealPlan.findFirst({
+    where: { id: plan.id, householdId },
+    include: avecRepas,
+  });
+  if (!enregistre) throw new ErreurApi("ERREURSERVEUR");
+  return { menu: versMenu(enregistre), liste };
+}
+
+// ---------------------------------------------------------------------------
+// Changement de portions (EF-07) : ajuster le nombre de portions d'un repas.
+// ---------------------------------------------------------------------------
+
+export async function changerPortions(
+  session: SessionVerifiee,
+  repasId: string,
+  servings: number,
+): Promise<RepasRemplace> {
+  const householdId = exigerFoyer(session);
+  const cible = await prisma.plannedMeal.findFirst({
+    where: { id: repasId, mealPlan: { householdId } },
+    include: { mealPlan: { include: { meals: true } } },
+  });
+  if (!cible) throw new ErreurApi("INTROUVABLE");
+  const plan = cible.mealPlan;
+  if (plan.status === "archived") throw new ErreurApi("MENUARCHIVE");
+
+  const catalogue = await chargerRecettes();
+  const maintenant = new Date();
+  const candidates = catalogue.map((r) => versCandidate(r, maintenant));
+
+  const modifications: Modification[] = [
+    { id: cible.id, recipeId: cible.recipeId, servings, leftoverFromId: cible.leftoverFromId },
+  ];
+
+  const repas = ordonner(plan.meals);
+  const recettesMap = new Map(candidates.map((c) => [c.id, c]));
+  const menu = versMenuCompose(repas, modifications, recettesMap);
+
+  await prisma.$transaction([
+    prisma.plannedMeal.update({
+      where: { id: repasId },
+      data: { servings },
+    }),
+    prisma.mealPlan.update({
+      where: { id: plan.id },
+      data: { estimatedCostFcfa: menu.totalFcfa },
+    }),
+  ]);
+
+  const liste = plan.status === "active" ? await genererListe(session, plan.id) : null;
+  const enregistre = await prisma.mealPlan.findFirst({
+    where: { id: plan.id, householdId },
+    include: avecRepas,
+  });
+  if (!enregistre) throw new ErreurApi("ERREURSERVEUR");
+  return { menu: versMenu(enregistre), liste };
+}

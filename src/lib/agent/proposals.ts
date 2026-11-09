@@ -43,9 +43,7 @@ const purchasePayload = z.object({
 });
 
 const emergencyPayload = z.object({
-  options: z
-    .array(z.object({ recetteId: z.string(), titre: z.string() }))
-    .optional(),
+  options: z.array(z.object({ recetteId: z.string(), titre: z.string() })).optional(),
 });
 
 function validerPayload<T>(schema: z.ZodType<T>, payload: unknown): T {
@@ -164,7 +162,10 @@ export async function accepterProposition(
 
   switch (proposition.type) {
     case "profileUpdate":
-      resultat = await appliquerProfileUpdate(session, validerPayload(profileUpdatePayload, payload));
+      resultat = await appliquerProfileUpdate(
+        session,
+        validerPayload(profileUpdatePayload, payload),
+      );
       break;
     case "weekPlan":
       resultat = await appliquerWeekPlan(session, validerPayload(weekPlanPayload, payload));
@@ -202,9 +203,7 @@ async function appliquerProfileUpdate(
     name: payload.name ?? foyer.name,
     weeklyBudgetFcfa: payload.weeklyBudgetFcfa ?? foyer.weeklyBudgetFcfa,
     cuisinesPreferred: payload.cuisinesPreferred ?? foyer.cuisinesPreferred,
-    shoppingDay: payload.shoppingDay !== undefined
-      ? payload.shoppingDay
-      : foyer.shoppingDay,
+    shoppingDay: payload.shoppingDay !== undefined ? payload.shoppingDay : foyer.shoppingDay,
   };
 
   const { foyer: mis } = await enregistrerFoyer(session, donnees);

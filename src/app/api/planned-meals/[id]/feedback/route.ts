@@ -5,10 +5,7 @@ import { donnerRetour } from "@/lib/stock/retour-repas";
 import { feedbackSchema } from "@/lib/validation/feedback";
 import { lireCorps } from "@/lib/validation/requete";
 
-export async function POST(
-  requete: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function POST(requete: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await exigerEcriture();
     const { id } = await params;

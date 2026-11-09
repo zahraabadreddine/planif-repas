@@ -59,7 +59,11 @@ function whatsappLien(text: string): string {
   return `https://wa.me/?text=${encodeURIComponent(text)}`;
 }
 
-export default function UrgenceInteractif({ membres, restrictionsTexte, options: toutesOptions }: Props) {
+export default function UrgenceInteractif({
+  membres,
+  restrictionsTexte,
+  options: toutesOptions,
+}: Props) {
   const [minutes, setMinutes] = useState(15);
   const [people, setPeople] = useState(membres);
   const [picked, setPicked] = useState(0);

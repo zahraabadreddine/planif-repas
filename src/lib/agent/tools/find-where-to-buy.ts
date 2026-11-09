@@ -7,10 +7,7 @@ import type { OutilAgent } from "./types";
 const schema = z
   .object({
     listeId: z.string().optional().describe("Identifiant de la liste de courses"),
-    ingredients: z
-      .array(z.string())
-      .optional()
-      .describe("Noms d'ingrédients si pas de liste"),
+    ingredients: z.array(z.string()).optional().describe("Noms d'ingrédients si pas de liste"),
     typeLieu: z
       .enum(["market", "supermarket", "shop"])
       .optional()

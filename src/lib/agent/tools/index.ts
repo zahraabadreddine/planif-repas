@@ -34,9 +34,7 @@ const liste: OutilAgent<any>[] = [
   rememberPreference,
 ];
 
-export const OUTILS = new Map<string, OutilAgent>(
-  liste.map((o) => [o.nom, o]),
-);
+export const OUTILS = new Map<string, OutilAgent>(liste.map((o) => [o.nom, o]));
 
 export function outilsAnthropicSchema(): Anthropic.Messages.Tool[] {
   return liste.map((o) => ({
@@ -47,7 +45,7 @@ export function outilsAnthropicSchema(): Anthropic.Messages.Tool[] {
 }
 
 function zodVersJsonSchema(schema: z.ZodType): Anthropic.Messages.Tool["input_schema"] {
-  const jsonSchema = z.toJSONSchema(schema);
-  const { $schema: _, ...reste } = jsonSchema as Record<string, unknown>;
-  return reste as Anthropic.Messages.Tool["input_schema"];
+  const jsonSchema = z.toJSONSchema(schema) as Record<string, unknown>;
+  delete jsonSchema["$schema"];
+  return jsonSchema as Anthropic.Messages.Tool["input_schema"];
 }

@@ -15,25 +15,14 @@ const schema = z
       .max(3)
       .optional()
       .describe("Note : 1 = pas aimé, 2 = bof, 3 = aimé"),
-    leftovers: z
-      .boolean()
-      .optional()
-      .describe("Y a-t-il eu des restes ?"),
-    comment: z
-      .string()
-      .max(500)
-      .optional()
-      .describe("Commentaire libre de la famille"),
+    leftovers: z.boolean().optional().describe("Y a-t-il eu des restes ?"),
+    comment: z.string().max(500).optional().describe("Commentaire libre de la famille"),
   })
   .strict();
 
 type Input = z.infer<typeof schema>;
 
-async function executer(
-  session: SessionVerifiee,
-  input: Input,
-  contexte: ContexteOutil,
-) {
+async function executer(session: SessionVerifiee, input: Input, contexte: ContexteOutil) {
   const repas = await prisma.plannedMeal.findUnique({
     where: { id: input.plannedMealId },
     include: {

@@ -22,7 +22,12 @@ const newId = () => `m${idCounter++}`;
 
 export default function AssistantPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([
-    { id: "m0", from: "agent", kind: "text", text: "Bonsoir ! Je suis Umi, ton assistante cuisine. Dis-moi ce qui se passe 🍲" },
+    {
+      id: "m0",
+      from: "agent",
+      kind: "text",
+      text: "Bonsoir ! Je suis Umi, ton assistante cuisine. Dis-moi ce qui se passe 🍲",
+    },
   ]);
   const [draft, setDraft] = useState("");
   const [typing, setTyping] = useState(false);
@@ -94,9 +99,7 @@ export default function AssistantPage() {
             } else {
               setMessages((prev) =>
                 prev.map((m) =>
-                  m.id === agentMsgId && m.kind === "text"
-                    ? { ...m, text: m.text + delta }
-                    : m,
+                  m.id === agentMsgId && m.kind === "text" ? { ...m, text: m.text + delta } : m,
                 ),
               );
             }
@@ -139,7 +142,12 @@ export default function AssistantPage() {
       if (!agentTextStarted) {
         setMessages((prev) => [
           ...prev,
-          { id: agentMsgId, from: "agent", kind: "text", text: "Je n'ai pas pu formuler de réponse. Réessaie." },
+          {
+            id: agentMsgId,
+            from: "agent",
+            kind: "text",
+            text: "Je n'ai pas pu formuler de réponse. Réessaie.",
+          },
         ]);
       }
     } catch (err) {
@@ -148,7 +156,12 @@ export default function AssistantPage() {
       if (!agentTextStarted) {
         setMessages((prev) => [
           ...prev,
-          { id: agentMsgId, from: "agent", kind: "text", text: "Désolée, je n'ai pas pu répondre. Réessaie dans un instant." },
+          {
+            id: agentMsgId,
+            from: "agent",
+            kind: "text",
+            text: "Désolée, je n'ai pas pu répondre. Réessaie dans un instant.",
+          },
         ]);
       }
     } finally {
@@ -337,9 +350,7 @@ function ProposalCard({
       <Tape color="bg-lagon" className="-top-3 left-[110px] rotate-3" />
       <div>
         <p className="font-hand text-lg font-bold leading-none text-carmin">{proposal.label}</p>
-        <p className="mt-0.5 font-display text-lg font-semibold leading-tight">
-          {proposal.title}
-        </p>
+        <p className="mt-0.5 font-display text-lg font-semibold leading-tight">{proposal.title}</p>
         <p className="mt-0.5 text-[13px] font-bold text-cacao">{proposal.summary}</p>
       </div>
       {proposal.status === "pending" ? (

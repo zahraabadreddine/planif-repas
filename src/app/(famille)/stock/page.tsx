@@ -165,7 +165,9 @@ export default function FridgePage() {
       }
       const resultats = await r.json();
       const premier = resultats[0];
-      setToast(`c'est rangé : ${premier.quantity} ${premier.unitLabel} de ${premier.ingredientName}`);
+      setToast(
+        `c'est rangé : ${premier.quantity} ${premier.unitLabel} de ${premier.ingredientName}`,
+      );
       setIngredientId("");
       setUnitIdManuel(null);
       setQuantity("");
@@ -192,7 +194,9 @@ export default function FridgePage() {
   if (chargement) {
     return (
       <div className="-mx-5 -mb-[190px] -mt-6 flex min-h-dvh items-center justify-center bg-lagon px-5 pb-[190px] pt-[22px]">
-        <p className="font-hand text-xl font-bold text-canard animate-pulse">Chargement du frigo…</p>
+        <p className="font-hand text-xl font-bold text-canard animate-pulse">
+          Chargement du frigo…
+        </p>
       </div>
     );
   }
@@ -202,7 +206,11 @@ export default function FridgePage() {
       <div className="-mx-5 -mb-[190px] -mt-6 flex min-h-dvh flex-col items-center justify-center gap-3 bg-lagon px-5 pb-[190px] pt-[22px]">
         <p className="font-hand text-xl font-bold text-carmin">{erreur}</p>
         <button
-          onClick={() => { setErreur(null); setChargement(true); chargerStock().finally(() => setChargement(false)); }}
+          onClick={() => {
+            setErreur(null);
+            setChargement(true);
+            chargerStock().finally(() => setChargement(false));
+          }}
           className="press rounded-xl bg-foret px-4 py-2 font-hand text-lg font-bold text-or"
         >
           Réessayer
@@ -227,7 +235,10 @@ export default function FridgePage() {
         <div className="flex flex-col gap-2">
           <select
             value={ingredientId}
-            onChange={(e) => { setIngredientId(e.target.value); setUnitIdManuel(null); }}
+            onChange={(e) => {
+              setIngredientId(e.target.value);
+              setUnitIdManuel(null);
+            }}
             className="h-[46px] rounded-[12px_16px_14px_12px] border-2 border-foret bg-white px-3 text-sm font-semibold"
             required
           >

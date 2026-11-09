@@ -4,7 +4,7 @@ import { exigerSession, exigerEcriture } from "@/lib/auth/garde";
 import { gererErreur, ErreurApi } from "@/lib/erreurs";
 import { prisma } from "@/lib/db";
 
-// GET /api/preferences : liste les préférences apprises du foyer (EF-19).
+// GET /api/household/learned : liste les préférences apprises du foyer (EF-19).
 export async function GET() {
   try {
     const session = await exigerSession();
@@ -42,7 +42,7 @@ const patchSchema = z
     message: "Rien à modifier.",
   });
 
-// PATCH /api/preferences : active/désactive ou modifie une préférence (EF-19).
+// PATCH /api/household/learned : active/désactive ou modifie une préférence (EF-19).
 export async function PATCH(request: NextRequest) {
   try {
     const session = await exigerEcriture();
@@ -84,7 +84,7 @@ export async function PATCH(request: NextRequest) {
   }
 }
 
-// DELETE /api/preferences?id=… : supprime une préférence (EF-19).
+// DELETE /api/household/learned?id=… : supprime une préférence (EF-19).
 export async function DELETE(request: NextRequest) {
   try {
     const session = await exigerEcriture();
