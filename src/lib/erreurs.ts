@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { ZodError } from "zod";
 
 // Format d'erreur unique de l'API : { error: { code, message } }.
 // Les messages sont lisibles en français, sans détail technique ni donnée sensible.
@@ -85,6 +86,14 @@ export function reponseErreur(
  */
 export function gererErreur(erreur: unknown): NextResponse<CorpsErreur> {
   if (erreur instanceof ErreurApi) return reponseErreur(erreur.code, erreur.message, erreur.champs);
+  if (erreur instanceof ZodError) {
+    const champs: Record<string, string> = {};
+    for (const issue of erreur.issues) {
+      const cle = issue.path.join(".");
+      if (cle && !champs[cle]) champs[cle] = issue.message;
+    }
+    return reponseErreur("DONNEESINVALIDES", undefined, champs);
+  }
   console.error(
     "Erreur inattendue dans une route API",
     erreur instanceof Error ? erreur.message : String(erreur),
