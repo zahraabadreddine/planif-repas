@@ -29,8 +29,8 @@ export const inscriptionSchema = z.object({
   email,
   password: nouveauMotDePasse,
   // Consentements refusables (section 13) : on enregistre seulement la date s'ils sont acceptés.
-  consentHealth: z.boolean(),
-  consentLocation: z.boolean(),
+  consentHealth: z.boolean({ error: "Indique si tu acceptes le traitement des données de santé." }),
+  consentLocation: z.boolean({ error: "Indique si tu acceptes la géolocalisation." }),
 });
 export type Inscription = z.infer<typeof inscriptionSchema>;
 
@@ -68,7 +68,13 @@ export function erreursParChamp(erreur: z.ZodError): Record<string, string> {
   const champs: Record<string, string> = {};
   for (const probleme of erreur.issues) {
     const cle = probleme.path.join(".") || "formulaire";
-    if (!(cle in champs)) champs[cle] = probleme.message;
+    if (!(cle in champs)) {
+      const message =
+        probleme.code === "unrecognized_keys"
+          ? "Champ non reconnu."
+          : probleme.message;
+      champs[cle] = message;
+    }
   }
   return champs;
 }

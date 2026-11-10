@@ -7,7 +7,7 @@ import { remplacerRepas } from "@/lib/planificateur/modification";
 import { lireCorps } from "@/lib/validation/requete";
 
 const emergencySchema = z.object({
-  recipeId: z.string().uuid(),
+  recipeId: z.uuid({ error: "Choisis une recette." }),
 });
 
 async function trouverDinerCeSoir(session: SessionVerifiee) {
