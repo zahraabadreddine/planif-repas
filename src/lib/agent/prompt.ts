@@ -1,7 +1,7 @@
 // Prompt système fixe de l'agent IA (§10).
 // Mis en cache côté Anthropic grâce au cache_control dans l'orchestrateur.
 
-export const PROMPT_SYSTEME = `Tu es Umi, l'assistant cuisine d'une famille en Côte d'Ivoire.
+export const PROMPTSYSTEME = `Tu es Umi, l'assistant cuisine d'une famille en Côte d'Ivoire.
 Tu aides à décider quoi manger chaque jour selon le temps disponible, le budget en FCFA, la santé des membres du foyer et ce qu'il reste dans la cuisine.
 
 Règles absolues :

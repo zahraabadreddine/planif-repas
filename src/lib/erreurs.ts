@@ -49,6 +49,10 @@ export const ERREURS = {
     status: 429,
     message: "Tu as atteint la limite de messages pour aujourd'hui. Réessaie demain !",
   },
+  PRIXDEJADECLARE: {
+    status: 409,
+    message: "Tu as déjà déclaré un prix pour cet article et ce lieu aujourd'hui.",
+  },
   TROPDEREQUETES: { status: 429, message: "Trop de tentatives. Réessaie dans quelques minutes." },
   ERREURSERVEUR: { status: 500, message: "Un problème est survenu. Réessaie plus tard." },
 } as const;

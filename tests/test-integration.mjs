@@ -4,8 +4,12 @@
  * courses → achats → stock → cuisson → retour → alertes → sécurité
  */
 
+import { randomBytes } from "node:crypto";
+
 const BASE = "http://localhost:3000";
-let pass = 0, fail = 0, total = 0;
+let pass = 0,
+  fail = 0,
+  total = 0;
 let cookies = {};
 
 // ─── Helpers ──────────────────────────────────────────────────────
@@ -57,7 +61,9 @@ function storeCookies(resp) {
 }
 
 function cookieHeader() {
-  return Object.entries(cookies).map(([k, v]) => `${k}=${v}`).join("; ");
+  return Object.entries(cookies)
+    .map(([k, v]) => `${k}=${v}`)
+    .join("; ");
 }
 
 async function api(method, path, body) {
@@ -78,8 +84,11 @@ async function api(method, path, body) {
 async function apiJson(method, path, body) {
   const resp = await api(method, path, body);
   const text = await resp.text();
-  try { return { status: resp.status, data: JSON.parse(text) }; }
-  catch { return { status: resp.status, data: text.slice(0, 200) }; }
+  try {
+    return { status: resp.status, data: JSON.parse(text) };
+  } catch {
+    return { status: resp.status, data: text.slice(0, 200) };
+  }
 }
 
 async function apiForm(path, formData) {
@@ -101,7 +110,8 @@ async function apiForm(path, formData) {
 
 const TS = Date.now();
 const EMAIL = `test-${TS}@planifrepas.test`;
-const PASSWORD = "MotDePasse123!";
+// Tiré au hasard à chaque lancement : aucun mot de passe écrit en dur
+const PASSWORD = `Mdp-${randomBytes(9).toString("base64url")}`;
 
 function nextMonday() {
   const d = new Date();
@@ -109,6 +119,18 @@ function nextMonday() {
   const diff = day === 0 ? 1 : day === 1 ? 7 : 8 - day;
   d.setUTCDate(d.getUTCDate() + diff);
   return d.toISOString().split("T")[0];
+}
+
+/** Supprime le compte de test (et son foyer) : la base ne garde aucune trace du lancement. */
+async function nettoyer() {
+  try {
+    const resp = await apiJson("DELETE", "/api/account", { password: PASSWORD });
+    console.log(
+      `  Nettoyage : compte de test ${resp.status === 200 ? "supprimé" : `non supprimé (${resp.status})`}`,
+    );
+  } catch {
+    console.log("  Nettoyage : compte de test non supprimé (serveur injoignable)");
+  }
 }
 
 // ─── Main ────────────────────────────────────────────────────────
@@ -131,7 +153,6 @@ async function main() {
   assert("Inscription: status 201", 201, reg.status);
   assert("Inscription: email correct", EMAIL, reg.data?.user?.email);
   assertOk("Inscription: userId retourné", reg.data?.user?.id);
-
 
   // Doublon
   const dup = await apiJson("POST", "/api/register", {
@@ -294,15 +315,18 @@ async function main() {
   assert("Membre invalide (pas de date/tranche): 400", 400, mBad.status);
 
   // Vérifier le nombre de membres via les réponses POST (pas de GET /members)
-  const membresCreesOk = [m1, m2, m3, m4].filter(m => m.status === 201).length;
+  const membresCreesOk = [m1, m2, m3, m4].filter((m) => m.status === 201).length;
   assert("Membres: 4 créés avec succès", 4, membresCreesOk);
 
   // ═══ 5. RECETTES ═══════════════════════════════════════════════
   title("5. RECETTES");
 
   const recipes = await apiJson("GET", "/api/recipes");
-  const recipeList = Array.isArray(recipes.data) ? recipes.data
-    : Array.isArray(recipes.data?.recipes) ? recipes.data.recipes : [];
+  const recipeList = Array.isArray(recipes.data)
+    ? recipes.data
+    : Array.isArray(recipes.data?.recipes)
+      ? recipes.data.recipes
+      : [];
   assertGt("Recettes: catalogue non vide", recipeList.length, 0);
   console.log(`     → ${recipeList.length} recettes dans le catalogue`);
 
@@ -310,14 +334,19 @@ async function main() {
   title("6. INGRÉDIENTS");
 
   const ings = await apiJson("GET", "/api/ingredients");
-  const ingList = Array.isArray(ings.data) ? ings.data
-    : Array.isArray(ings.data?.ingredients) ? ings.data.ingredients : [];
+  const ingList = Array.isArray(ings.data)
+    ? ings.data
+    : Array.isArray(ings.data?.ingredients)
+      ? ings.data.ingredients
+      : [];
   assertGt("Ingrédients: catalogue non vide", ingList.length, 0);
   console.log(`     → ${ingList.length} ingrédients`);
 
   // Trouver un ingrédient avec son unité pour les achats
-  let firstIngId = null, firstUnitId = null;
-  let secondIngId = null, secondUnitId = null;
+  let firstIngId = null,
+    firstUnitId = null;
+  let secondIngId = null,
+    secondUnitId = null;
   for (const ing of ingList) {
     const units = ing.units || ing.marketUnits || [];
     if (units.length > 0) {
@@ -336,8 +365,11 @@ async function main() {
   title("7. MAGASINS");
 
   const stores = await apiJson("GET", "/api/stores?lat=5.3364&lng=-4.0267");
-  const storeList = Array.isArray(stores.data) ? stores.data
-    : Array.isArray(stores.data?.stores) ? stores.data.stores : [];
+  const storeList = Array.isArray(stores.data)
+    ? stores.data
+    : Array.isArray(stores.data?.stores)
+      ? stores.data.stores
+      : [];
   assertGt("Magasins: catalogue non vide", storeList.length, 0);
   console.log(`     → ${storeList.length} magasins`);
 
@@ -365,8 +397,10 @@ async function main() {
   let arachideFound = false;
   for (const meal of meals) {
     const recipe = meal.recipe;
-    if (recipe?.allergens?.includes("arachide") ||
-        recipe?.ingredients?.some(i => i.ingredient?.allergens?.includes("arachide"))) {
+    if (
+      recipe?.allergens?.includes("arachide") ||
+      recipe?.ingredients?.some((i) => i.ingredient?.allergens?.includes("arachide"))
+    ) {
       arachideFound = true;
       break;
     }
@@ -429,7 +463,8 @@ async function main() {
         }
       }
     } else {
-      total += 3; fail += 3;
+      total += 3;
+      fail += 3;
       console.log("  \x1b[31m✗\x1b[0m Liste de courses: pas de liste");
     }
 
@@ -441,9 +476,12 @@ async function main() {
         { ingredientId: firstIngId, unitId: firstUnitId, quantity: 3, location: "fridge" },
       ];
       if (secondIngId && secondUnitId) {
-        purchaseItems.push(
-          { ingredientId: secondIngId, unitId: secondUnitId, quantity: 2, location: "pantry" },
-        );
+        purchaseItems.push({
+          ingredientId: secondIngId,
+          unitId: secondUnitId,
+          quantity: 2,
+          location: "pantry",
+        });
       }
 
       const achat = await apiJson("POST", "/api/stock/purchases", { items: purchaseItems });
@@ -473,14 +511,17 @@ async function main() {
         assert("Jet: quantité = 4 après jet de 1", 4, thrown.data?.quantiteRestante);
       } else {
         title("13. STOCK — CORRECTION");
-        total++; fail++;
+        total++;
+        fail++;
         console.log("  \x1b[31m✗\x1b[0m Correction: pas de stock");
         title("14. STOCK — JET");
-        total++; fail++;
+        total++;
+        fail++;
         console.log("  \x1b[31m✗\x1b[0m Jet: pas de stock");
       }
     } else {
-      total += 4; fail += 4;
+      total += 4;
+      fail += 4;
       console.log("  \x1b[31m✗\x1b[0m Achats: pas d'ingrédient/unité disponible");
     }
 
@@ -536,14 +577,16 @@ async function main() {
       }
     } else {
       title("18. RETOUR APRÈS REPAS");
-      total += 4; fail += 4;
+      total += 4;
+      fail += 4;
       console.log("  \x1b[31m✗\x1b[0m Cuisson/Retour: pas de repas disponible");
     }
   } else {
     // Pas de menu → sauter sections 9-18
-    for (const s of [9,10,11,12,13,14,15,16,17,18]) {
+    for (const s of [9, 10, 11, 12, 13, 14, 15, 16, 17, 18]) {
       title(`${s}. (SAUTÉ — pas de menu)`);
-      total += 2; fail += 2;
+      total += 2;
+      fail += 2;
     }
   }
 
@@ -567,8 +610,16 @@ async function main() {
 
   assert("Sécurité: GET /api/household sans session → 401", 401, await noAuthGet("/api/household"));
   assert("Sécurité: GET /api/stock sans session → 401", 401, await noAuthGet("/api/stock"));
-  assert("Sécurité: POST /api/stock/purchases sans session → 401", 401, await noAuthPost("/api/stock/purchases"));
-  assert("Sécurité: GET /api/meal-plans/current sans session → 401", 401, await noAuthGet("/api/meal-plans/current"));
+  assert(
+    "Sécurité: POST /api/stock/purchases sans session → 401",
+    401,
+    await noAuthPost("/api/stock/purchases"),
+  );
+  assert(
+    "Sécurité: GET /api/meal-plans/current sans session → 401",
+    401,
+    await noAuthGet("/api/meal-plans/current"),
+  );
   assert("Sécurité: GET /api/recipes sans session → 401", 401, await noAuthGet("/api/recipes"));
 
   // ═══ 20. VALIDATION — DONNÉES INVALIDES ═════════════════════
@@ -606,6 +657,8 @@ async function main() {
   });
   assert("Validation: feedback invalide → 400", 400, badFeedback.status);
 
+  await nettoyer();
+
   // ═══ RÉSUMÉ ════════════════════════════════════════════════════
   console.log("\n\x1b[33m═══════════════════════════════════════════════\x1b[0m");
   console.log(`  RÉSULTAT : \x1b[32m${pass} réussis\x1b[0m / ${total} tests`);
@@ -619,7 +672,8 @@ async function main() {
   process.exit(fail > 0 ? 1 : 0);
 }
 
-main().catch(err => {
+main().catch(async (err) => {
   console.error("ERREUR FATALE:", err);
+  await nettoyer();
   process.exit(2);
 });

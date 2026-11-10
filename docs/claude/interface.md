@@ -28,7 +28,7 @@
 - **Bouton urgence** visible sur tous les écrans de la famille.
 - **Accueil** : alertes de péremption en tête, repas du jour, accès rapide au menu et au chat.
 - **Chat** : réponse en flux, cartes de proposition avec Confirmer et Modifier.
-- **Montants** affichés au format « 12 500 FCFA ». **Quantités** en unités du marché, jamais en grammes.
+- **Montants** affichés au format « 12 500 FCFA ». **Quantités** en unités du marché, jamais en grammes. Seule exception, une aide : sous l'unité choisie pour déclarer un achat, son équivalence (« 1 tas ≈ 250 g »), pour que la famille sache ce que représente l'unité.
 - Boutons d'au moins 44 px, contrastes lisibles, libellés explicites.
 - États de chargement, d'erreur et de liste vide sur chaque écran.
 - Consentements (santé, localisation) demandés clairement à l'accueil, refusables.

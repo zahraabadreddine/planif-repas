@@ -88,6 +88,8 @@ export type AgentProposal = {
   label: string;
   summary: string;
   status: "pending" | "accepted" | "rejected";
+  // Mode urgence : les plats parmi lesquels la famille choisit en confirmant
+  options?: { recetteId: string; titre: string }[];
 };
 
 export type EmergencyOption = {

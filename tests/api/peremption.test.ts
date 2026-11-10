@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ErreurApi } from "@/lib/erreurs";
 
-const HOUSEHOLD_ID = "66666666-6666-6666-6666-666666666666";
-const STOCK_ID_1 = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
-const STOCK_ID_2 = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb";
+const HOUSEHOLDID = "66666666-6666-6666-6666-666666666666";
+const STOCKID1 = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
+const STOCKID2 = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb";
 
 const { stockItem, exigerSession } = vi.hoisted(() => ({
   stockItem: { updateMany: vi.fn(), findMany: vi.fn() },
@@ -24,7 +24,7 @@ import { rafraichirPeremption } from "@/lib/stock/peremption";
 const session = {
   userId: "user-1",
   role: "user" as const,
-  householdId: HOUSEHOLD_ID,
+  householdId: HOUSEHOLDID,
   acces: { canWrite: true } as never,
 };
 
@@ -49,14 +49,14 @@ describe("rafraichirPeremption", () => {
     stockItem.updateMany.mockResolvedValue({ count: 2 });
     stockItem.findMany.mockResolvedValue([
       {
-        id: STOCK_ID_1,
+        id: STOCKID1,
         expiresAt: dansJours(1),
         quantity: 3,
         ingredient: { name: "Tomate" },
         unit: { label: "tas" },
       },
       {
-        id: STOCK_ID_2,
+        id: STOCKID2,
         expiresAt: dansJours(0),
         quantity: 1,
         ingredient: { name: "Aubergine" },
@@ -81,7 +81,7 @@ describe("rafraichirPeremption", () => {
 
     expect(stockItem.updateMany).toHaveBeenCalledTimes(1);
     const appel = stockItem.updateMany.mock.calls[0][0];
-    expect(appel.where.householdId).toBe(HOUSEHOLD_ID);
+    expect(appel.where.householdId).toBe(HOUSEHOLDID);
     expect(appel.where.status).toBe("ok");
     expect(appel.where.quantity).toEqual({ gt: 0 });
     expect(appel.where.expiresAt.not).toBeNull();
@@ -101,9 +101,7 @@ describe("rafraichirPeremption", () => {
   it("lève FOYERMANQUANT sans foyer", async () => {
     const sessionSansFoyer = { ...session, householdId: null };
 
-    await expect(rafraichirPeremption(sessionSansFoyer as never)).rejects.toThrow(
-      ErreurApi,
-    );
+    await expect(rafraichirPeremption(sessionSansFoyer as never)).rejects.toThrow(ErreurApi);
   });
 
   it("calcule joursRestants = 0 pour un article qui expire aujourd'hui", async () => {
@@ -112,7 +110,7 @@ describe("rafraichirPeremption", () => {
     stockItem.updateMany.mockResolvedValue({ count: 1 });
     stockItem.findMany.mockResolvedValue([
       {
-        id: STOCK_ID_1,
+        id: STOCKID1,
         expiresAt: expireAujourdhui,
         quantity: 2,
         ingredient: { name: "Lait" },
@@ -129,7 +127,7 @@ describe("rafraichirPeremption", () => {
     stockItem.updateMany.mockResolvedValue({ count: 0 });
     stockItem.findMany.mockResolvedValue([
       {
-        id: STOCK_ID_1,
+        id: STOCKID1,
         expiresAt: null,
         quantity: 2,
         ingredient: { name: "Sel" },
@@ -150,7 +148,7 @@ describe("GET /api/stock/alertes", () => {
     stockItem.updateMany.mockResolvedValue({ count: 1 });
     stockItem.findMany.mockResolvedValue([
       {
-        id: STOCK_ID_1,
+        id: STOCKID1,
         expiresAt: dansJours(1),
         quantity: 2,
         ingredient: { name: "Oignon" },

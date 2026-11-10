@@ -4,14 +4,14 @@ import { restrictionsDuFoyer } from "@/lib/planificateur/filtres";
 import { suggestionsUrgence } from "@/lib/urgence/suggestion";
 import UrgenceInteractif, { type OptionUrgenceClient } from "./urgence-interactif";
 
-const MAX_MINUTES = 30;
+const MAXMINUTES = 30;
 
 export default async function UrgencePage() {
   const session = await exigerSession();
   const membres = await listerMembres(session);
   const restrictions = restrictionsDuFoyer(membres);
 
-  const suggestions = await suggestionsUrgence(session, MAX_MINUTES);
+  const suggestions = await suggestionsUrgence(session, MAXMINUTES);
 
   const options: OptionUrgenceClient[] = suggestions.map((s) => ({
     recipeId: s.id,

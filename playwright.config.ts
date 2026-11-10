@@ -10,7 +10,10 @@ try {
     const match = line.match(/^([A-Z_][A-Z0-9_]*)=(.*)$/);
     if (match && !process.env[match[1]]) {
       let val = match[2];
-      if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+      if (
+        (val.startsWith('"') && val.endsWith('"')) ||
+        (val.startsWith("'") && val.endsWith("'"))
+      ) {
         val = val.slice(1, -1);
       }
       process.env[match[1]] = val;

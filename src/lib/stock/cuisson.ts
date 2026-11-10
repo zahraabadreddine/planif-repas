@@ -41,7 +41,8 @@ export async function marquerCuisine(
   });
 
   if (!repas) throw new ErreurApi("INTROUVABLE");
-  if (repas.mealPlan.householdId !== householdId) throw new ErreurApi("INTERDIT");
+  // Un repas d'un autre foyer est introuvable : on ne révèle pas qu'il existe
+  if (repas.mealPlan.householdId !== householdId) throw new ErreurApi("INTROUVABLE");
 
   return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     const updated = await tx.plannedMeal.updateMany({

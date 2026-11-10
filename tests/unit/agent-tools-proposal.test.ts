@@ -101,20 +101,13 @@ describe("generateWeekPlan", () => {
     });
     mocks.creerProposition.mockResolvedValue({ ...PROPOSITION, type: "weekPlan" });
 
-    const result = await generateWeekPlan.executer(
-      SESSION,
-      { weekStart: "2026-11-09" },
-      CTX,
-    );
+    const result = await generateWeekPlan.executer(SESSION, { weekStart: "2026-11-09" }, CTX);
 
     expect(result.menuId).toBe("menu-1");
     expect(result.coutEstimeFcfa).toBe(22000);
     expect(result.repas).toHaveLength(1);
     expect((result.repas as Array<{ recette: string }>)[0].recette).toBe("Attiéké poisson");
-    expect(mocks.genererMenu).toHaveBeenCalledWith(
-      SESSION,
-      new Date("2026-11-09T00:00:00Z"),
-    );
+    expect(mocks.genererMenu).toHaveBeenCalledWith(SESSION, new Date("2026-11-09T00:00:00Z"));
   });
 
   it("utilise le lundi prochain par défaut", async () => {
@@ -249,9 +242,7 @@ describe("recordPurchase", () => {
     const result = await recordPurchase.executer(
       SESSION,
       {
-        items: [
-          { ingredientId: "ing-x", unitId: "u-1", quantity: 1, location: "fridge" as const },
-        ],
+        items: [{ ingredientId: "ing-x", unitId: "u-1", quantity: 1, location: "fridge" as const }],
       },
       CTX,
     );
@@ -278,11 +269,7 @@ describe("planEmergency", () => {
     ]);
     mocks.creerProposition.mockResolvedValue({ ...PROPOSITION, type: "emergency" });
 
-    const result = await planEmergency.executer(
-      SESSION,
-      { maxMinutes: 20 },
-      CTX,
-    );
+    const result = await planEmergency.executer(SESSION, { maxMinutes: 20 }, CTX);
 
     expect(result.propositionId).toBe("prop-1");
     const options = result.options as Array<{ titre: string }>;
@@ -294,11 +281,7 @@ describe("planEmergency", () => {
   it("renvoie un message sans proposition si aucune recette", async () => {
     mocks.suggestionsUrgence.mockResolvedValue([]);
 
-    const result = await planEmergency.executer(
-      SESSION,
-      { maxMinutes: 5 },
-      CTX,
-    );
+    const result = await planEmergency.executer(SESSION, { maxMinutes: 5 }, CTX);
 
     expect(result.options).toHaveLength(0);
     expect(result.message).toContain("Aucune recette");

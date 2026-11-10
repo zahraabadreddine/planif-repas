@@ -39,9 +39,9 @@ const idRecette = (n: number) => `10000000-0000-4000-8000-${pad(n)}`;
 const idRepas = (jour: number, slot: "lunch" | "dinner") =>
   `20000000-0000-4000-8000-${pad(jour * 2 + (slot === "dinner" ? 2 : 1))}`;
 
-const LUNDI_MIDI = idRepas(0, "lunch");
-const LUNDI_SOIR = idRepas(0, "dinner");
-const MARDI_MIDI = idRepas(1, "lunch");
+const LUNDIMIDI = idRepas(0, "lunch");
+const LUNDISOIR = idRepas(0, "dinner");
+const MARDIMIDI = idRepas(1, "lunch");
 
 const contexte = (id: string) => ({ params: Promise.resolve({ id }) });
 const requete = (corps: unknown) =>
@@ -152,7 +152,7 @@ beforeEach(() => {
   prisma.stockItem.findMany.mockResolvedValue([]);
   prisma.plannedMeal.findMany.mockResolvedValue([]);
   prisma.dishRating.findMany.mockResolvedValue([]);
-  prisma.plannedMeal.findFirst.mockResolvedValue(trouve(LUNDI_MIDI));
+  prisma.plannedMeal.findFirst.mockResolvedValue(trouve(LUNDIMIDI));
   prisma.plannedMeal.update.mockResolvedValue({});
   prisma.mealPlan.update.mockResolvedValue({});
   prisma.mealPlan.findFirst.mockResolvedValue(planRelu);
@@ -162,13 +162,13 @@ beforeEach(() => {
 describe("PATCH /api/planned-meals/[id]", () => {
   it("refuse une personne non connectée (401)", async () => {
     exigerEcriture.mockRejectedValue(new ErreurApi("NONCONNECTE"));
-    const reponse = await remplacer(requete({ recipeId: idRecette(9) }), contexte(LUNDI_MIDI));
+    const reponse = await remplacer(requete({ recipeId: idRecette(9) }), contexte(LUNDIMIDI));
     expect(reponse.status).toBe(401);
   });
 
   it("refuse une personne en lecture seule (403)", async () => {
     exigerEcriture.mockRejectedValue(new ErreurApi("LECTURESEULE"));
-    const reponse = await remplacer(requete({ recipeId: idRecette(9) }), contexte(LUNDI_MIDI));
+    const reponse = await remplacer(requete({ recipeId: idRecette(9) }), contexte(LUNDIMIDI));
     expect(reponse.status).toBe(403);
     expect(prisma.plannedMeal.update).not.toHaveBeenCalled();
   });
@@ -180,41 +180,50 @@ describe("PATCH /api/planned-meals/[id]", () => {
 
   it("répond 404 pour le repas d'un autre foyer", async () => {
     prisma.plannedMeal.findFirst.mockResolvedValue(null);
-    const reponse = await remplacer(requete({ recipeId: idRecette(9) }), contexte(LUNDI_MIDI));
+    const reponse = await remplacer(requete({ recipeId: idRecette(9) }), contexte(LUNDIMIDI));
     expect(reponse.status).toBe(404);
     const filtre = prisma.plannedMeal.findFirst.mock.calls[0][0];
     expect(filtre.where.mealPlan.householdId).toBe("f1");
   });
 
   it("refuse un corps invalide ou contenant un foyer (400)", async () => {
-    const invalide = await remplacer(requete({ recipeId: "x" }), contexte(LUNDI_MIDI));
+    const invalide = await remplacer(requete({ recipeId: "x" }), contexte(LUNDIMIDI));
     expect(invalide.status).toBe(400);
     const intrus = { recipeId: idRecette(9), householdId: "f2" };
-    const reponse = await remplacer(requete(intrus), contexte(LUNDI_MIDI));
+    const reponse = await remplacer(requete(intrus), contexte(LUNDIMIDI));
     expect(reponse.status).toBe(400);
   });
 
+  it("refuse deux sortes de changements à la fois : rien n'est appliqué à moitié (400)", async () => {
+    const reponse = await remplacer(
+      requete({ recipeId: idRecette(9), servings: 6 }),
+      contexte(LUNDIMIDI),
+    );
+    expect(reponse.status).toBe(400);
+    expect(prisma.plannedMeal.update).not.toHaveBeenCalled();
+  });
+
   it("répond 404 pour une recette absente du catalogue", async () => {
-    const reponse = await remplacer(requete({ recipeId: idRecette(99) }), contexte(LUNDI_MIDI));
+    const reponse = await remplacer(requete({ recipeId: idRecette(99) }), contexte(LUNDIMIDI));
     expect(reponse.status).toBe(404);
   });
 
   it("refuse un menu archivé (409)", async () => {
-    prisma.plannedMeal.findFirst.mockResolvedValue(trouve(LUNDI_MIDI, "archived"));
-    const reponse = await remplacer(requete({ recipeId: idRecette(9) }), contexte(LUNDI_MIDI));
+    prisma.plannedMeal.findFirst.mockResolvedValue(trouve(LUNDIMIDI, "archived"));
+    const reponse = await remplacer(requete({ recipeId: idRecette(9) }), contexte(LUNDIMIDI));
     expect(reponse.status).toBe(409);
   });
 
   it("refuse une recette avec un allergène du foyer (400)", async () => {
     chargerRecettes.mockResolvedValue([recette(9, { arachide: true })]);
-    const reponse = await remplacer(requete({ recipeId: idRecette(9) }), contexte(LUNDI_MIDI));
+    const reponse = await remplacer(requete({ recipeId: idRecette(9) }), contexte(LUNDIMIDI));
     expect(reponse.status).toBe(400);
     expect(prisma.plannedMeal.update).not.toHaveBeenCalled();
   });
 
   it("refuse une recette qui demande un four absent du foyer (400)", async () => {
     chargerRecettes.mockResolvedValue([recette(9, { four: true })]);
-    const reponse = await remplacer(requete({ recipeId: idRecette(9) }), contexte(LUNDI_MIDI));
+    const reponse = await remplacer(requete({ recipeId: idRecette(9) }), contexte(LUNDIMIDI));
     expect(reponse.status).toBe(400);
   });
 
@@ -223,7 +232,7 @@ describe("PATCH /api/planned-meals/[id]", () => {
       ...Array.from({ length: 8 }, (_, i) => recette(i + 1)),
       recette(9, { mealTypes: ["dinner"] }),
     ]);
-    const reponse = await remplacer(requete({ recipeId: idRecette(9) }), contexte(LUNDI_MIDI));
+    const reponse = await remplacer(requete({ recipeId: idRecette(9) }), contexte(LUNDIMIDI));
     expect(reponse.status).toBe(400);
   });
 
@@ -233,16 +242,16 @@ describe("PATCH /api/planned-meals/[id]", () => {
       equipment: ["gaz"],
       cuisinesPreferred: [],
     });
-    const reponse = await remplacer(requete({ recipeId: idRecette(9) }), contexte(LUNDI_MIDI));
+    const reponse = await remplacer(requete({ recipeId: idRecette(9) }), contexte(LUNDIMIDI));
     expect(reponse.status).toBe(409);
     expect(prisma.plannedMeal.update).not.toHaveBeenCalled();
   });
 
   it("remplace un repas simple sans refaire la liste d'un brouillon", async () => {
-    const reponse = await remplacer(requete({ recipeId: idRecette(9) }), contexte(LUNDI_MIDI));
+    const reponse = await remplacer(requete({ recipeId: idRecette(9) }), contexte(LUNDIMIDI));
     expect(reponse.status).toBe(200);
     expect(misesAJour()).toEqual([
-      { id: LUNDI_MIDI, recipeId: idRecette(9), servings: 4, leftoverFromId: null },
+      { id: LUNDIMIDI, recipeId: idRecette(9), servings: 4, leftoverFromId: null },
     ]);
     expect(prisma.mealPlan.update.mock.calls[0][0].data.estimatedCostFcfa).toBe(16800);
     expect(genererListe).not.toHaveBeenCalled();
@@ -250,21 +259,21 @@ describe("PATCH /api/planned-meals/[id]", () => {
   });
 
   it("refait la liste de courses quand le menu est actif", async () => {
-    prisma.plannedMeal.findFirst.mockResolvedValue(trouve(LUNDI_MIDI, "active"));
+    prisma.plannedMeal.findFirst.mockResolvedValue(trouve(LUNDIMIDI, "active"));
     prisma.mealPlan.findFirst.mockResolvedValue({ ...planRelu, status: "active" });
-    const reponse = await remplacer(requete({ recipeId: idRecette(9) }), contexte(LUNDI_MIDI));
+    const reponse = await remplacer(requete({ recipeId: idRecette(9) }), contexte(LUNDIMIDI));
     expect(reponse.status).toBe(200);
     expect(genererListe).toHaveBeenCalledWith(SESSION, PLAN);
     expect((await reponse.json()).list).toEqual({ id: "l1" });
   });
 
   it("donne la même recette au reste du lendemain midi", async () => {
-    prisma.plannedMeal.findFirst.mockResolvedValue(trouve(LUNDI_SOIR));
-    const reponse = await remplacer(requete({ recipeId: idRecette(9) }), contexte(LUNDI_SOIR));
+    prisma.plannedMeal.findFirst.mockResolvedValue(trouve(LUNDISOIR));
+    const reponse = await remplacer(requete({ recipeId: idRecette(9) }), contexte(LUNDISOIR));
     expect(reponse.status).toBe(200);
     expect(misesAJour()).toEqual([
-      { id: LUNDI_SOIR, recipeId: idRecette(9), servings: 8, leftoverFromId: null },
-      { id: MARDI_MIDI, recipeId: idRecette(9), servings: 4, leftoverFromId: LUNDI_SOIR },
+      { id: LUNDISOIR, recipeId: idRecette(9), servings: 8, leftoverFromId: null },
+      { id: MARDIMIDI, recipeId: idRecette(9), servings: 4, leftoverFromId: LUNDISOIR },
     ]);
   });
 
@@ -273,22 +282,92 @@ describe("PATCH /api/planned-meals/[id]", () => {
       ...Array.from({ length: 8 }, (_, i) => recette(i + 1)),
       recette(9, { mealTypes: ["dinner"] }),
     ]);
-    prisma.plannedMeal.findFirst.mockResolvedValue(trouve(LUNDI_SOIR));
-    const reponse = await remplacer(requete({ recipeId: idRecette(9) }), contexte(LUNDI_SOIR));
+    prisma.plannedMeal.findFirst.mockResolvedValue(trouve(LUNDISOIR));
+    const reponse = await remplacer(requete({ recipeId: idRecette(9) }), contexte(LUNDISOIR));
     expect(reponse.status).toBe(200);
     expect(misesAJour()).toEqual([
-      { id: LUNDI_SOIR, recipeId: idRecette(9), servings: 4, leftoverFromId: null },
-      { id: MARDI_MIDI, recipeId: idRecette(1), servings: 4, leftoverFromId: null },
+      { id: LUNDISOIR, recipeId: idRecette(9), servings: 4, leftoverFromId: null },
+      { id: MARDIMIDI, recipeId: idRecette(1), servings: 4, leftoverFromId: null },
     ]);
   });
 
   it("remplacer un reste le rend ordinaire et le dîner de la veille repasse à 4 portions", async () => {
-    prisma.plannedMeal.findFirst.mockResolvedValue(trouve(MARDI_MIDI));
-    const reponse = await remplacer(requete({ recipeId: idRecette(9) }), contexte(MARDI_MIDI));
+    prisma.plannedMeal.findFirst.mockResolvedValue(trouve(MARDIMIDI));
+    const reponse = await remplacer(requete({ recipeId: idRecette(9) }), contexte(MARDIMIDI));
     expect(reponse.status).toBe(200);
     expect(misesAJour()).toEqual([
-      { id: MARDI_MIDI, recipeId: idRecette(9), servings: 4, leftoverFromId: null },
-      { id: LUNDI_SOIR, recipeId: idRecette(1), servings: 4, leftoverFromId: null },
+      { id: MARDIMIDI, recipeId: idRecette(9), servings: 4, leftoverFromId: null },
+      { id: LUNDISOIR, recipeId: idRecette(1), servings: 4, leftoverFromId: null },
     ]);
+  });
+});
+
+describe("PATCH /api/planned-meals/:id : déplacer et changer les portions", () => {
+  const MERCREDI = "2026-10-28";
+  const MERCREDISOIR = idRepas(2, "dinner");
+
+  /** Le même menu, avec un repas déjà cuisiné. */
+  function avecCuisine(cibleId: string, cuisineId: string) {
+    const trouvee = trouve(cibleId);
+    const meals = trouvee.mealPlan.meals.map((m) =>
+      m.id === cuisineId ? { ...m, status: "cooked" } : { ...m, status: "planned" },
+    );
+    return {
+      ...trouvee,
+      status: meals.find((m) => m.id === cibleId)!.status,
+      mealPlan: { ...trouvee.mealPlan, meals },
+    };
+  }
+
+  it("échange deux dîners : chacun emmène son reste au lendemain midi", async () => {
+    prisma.plannedMeal.findFirst.mockResolvedValue(trouve(LUNDISOIR));
+    const reponse = await remplacer(requete({ date: MERCREDI }), contexte(LUNDISOIR));
+    expect(reponse.status).toBe(200);
+    const dates = new Map(
+      prisma.plannedMeal.update.mock.calls.map((appel: unknown[]) => {
+        const { where, data } = appel[0] as { where: { id: string }; data: { date: Date } };
+        return [where.id, data.date.toISOString().slice(0, 10)];
+      }),
+    );
+    expect(dates.get(LUNDISOIR)).toBe(MERCREDI);
+    expect(dates.get(MERCREDISOIR)).toBe(LUNDI);
+    // Le reste du lundi soir (mardi midi) passe au jeudi midi
+    expect(dates.get(MARDIMIDI)).toBe("2026-10-29");
+  });
+
+  it("refuse de déplacer un reste seul (400), sans rien écrire", async () => {
+    prisma.plannedMeal.findFirst.mockResolvedValue(trouve(MARDIMIDI));
+    const reponse = await remplacer(requete({ date: MERCREDI }), contexte(MARDIMIDI));
+    expect(reponse.status).toBe(400);
+    expect(prisma.plannedMeal.update).not.toHaveBeenCalled();
+  });
+
+  it("refuse le petit-déjeuner, que le menu ne prévoit pas (400)", async () => {
+    prisma.plannedMeal.findFirst.mockResolvedValue(trouve(LUNDISOIR));
+    const reponse = await remplacer(requete({ slot: "breakfast" }), contexte(LUNDISOIR));
+    expect(reponse.status).toBe(400);
+    expect(prisma.plannedMeal.update).not.toHaveBeenCalled();
+  });
+
+  it("refuse de déplacer un repas à la place d'un repas déjà cuisiné", async () => {
+    prisma.plannedMeal.findFirst.mockResolvedValue(avecCuisine(LUNDISOIR, MERCREDISOIR));
+    const reponse = await remplacer(requete({ date: MERCREDI }), contexte(LUNDISOIR));
+    expect(reponse.status).toBe(400);
+    expect((await reponse.json()).error.message).toMatch(/déjà cuisiné/);
+    expect(prisma.plannedMeal.update).not.toHaveBeenCalled();
+  });
+
+  it("refuse de remplacer un repas déjà cuisiné : l'historique ne change pas", async () => {
+    prisma.plannedMeal.findFirst.mockResolvedValue(avecCuisine(LUNDISOIR, LUNDISOIR));
+    const reponse = await remplacer(requete({ recipeId: idRecette(9) }), contexte(LUNDISOIR));
+    expect(reponse.status).toBe(400);
+    expect(prisma.plannedMeal.update).not.toHaveBeenCalled();
+  });
+
+  it("invités : un dîner en double garde son reste (6 ce soir + 4 demain midi = 10)", async () => {
+    prisma.plannedMeal.findFirst.mockResolvedValue(trouve(LUNDISOIR));
+    const reponse = await remplacer(requete({ servings: 6 }), contexte(LUNDISOIR));
+    expect(reponse.status).toBe(200);
+    expect(misesAJour()).toEqual([expect.objectContaining({ id: LUNDISOIR, servings: 10 })]);
   });
 });

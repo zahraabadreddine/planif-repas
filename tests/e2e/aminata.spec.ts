@@ -85,7 +85,9 @@ test.describe("Scénario Aminata", () => {
     await expect(page.getByText("Pas le temps")).toBeVisible({ timeout: 10_000 });
 
     // Le foyer d'Aminata a 4 membres, le compteur doit démarrer à 4
-    const compteur = page.getByRole("region", { name: /polite/i }).or(page.locator("[aria-live='polite']"));
+    const compteur = page
+      .getByRole("region", { name: /polite/i })
+      .or(page.locator("[aria-live='polite']"));
     await expect(compteur.getByText("4")).toBeVisible();
 
     // Augmenter d'une personne

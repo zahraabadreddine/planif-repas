@@ -34,7 +34,11 @@ vi.mock("@/lib/auth/garde", () => ({ exigerAdmin }));
 vi.mock("bcryptjs", () => ({ default: { hash }, hash }));
 
 import { GET as listRecipes } from "@/app/api/admin/recipes/route";
-import { GET as getRecipe, PUT as putRecipe, DELETE as deleteRecipe } from "@/app/api/admin/recipes/[id]/route";
+import {
+  GET as getRecipe,
+  PUT as putRecipe,
+  DELETE as deleteRecipe,
+} from "@/app/api/admin/recipes/[id]/route";
 import { GET as listIngredients } from "@/app/api/admin/ingredients/route";
 import { DELETE as deleteIngredient } from "@/app/api/admin/ingredients/[id]/route";
 import { GET as listPrices } from "@/app/api/admin/prices/route";
@@ -181,14 +185,18 @@ describe("POST /api/admin/users/[id]/reset-password", () => {
     expect(r.status).toBe(400);
   });
 
+  it("refuse au-delà de 72 octets : bcrypt ignorerait la fin du mot de passe", async () => {
+    prisma.user.findUnique.mockResolvedValue({ id: UUID });
+    const r = await resetPassword(jsonReq({ newPassword: "é".repeat(37) }, "POST"), params(UUID));
+    expect(r.status).toBe(400);
+    expect(prisma.user.update).not.toHaveBeenCalled();
+  });
+
   it("réinitialise le mot de passe", async () => {
     prisma.user.findUnique.mockResolvedValue({ id: UUID });
     hash.mockResolvedValue("hashed");
     prisma.user.update.mockResolvedValue({ id: UUID });
-    const r = await resetPassword(
-      jsonReq({ newPassword: "nouveauMDP1!" }, "POST"),
-      params(UUID),
-    );
+    const r = await resetPassword(jsonReq({ newPassword: "nouveauMDP1!" }, "POST"), params(UUID));
     expect(r.status).toBe(200);
     expect(hash).toHaveBeenCalledWith("nouveauMDP1!", 12);
     expect(prisma.user.update).toHaveBeenCalledWith({
