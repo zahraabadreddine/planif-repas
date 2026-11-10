@@ -42,7 +42,7 @@ const LOCATIONS = [
   { value: "pantry", label: "Placard" },
 ] as const;
 
-const ICON_PAR_NOM: Record<string, StockIcon> = {
+const ICONPARNOM: Record<string, StockIcon> = {
   riz: "riz",
   "riz basmati": "riz",
   "riz paddy": "riz",
@@ -68,7 +68,7 @@ const ICON_PAR_NOM: Record<string, StockIcon> = {
   "aubergine africaine": "aubergine",
 };
 
-const ICON_PAR_CATEGORIE: Partial<Record<string, StockIcon>> = {
+const ICONPARCATEGORIE: Partial<Record<string, StockIcon>> = {
   poisson: "poisson",
   "fruits de mer": "poisson",
   féculent: "riz",
@@ -81,11 +81,11 @@ const ICON_PAR_CATEGORIE: Partial<Record<string, StockIcon>> = {
 
 function iconePour(name: string, category: string): StockIcon {
   const cle = name.toLowerCase().trim();
-  if (ICON_PAR_NOM[cle]) return ICON_PAR_NOM[cle];
-  for (const [prefix, icon] of Object.entries(ICON_PAR_NOM)) {
+  if (ICONPARNOM[cle]) return ICONPARNOM[cle];
+  for (const [prefix, icon] of Object.entries(ICONPARNOM)) {
     if (cle.startsWith(prefix)) return icon;
   }
-  return ICON_PAR_CATEGORIE[category] ?? "tomate";
+  return ICONPARCATEGORIE[category] ?? "tomate";
 }
 
 function joursAvantExpiration(expiresAt: string | null): number | undefined {

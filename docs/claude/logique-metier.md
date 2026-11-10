@@ -43,9 +43,17 @@ Sans aucun relevé récent, on utilise l'estimation la plus récente de l'équip
 
 ### Mode urgence (« pas le temps »)
 
-1. Recettes faisables **uniquement avec le stock**, dans le temps donné, pour le nombre de personnes, allergènes exclus.
+1. Recettes faisables **uniquement avec le stock**, dans le temps donné, pour le nombre de personnes, allergènes exclus, et qui se mangent le soir.
 2. 2 ou 3 options classées par rapidité. Si aucune : solution de secours honnête.
-3. Après le choix : proposition de réorganisation (le repas prévu ce soir est décalé au lendemain).
+3. Après le choix : le plat rapide est servi ce soir et **chaque dîner suivant glisse d'un jour** (le repas prévu ce soir passe au lendemain). Le dernier dîner de la semaine sort du menu (ses ingrédients restent en stock), sauf si l'avant-dernier soir était cuisiné en double : son plat est alors mangé au dernier midi, à la place de son reste, et le dernier dîner est gardé. Les restes suivent leur dîner.
+4. La semaine décalée est revérifiée (allergies, 60 min maximum un soir de semaine, restes, budget). Si elle ne passe pas, seul le dîner de ce soir est remplacé, avec un message qui le dit.
+
+### Réorganisation du menu par la famille (EF-07)
+
+- **Une seule sorte de changement par demande** : la recette, ou la date et le créneau, ou les portions.
+- **Déplacer** : si le créneau visé est pris, les deux repas échangent leur place ; un dîner cuisiné en double emmène son reste au lendemain midi. Un reste ne se déplace pas seul. Pas de petit-déjeuner au menu.
+- **Portions** (invités) : un dîner cuisiné en double garde son reste et couvre ses portions et celles du lendemain midi (6 ce soir + 4 demain midi = 10 portions cuisinées).
+- Toute modification revérifie la semaine entière avant d'être enregistrée ; un repas déjà cuisiné ne bouge plus.
 
 ### Apprentissage
 

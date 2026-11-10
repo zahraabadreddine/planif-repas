@@ -11,7 +11,7 @@ import type { AgentProposal, ChatMessage } from "@/lib/types";
 
 const SUGGESTIONS = ["Vider le frigo", "Moins cher", "Une idée pour dimanche"];
 
-const SUGGESTION_STYLE = [
+const SUGGESTIONSTYLE = [
   "bg-rose text-puce -rotate-2 rounded-[12px_16px_14px_10px]",
   "bg-lagon rotate-[1.5deg] rounded-[16px_12px_10px_14px]",
   "bg-or -rotate-1 rounded-[14px_10px_16px_12px]",
@@ -112,6 +112,7 @@ export default function AssistantPage() {
               title: string;
               label: string;
               summary: string;
+              options?: { recetteId: string; titre: string }[];
             }>;
             if (propositions?.length > 0) {
               for (const p of propositions) {
@@ -127,6 +128,7 @@ export default function AssistantPage() {
                       title: p.title,
                       label: p.label,
                       summary: p.summary,
+                      options: p.options,
                       status: "pending",
                     },
                   },
@@ -169,7 +171,11 @@ export default function AssistantPage() {
     }
   }
 
-  async function answerProposal(proposalId: string, status: "accepted" | "rejected") {
+  async function answerProposal(
+    proposalId: string,
+    status: "accepted" | "rejected",
+    recetteId?: string,
+  ) {
     setMessages((prev) =>
       prev.map((m) =>
         m.kind === "proposal" && m.proposal.id === proposalId
@@ -184,11 +190,17 @@ export default function AssistantPage() {
     try {
       const res = await fetch(`/api/chat/proposals/${proposalId}/${action}`, {
         method: "POST",
+        // En mode urgence, le plat choisi parmi les options
+        ...(recetteId
+          ? { headers: { "Content-Type": "application/json" }, body: JSON.stringify({ recetteId }) }
+          : {}),
       });
 
       if (!res.ok) {
         const body = await res.json().catch(() => null);
-        throw new Error(body?.message ?? `Erreur ${res.status}`);
+        throw new Error(
+          body?.error?.message ?? "Un problème est survenu. Réessaie dans un instant.",
+        );
       }
 
       const data = await res.json();
@@ -297,7 +309,7 @@ export default function AssistantPage() {
               disabled={typing}
               className={cx(
                 "press h-[38px] px-3 text-[13px] font-extrabold",
-                SUGGESTION_STYLE[i % SUGGESTION_STYLE.length],
+                SUGGESTIONSTYLE[i % SUGGESTIONSTYLE.length],
                 typing && "opacity-50",
               )}
             >
@@ -343,8 +355,9 @@ function ProposalCard({
   onAnswer,
 }: {
   proposal: AgentProposal;
-  onAnswer: (id: string, status: "accepted" | "rejected") => void;
+  onAnswer: (id: string, status: "accepted" | "rejected", recetteId?: string) => void;
 }) {
+  const options = proposal.options ?? [];
   return (
     <div className="paper-shadow relative mt-2 w-[296px] max-w-full -rotate-1 animate-slide-up self-start rounded-md bg-white px-3.5 pb-3 pt-3.5">
       <Tape color="bg-lagon" className="-top-3 left-[110px] rotate-3" />
@@ -353,7 +366,27 @@ function ProposalCard({
         <p className="mt-0.5 font-display text-lg font-semibold leading-tight">{proposal.title}</p>
         <p className="mt-0.5 text-[13px] font-bold text-cacao">{proposal.summary}</p>
       </div>
-      {proposal.status === "pending" ? (
+      {proposal.status === "pending" && options.length > 1 ? (
+        <div className="mt-3 flex flex-col gap-2 border-t-2 border-dashed border-sable pt-2.5">
+          {options.map((option) => (
+            <button
+              key={option.recetteId}
+              type="button"
+              onClick={() => onAnswer(proposal.id, "accepted", option.recetteId)}
+              className="press min-h-11 rounded-[12px_16px_14px_12px] bg-foret px-3 text-left text-[15px] font-extrabold text-or"
+            >
+              Ce soir : {option.titre}
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => onAnswer(proposal.id, "rejected")}
+            className="h-11 text-sm font-extrabold text-carmin underline decoration-wavy underline-offset-4"
+          >
+            Modifier
+          </button>
+        </div>
+      ) : proposal.status === "pending" ? (
         <div className="mt-3 flex gap-2 border-t-2 border-dashed border-sable pt-2.5">
           <button
             type="button"

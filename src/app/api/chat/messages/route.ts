@@ -99,13 +99,17 @@ function formaterProposition(p: { id: string; type: string; payload: unknown; st
       };
 
     case "emergency": {
-      const options = (data.options ?? []) as Array<{ titre?: string }>;
+      const options = (data.options ?? []) as Array<{ recetteId?: string; titre?: string }>;
       return {
         id: p.id,
         type: p.type,
         status: p.status,
         title: options[0]?.titre ?? "Mode urgence",
         label: "Urgence",
+        // La famille choisit son plat parmi ces options au moment de confirmer
+        options: options
+          .filter((o) => o.recetteId && o.titre)
+          .map((o) => ({ recetteId: String(o.recetteId), titre: String(o.titre) })),
         summary: `${options.length} option${options.length > 1 ? "s" : ""} rapide${options.length > 1 ? "s" : ""}`,
       };
     }

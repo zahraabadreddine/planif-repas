@@ -30,8 +30,8 @@ type JourDuMenu = {
 type SlotUI = MealSlot;
 type RepasCible = { mealId: string; slot: SlotUI; currentId: string };
 
-const JOURS_COURTS = ["LUN", "MAR", "MER", "JEU", "VEN", "SAM", "DIM"];
-const JOURS_LONGS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
+const JOURSCOURTS = ["LUN", "MAR", "MER", "JEU", "VEN", "SAM", "DIM"];
+const JOURSLONGS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"];
 const MOIS = [
   "janv.",
   "févr.",
@@ -63,8 +63,8 @@ function jourDuMenu(date: string): { short: string; label: string } {
   const d = new Date(date + "T00:00:00Z");
   const jour = (d.getUTCDay() + 6) % 7;
   return {
-    short: JOURS_COURTS[jour],
-    label: `${JOURS_LONGS[jour]} ${d.getUTCDate()} ${MOIS[d.getUTCMonth()]}`,
+    short: JOURSCOURTS[jour],
+    label: `${JOURSLONGS[jour]} ${d.getUTCDate()} ${MOIS[d.getUTCMonth()]}`,
   };
 }
 

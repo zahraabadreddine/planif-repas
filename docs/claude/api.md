@@ -26,19 +26,19 @@ Routes Next.js sous `src/app/api/`. Toutes exigent une session sauf `register` e
 | PATCH | `/api/household/learned/:id` | Corriger ou désactiver une préférence | EF-19 |
 | POST | `/api/chat/messages` | Message à l'agent (identifiant de conversation facultatif) ; réponse en flux | EF-05 |
 | GET | `/api/chat/conversations/:id` | Historique | EF-05 |
-| POST | `/api/chat/proposals/:id/accept` | Appliquer une proposition après revérification | EF-08 |
+| POST | `/api/chat/proposals/:id/accept` | Appliquer une proposition après revérification ; corps facultatif `{ recetteId }` : le plat d’urgence choisi parmi les options | EF-08 |
 | POST | `/api/chat/proposals/:id/reject` | Refuser une proposition | EF-08 |
-| POST | `/api/emergency` | Mode urgence ; réponse en flux | EF-17 |
+| POST | `/api/emergency` | Mode urgence : plat rapide ce soir, les dîners suivants glissent d'un jour (`decale`, `message`) | EF-17 |
 | POST | `/api/meal-plans/generate` | Générer un menu brouillon (date de début de semaine) | EF-06 |
 | GET | `/api/meal-plans/current` | Menu de la semaine en cours | EF-06 |
 | POST | `/api/meal-plans/:id/activate` | Valider le menu et générer la liste | EF-06 |
-| PATCH | `/api/planned-meals/:id` | Déplacer, remplacer, changer les portions | EF-07 |
+| PATCH | `/api/planned-meals/:id` | Déplacer (ou échanger), remplacer, changer les portions : une seule sorte de changement par requête | EF-07 |
 | POST | `/api/planned-meals/:id/cooked` | Marquer cuisiné (déduit le stock) | EF-14 |
 | POST | `/api/planned-meals/:id/feedback` | Retour après repas | EF-18 |
 | POST | `/api/meal-plans/:id/shopping-list` | (Re)générer la liste | EF-09 |
 | GET | `/api/shopping-lists/:id` | Liste avec coûts | EF-10 |
 | PATCH | `/api/shopping-lists/:id/items/:itemId` | Cocher un article | EF-10 |
-| GET | `/api/shopping-lists/:id/share` | Texte et lien WhatsApp | EF-11 |
+| GET, POST | `/api/shopping-lists/:id/share` | Texte et lien WhatsApp ; POST note en plus la date du partage (droit de modifier) | EF-11 |
 | GET | `/api/shopping-lists/:id/where-to-buy` | Découpage par lieu et magasins conseillés | EF-12 |
 | GET | `/api/stores` | Magasins triés par distance (latitude et longitude, ou quartier ; type) | EF-12 |
 | GET | `/api/stock` | Stock, produits à consommer vite en premier | EF-15 |
@@ -47,7 +47,7 @@ Routes Next.js sous `src/app/api/`. Toutes exigent une session sauf `register` e
 | POST | `/api/stock/:id/thrown` | Déclarer un produit jeté | EF-14 |
 | GET | `/api/recipes` | Catalogue filtré (texte, durée maximale, cuisine, sans cuisson, faisable avec le stock) | EF-20 |
 | GET | `/api/recipes/:id` | Détail et étapes | EF-20 |
-| POST | `/api/prices/report` | Déclarer un prix observé | EF-21 |
+| POST | `/api/prices/report` | Déclarer un prix observé (pas de date future ; un relevé par personne, article, lieu et jour) | EF-21 |
 | CRUD | `/api/admin/recipes` | Gérer et valider les recettes | EF-21 |
 | CRUD | `/api/admin/ingredients` | Ingrédients et unités | EF-21 |
 | CRUD | `/api/admin/prices` | Relevés de prix | EF-21 |

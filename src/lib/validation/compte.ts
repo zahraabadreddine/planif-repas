@@ -13,7 +13,8 @@ const email = z
   .toLowerCase()
   .pipe(z.email({ error: "Cet email n'est pas valide." }).max(254, { error: "Email trop long." }));
 
-const nouveauMotDePasse = z
+/** Règle d'un nouveau mot de passe, partagée par l'inscription, le changement et la réinitialisation admin. */
+export const nouveauMotDePasse = z
   .string({ error: "Le mot de passe est obligatoire." })
   .min(MOTDEPASSEMIN, { error: `Au moins ${MOTDEPASSEMIN} caractères.` })
   .refine((valeur) => new TextEncoder().encode(valeur).length <= MOTDEPASSEMAX, {

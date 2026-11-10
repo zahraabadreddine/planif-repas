@@ -1,3 +1,4 @@
+import type { MealSlot } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import type { SessionVerifiee } from "@/lib/auth/garde";
 import { ErreurApi } from "@/lib/erreurs";
@@ -21,6 +22,8 @@ export type SuggestionRecette = {
   servings: number;
   difficulty: number;
   tags: string[];
+  // Repas où la recette se mange (déjeuner, dîner…)
+  mealTypes: MealSlot[];
   utiliseUseSoon: boolean;
 };
 
@@ -124,6 +127,7 @@ export async function suggererRecettes(session: SessionVerifiee): Promise<Sugges
       id: recette.id,
       title: recette.title,
       cuisine: recette.cuisine,
+      mealTypes: recette.mealTypes,
       prepMinutes: recette.prepMinutes,
       cookMinutes: recette.cookMinutes,
       servings: recette.servings,

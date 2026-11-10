@@ -23,7 +23,7 @@ type Props = {
 };
 
 const TIMES = [10, 15, 20, 30];
-const CHIP_RADII = [
+const CHIPRADII = [
   "14px 18px 16px 12px",
   "18px 12px 14px 16px",
   "12px 16px 18px 14px",
@@ -68,7 +68,8 @@ export default function UrgenceInteractif({
   const [people, setPeople] = useState(membres);
   const [picked, setPicked] = useState(0);
   const [enCours, setEnCours] = useState(false);
-  const [resultat, setResultat] = useState<{ ancienneRecette: string; nom: string } | null>(null);
+  const [resultat, setResultat] = useState<{ message: string; nom: string } | null>(null);
+  const [erreur, setErreur] = useState<string | null>(null);
 
   const options = toutesOptions
     .filter((o) => o.minutes <= minutes)
@@ -78,16 +79,21 @@ export default function UrgenceInteractif({
   async function confirmerChoix() {
     if (!choice || enCours) return;
     setEnCours(true);
+    setErreur(null);
     try {
       const res = await fetch("/api/emergency", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ recipeId: choice.recipeId }),
       });
+      const data = await res.json().catch(() => null);
       if (res.ok) {
-        const data = await res.json();
-        setResultat({ ancienneRecette: data.ancienneRecette, nom: choice.name });
+        setResultat({ message: data.message, nom: choice.name });
+      } else {
+        setErreur(data?.error?.message ?? "Un problème est survenu. Réessaie dans un instant.");
       }
+    } catch {
+      setErreur("Pas de connexion internet. Réessaie dans un instant.");
     } finally {
       setEnCours(false);
     }
@@ -141,7 +147,7 @@ export default function UrgenceInteractif({
                     "press flex h-[50px] w-[52px] flex-col items-center justify-center font-display leading-none transition-colors",
                     active ? "-rotate-[4deg] bg-foret text-or" : "bg-creme",
                   )}
-                  style={{ borderRadius: CHIP_RADII[i] }}
+                  style={{ borderRadius: CHIPRADII[i] }}
                 >
                   <span className="text-[19px] font-semibold">{t}</span>
                   <span className="text-[11px] font-medium">min</span>
@@ -240,10 +246,17 @@ export default function UrgenceInteractif({
             <p className="font-display text-[17px] font-semibold text-palme">
               C&apos;est parti pour {resultat.nom.toLowerCase()}&nbsp;!
             </p>
-            <p className="mt-1 text-sm font-bold text-cacao">
-              « {resultat.ancienneRecette} » peut être décalé à demain.
-            </p>
+            <p className="mt-1 text-sm font-bold text-cacao">{resultat.message}</p>
           </div>
+        )}
+
+        {erreur && (
+          <p
+            role="alert"
+            className="mt-4 rounded-[18px] bg-rose/40 p-4 text-sm font-bold text-carmin"
+          >
+            {erreur}
+          </p>
         )}
 
         {choice && (

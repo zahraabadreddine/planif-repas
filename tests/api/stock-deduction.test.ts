@@ -1,20 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ErreurApi } from "@/lib/erreurs";
 
-const MEAL_ID = "11111111-1111-1111-1111-111111111111";
-const STOCK_ID = "33333333-3333-3333-3333-333333333333";
-const STOCK_ID_2 = "33333333-3333-3333-3333-444444444444";
-const INGREDIENT_ID = "44444444-4444-4444-4444-444444444444";
-const HOUSEHOLD_ID = "66666666-6666-6666-6666-666666666666";
-const OTHER_HOUSEHOLD = "77777777-7777-7777-7777-777777777777";
+const MEALID = "11111111-1111-1111-1111-111111111111";
+const STOCKID = "33333333-3333-3333-3333-333333333333";
+const STOCKID2 = "33333333-3333-3333-3333-444444444444";
+const INGREDIENTID = "44444444-4444-4444-4444-444444444444";
+const HOUSEHOLDID = "66666666-6666-6666-6666-666666666666";
+const OTHERHOUSEHOLD = "77777777-7777-7777-7777-777777777777";
 
-const {
-  plannedMeal,
-  stockItem,
-  stockMovement,
-  $transaction,
-  exigerSession,
-} = vi.hoisted(() => ({
+const { plannedMeal, stockItem, stockMovement, $transaction, exigerSession } = vi.hoisted(() => ({
   plannedMeal: { findUnique: vi.fn(), update: vi.fn(), updateMany: vi.fn() },
   stockItem: { findUnique: vi.fn(), findMany: vi.fn(), update: vi.fn() },
   stockMovement: { create: vi.fn() },
@@ -42,7 +36,7 @@ import { POST as jetRoute } from "@/app/api/stock/[id]/thrown/route";
 const session = {
   userId: "user-1",
   role: "parent" as const,
-  householdId: HOUSEHOLD_ID,
+  householdId: HOUSEHOLDID,
   acces: { canWrite: true } as never,
 };
 
@@ -85,16 +79,16 @@ beforeEach(() => {
 
 describe("POST /api/planned-meals/:id/cooked", () => {
   const repasComplet = {
-    id: MEAL_ID,
+    id: MEALID,
     servings: 4,
     status: "planned",
-    mealPlan: { householdId: HOUSEHOLD_ID },
+    mealPlan: { householdId: HOUSEHOLDID },
     recipe: {
       title: "Sauce aubergine",
       servings: 4,
       ingredients: [
         {
-          ingredientId: INGREDIENT_ID,
+          ingredientId: INGREDIENTID,
           quantity: 2,
           optional: false,
           ingredient: { name: "Aubergine" },
@@ -107,13 +101,10 @@ describe("POST /api/planned-meals/:id/cooked", () => {
   it("déduit le stock et marque le repas cuisiné", async () => {
     plannedMeal.findUnique.mockResolvedValue(repasComplet);
     stockItem.findMany.mockResolvedValue([
-      { id: STOCK_ID, quantity: 5, status: "ok", unit: { gramsEquivalent: 300 } },
+      { id: STOCKID, quantity: 5, status: "ok", unit: { gramsEquivalent: 300 } },
     ]);
 
-    const reponse = await cuisineRoute(
-      new Request("http://localhost"),
-      paramsAvec(MEAL_ID),
-    );
+    const reponse = await cuisineRoute(new Request("http://localhost"), paramsAvec(MEALID));
     const corps = await reponse.json();
 
     expect(reponse.status).toBe(200);
@@ -126,7 +117,7 @@ describe("POST /api/planned-meals/:id/cooked", () => {
     });
     expect($transaction).toHaveBeenCalledTimes(1);
     expect(plannedMeal.updateMany).toHaveBeenCalledWith({
-      where: { id: MEAL_ID, status: { not: "cooked" } },
+      where: { id: MEALID, status: { not: "cooked" } },
       data: { status: "cooked" },
     });
   });
@@ -134,13 +125,10 @@ describe("POST /api/planned-meals/:id/cooked", () => {
   it("ne passe jamais sous zéro si stock insuffisant", async () => {
     plannedMeal.findUnique.mockResolvedValue(repasComplet);
     stockItem.findMany.mockResolvedValue([
-      { id: STOCK_ID, quantity: 1, status: "ok", unit: { gramsEquivalent: 300 } },
+      { id: STOCKID, quantity: 1, status: "ok", unit: { gramsEquivalent: 300 } },
     ]);
 
-    const reponse = await cuisineRoute(
-      new Request("http://localhost"),
-      paramsAvec(MEAL_ID),
-    );
+    const reponse = await cuisineRoute(new Request("http://localhost"), paramsAvec(MEALID));
     const corps = await reponse.json();
 
     expect(reponse.status).toBe(200);
@@ -150,14 +138,11 @@ describe("POST /api/planned-meals/:id/cooked", () => {
   it("combine plusieurs articles du même ingrédient (FEFO)", async () => {
     plannedMeal.findUnique.mockResolvedValue(repasComplet);
     stockItem.findMany.mockResolvedValue([
-      { id: STOCK_ID, quantity: 1, status: "useSoon", unit: { gramsEquivalent: 300 } },
-      { id: STOCK_ID_2, quantity: 3, status: "ok", unit: { gramsEquivalent: 300 } },
+      { id: STOCKID, quantity: 1, status: "useSoon", unit: { gramsEquivalent: 300 } },
+      { id: STOCKID2, quantity: 3, status: "ok", unit: { gramsEquivalent: 300 } },
     ]);
 
-    const reponse = await cuisineRoute(
-      new Request("http://localhost"),
-      paramsAvec(MEAL_ID),
-    );
+    const reponse = await cuisineRoute(new Request("http://localhost"), paramsAvec(MEALID));
     const corps = await reponse.json();
 
     expect(corps.deductions[0].quantity).toBe(2);
@@ -172,7 +157,7 @@ describe("POST /api/planned-meals/:id/cooked", () => {
         servings: 4,
         ingredients: [
           {
-            ingredientId: INGREDIENT_ID,
+            ingredientId: INGREDIENTID,
             quantity: 500,
             optional: false,
             ingredient: { name: "Riz" },
@@ -182,13 +167,10 @@ describe("POST /api/planned-meals/:id/cooked", () => {
       },
     });
     stockItem.findMany.mockResolvedValue([
-      { id: STOCK_ID, quantity: 2, status: "ok", unit: { gramsEquivalent: 400 } },
+      { id: STOCKID, quantity: 2, status: "ok", unit: { gramsEquivalent: 400 } },
     ]);
 
-    const reponse = await cuisineRoute(
-      new Request("http://localhost"),
-      paramsAvec(MEAL_ID),
-    );
+    const reponse = await cuisineRoute(new Request("http://localhost"), paramsAvec(MEALID));
     const corps = await reponse.json();
 
     expect(reponse.status).toBe(200);
@@ -210,13 +192,10 @@ describe("POST /api/planned-meals/:id/cooked", () => {
     };
     plannedMeal.findUnique.mockResolvedValue(repas6portions);
     stockItem.findMany.mockResolvedValue([
-      { id: STOCK_ID, quantity: 10, status: "ok", unit: { gramsEquivalent: 300 } },
+      { id: STOCKID, quantity: 10, status: "ok", unit: { gramsEquivalent: 300 } },
     ]);
 
-    const reponse = await cuisineRoute(
-      new Request("http://localhost"),
-      paramsAvec(MEAL_ID),
-    );
+    const reponse = await cuisineRoute(new Request("http://localhost"), paramsAvec(MEALID));
     const corps = await reponse.json();
 
     expect(corps.deductions[0].quantity).toBe(3);
@@ -225,34 +204,25 @@ describe("POST /api/planned-meals/:id/cooked", () => {
   it("401 sans session", async () => {
     exigerSession.mockRejectedValue(new ErreurApi("NONCONNECTE"));
 
-    const reponse = await cuisineRoute(
-      new Request("http://localhost"),
-      paramsAvec(MEAL_ID),
-    );
+    const reponse = await cuisineRoute(new Request("http://localhost"), paramsAvec(MEALID));
     expect(reponse.status).toBe(401);
   });
 
   it("404 si repas introuvable", async () => {
     plannedMeal.findUnique.mockResolvedValue(null);
 
-    const reponse = await cuisineRoute(
-      new Request("http://localhost"),
-      paramsAvec(MEAL_ID),
-    );
+    const reponse = await cuisineRoute(new Request("http://localhost"), paramsAvec(MEALID));
     expect(reponse.status).toBe(404);
   });
 
-  it("403 si le repas n'appartient pas au foyer", async () => {
+  it("404 si le repas n'appartient pas au foyer : on ne révèle pas qu'il existe", async () => {
     plannedMeal.findUnique.mockResolvedValue({
       ...repasComplet,
-      mealPlan: { householdId: OTHER_HOUSEHOLD },
+      mealPlan: { householdId: OTHERHOUSEHOLD },
     });
 
-    const reponse = await cuisineRoute(
-      new Request("http://localhost"),
-      paramsAvec(MEAL_ID),
-    );
-    expect(reponse.status).toBe(403);
+    const reponse = await cuisineRoute(new Request("http://localhost"), paramsAvec(MEALID));
+    expect(reponse.status).toBe(404);
   });
 
   it("400 si repas déjà cuisiné", async () => {
@@ -262,10 +232,7 @@ describe("POST /api/planned-meals/:id/cooked", () => {
     });
     plannedMeal.updateMany.mockResolvedValue({ count: 0 });
 
-    const reponse = await cuisineRoute(
-      new Request("http://localhost"),
-      paramsAvec(MEAL_ID),
-    );
+    const reponse = await cuisineRoute(new Request("http://localhost"), paramsAvec(MEALID));
     expect(reponse.status).toBe(400);
   });
 });
@@ -274,8 +241,8 @@ describe("POST /api/planned-meals/:id/cooked", () => {
 
 describe("PATCH /api/stock/:id", () => {
   const articleStock = {
-    id: STOCK_ID,
-    householdId: HOUSEHOLD_ID,
+    id: STOCKID,
+    householdId: HOUSEHOLDID,
     quantity: 3,
     status: "ok",
     ingredient: { name: "Riz" },
@@ -285,10 +252,7 @@ describe("PATCH /api/stock/:id", () => {
   it("corrige la quantité et crée un mouvement correction", async () => {
     stockItem.findUnique.mockResolvedValue(articleStock);
 
-    const reponse = await correctionRoute(
-      requeteJson({ quantity: 5 }),
-      paramsAvec(STOCK_ID),
-    );
+    const reponse = await correctionRoute(requeteJson({ quantity: 5 }), paramsAvec(STOCKID));
     const corps = await reponse.json();
 
     expect(reponse.status).toBe(200);
@@ -300,10 +264,7 @@ describe("PATCH /api/stock/:id", () => {
   it("ne crée pas de mouvement si la quantité ne change pas", async () => {
     stockItem.findUnique.mockResolvedValue(articleStock);
 
-    const reponse = await correctionRoute(
-      requeteJson({ quantity: 3 }),
-      paramsAvec(STOCK_ID),
-    );
+    const reponse = await correctionRoute(requeteJson({ quantity: 3 }), paramsAvec(STOCKID));
     const corps = await reponse.json();
 
     expect(reponse.status).toBe(200);
@@ -314,10 +275,7 @@ describe("PATCH /api/stock/:id", () => {
   it("met le statut used si la quantité tombe à 0", async () => {
     stockItem.findUnique.mockResolvedValue(articleStock);
 
-    const reponse = await correctionRoute(
-      requeteJson({ quantity: 0 }),
-      paramsAvec(STOCK_ID),
-    );
+    const reponse = await correctionRoute(requeteJson({ quantity: 0 }), paramsAvec(STOCKID));
     const corps = await reponse.json();
 
     expect(reponse.status).toBe(200);
@@ -326,34 +284,25 @@ describe("PATCH /api/stock/:id", () => {
   });
 
   it("400 si quantité négative", async () => {
-    const reponse = await correctionRoute(
-      requeteJson({ quantity: -1 }),
-      paramsAvec(STOCK_ID),
-    );
+    const reponse = await correctionRoute(requeteJson({ quantity: -1 }), paramsAvec(STOCKID));
     expect(reponse.status).toBe(400);
   });
 
   it("404 si article introuvable", async () => {
     stockItem.findUnique.mockResolvedValue(null);
 
-    const reponse = await correctionRoute(
-      requeteJson({ quantity: 5 }),
-      paramsAvec(STOCK_ID),
-    );
+    const reponse = await correctionRoute(requeteJson({ quantity: 5 }), paramsAvec(STOCKID));
     expect(reponse.status).toBe(404);
   });
 
-  it("403 si article d'un autre foyer", async () => {
+  it("404 si article d'un autre foyer : on ne révèle pas qu'il existe", async () => {
     stockItem.findUnique.mockResolvedValue({
       ...articleStock,
-      householdId: OTHER_HOUSEHOLD,
+      householdId: OTHERHOUSEHOLD,
     });
 
-    const reponse = await correctionRoute(
-      requeteJson({ quantity: 5 }),
-      paramsAvec(STOCK_ID),
-    );
-    expect(reponse.status).toBe(403);
+    const reponse = await correctionRoute(requeteJson({ quantity: 5 }), paramsAvec(STOCKID));
+    expect(reponse.status).toBe(404);
   });
 });
 
@@ -361,8 +310,8 @@ describe("PATCH /api/stock/:id", () => {
 
 describe("POST /api/stock/:id/thrown", () => {
   const articleStock = {
-    id: STOCK_ID,
-    householdId: HOUSEHOLD_ID,
+    id: STOCKID,
+    householdId: HOUSEHOLDID,
     quantity: 3,
     status: "ok",
     ingredient: { name: "Tomate" },
@@ -372,10 +321,7 @@ describe("POST /api/stock/:id/thrown", () => {
   it("déclare un produit jeté et crée un mouvement thrown", async () => {
     stockItem.findUnique.mockResolvedValue(articleStock);
 
-    const reponse = await jetRoute(
-      requeteJson({ quantity: 2 }),
-      paramsAvec(STOCK_ID),
-    );
+    const reponse = await jetRoute(requeteJson({ quantity: 2 }), paramsAvec(STOCKID));
     const corps = await reponse.json();
 
     expect(reponse.status).toBe(200);
@@ -387,10 +333,7 @@ describe("POST /api/stock/:id/thrown", () => {
   it("ne dépasse jamais le stock disponible", async () => {
     stockItem.findUnique.mockResolvedValue(articleStock);
 
-    const reponse = await jetRoute(
-      requeteJson({ quantity: 10 }),
-      paramsAvec(STOCK_ID),
-    );
+    const reponse = await jetRoute(requeteJson({ quantity: 10 }), paramsAvec(STOCKID));
     const corps = await reponse.json();
 
     expect(corps.quantiteJetee).toBe(3);
@@ -400,10 +343,7 @@ describe("POST /api/stock/:id/thrown", () => {
   it("met le statut thrown si tout est jeté", async () => {
     stockItem.findUnique.mockResolvedValue(articleStock);
 
-    const reponse = await jetRoute(
-      requeteJson({ quantity: 3 }),
-      paramsAvec(STOCK_ID),
-    );
+    const reponse = await jetRoute(requeteJson({ quantity: 3 }), paramsAvec(STOCKID));
     const corps = await reponse.json();
 
     expect(corps.quantiteRestante).toBe(0);
@@ -411,33 +351,24 @@ describe("POST /api/stock/:id/thrown", () => {
   });
 
   it("400 si quantité non positive", async () => {
-    const reponse = await jetRoute(
-      requeteJson({ quantity: 0 }),
-      paramsAvec(STOCK_ID),
-    );
+    const reponse = await jetRoute(requeteJson({ quantity: 0 }), paramsAvec(STOCKID));
     expect(reponse.status).toBe(400);
   });
 
   it("404 si article introuvable", async () => {
     stockItem.findUnique.mockResolvedValue(null);
 
-    const reponse = await jetRoute(
-      requeteJson({ quantity: 1 }),
-      paramsAvec(STOCK_ID),
-    );
+    const reponse = await jetRoute(requeteJson({ quantity: 1 }), paramsAvec(STOCKID));
     expect(reponse.status).toBe(404);
   });
 
-  it("403 si article d'un autre foyer", async () => {
+  it("404 si article d'un autre foyer : on ne révèle pas qu'il existe", async () => {
     stockItem.findUnique.mockResolvedValue({
       ...articleStock,
-      householdId: OTHER_HOUSEHOLD,
+      householdId: OTHERHOUSEHOLD,
     });
 
-    const reponse = await jetRoute(
-      requeteJson({ quantity: 1 }),
-      paramsAvec(STOCK_ID),
-    );
-    expect(reponse.status).toBe(403);
+    const reponse = await jetRoute(requeteJson({ quantity: 1 }), paramsAvec(STOCKID));
+    expect(reponse.status).toBe(404);
   });
 });

@@ -52,9 +52,18 @@ export type ContexteAgent = {
 export type TableSurnoms = {
   versLibelle: Map<string, string>;
   versSurnom: Map<string, string>;
+  // Noms du catalogue qui contiennent un surnom (« Riz gras » pour un membre « Riz ») : jamais abîmés
+  proteges?: string[];
 };
 
-export function construireTableSurnoms(membres: MembreFoyer[]): TableSurnoms {
+/**
+ * termesCatalogue : titres de recettes et noms d'ingrédients. Ceux qui contiennent un surnom sont
+ * protégés du remplacement. Un terme identique à un surnom n'est pas protégé : la vie privée passe d'abord.
+ */
+export function construireTableSurnoms(
+  membres: MembreFoyer[],
+  termesCatalogue: string[] = [],
+): TableSurnoms {
   const versLibelle = new Map<string, string>();
   const versSurnom = new Map<string, string>();
   const comptage = new Map<string, number>();
@@ -67,7 +76,13 @@ export function construireTableSurnoms(membres: MembreFoyer[]): TableSurnoms {
     versLibelle.set(surnom, libelle);
     versSurnom.set(libelle.toLowerCase(), m.label);
   }
-  return { versLibelle, versSurnom };
+  const surnoms = [...versLibelle.keys()].filter((s) => s.length > 0);
+  const proteges = [...new Set(termesCatalogue.map((terme) => terme.trim().toLowerCase()))]
+    .filter((terme) => !versLibelle.has(terme))
+    .filter((terme) => surnoms.some((surnom) => motEntier(surnom).test(terme)))
+    // Les plus longs d'abord : « riz gras au poulet » avant « riz gras »
+    .sort((a, b) => b.length - a.length);
+  return { versLibelle, versSurnom, proteges };
 }
 
 const compteurs: Record<string, string> = {
@@ -102,13 +117,20 @@ function numerotesParTranche(membres: MembreFoyer[]): MembreAnonyme[] {
 
 export function remplacerSurnoms(texte: string, table: TableSurnoms): string {
   if (table.versLibelle.size === 0) return texte;
+  // Les noms du catalogue protégés sont mis de côté le temps du remplacement
+  const mis: string[] = [];
   let resultat = texte;
+  for (const terme of table.proteges ?? []) {
+    resultat = resultat.replace(motEntier(terme), (trouve) => {
+      mis.push(trouve);
+      return `\u0000${mis.length - 1}\u0000`;
+    });
+  }
   for (const [surnom, libelle] of table.versLibelle) {
     if (surnom.length === 0) continue;
-    const regex = new RegExp(`\\b${echapperRegex(surnom)}\\b`, "gi");
-    resultat = resultat.replace(regex, libelle);
+    resultat = resultat.replace(motEntier(surnom), libelle);
   }
-  return resultat;
+  return resultat.replace(/\u0000(\d+)\u0000/g, (motif, n: string) => mis[Number(n)]);
 }
 
 export function restaurerSurnoms(texte: string, table: TableSurnoms): string {
@@ -116,19 +138,61 @@ export function restaurerSurnoms(texte: string, table: TableSurnoms): string {
   let resultat = texte;
   for (const [libelle, surnom] of table.versSurnom) {
     if (libelle.length === 0) continue;
-    const regex = new RegExp(`\\b${echapperRegex(libelle)}\\b`, "gi");
-    resultat = resultat.replace(regex, surnom);
+    resultat = resultat.replace(motEntier(libelle), surnom);
   }
   return resultat;
+}
+
+/**
+ * Le mot entier, sans tenir compte des majuscules. `\b` ne connaît pas les lettres accentuées :
+ * « Zoé » ne serait jamais remplacé. On borne donc par « ni lettre ni chiffre », accents compris.
+ */
+function motEntier(mot: string): RegExp {
+  return new RegExp(`(?<![\\p{L}\\p{N}])${echapperRegex(mot)}(?![\\p{L}\\p{N}])`, "giu");
 }
 
 function echapperRegex(texte: string): string {
   return texte.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+/**
+ * Position jusqu'où un texte reçu en flux peut être affiché sans couper un libellé
+ * (« Enf » puis « ant 1 ») : la fin, qui peut être le début d'un libellé, est gardée de côté.
+ */
+export function pointDeCoupe(texte: string, table: TableSurnoms): number {
+  const libelles = [...table.versSurnom.keys()];
+  if (libelles.length === 0) return texte.length;
+  let coupe = Math.max(0, texte.length - Math.max(...libelles.map((l) => l.length)));
+  const minuscules = texte.toLowerCase();
+  for (const libelle of libelles) {
+    for (let i = minuscules.indexOf(libelle); i !== -1; i = minuscules.indexOf(libelle, i + 1)) {
+      if (i < coupe && coupe < i + libelle.length) coupe = i;
+    }
+  }
+  return coupe;
+}
+
+/** Affichage en flux : chaque morceau est envoyé avec les surnoms restaurés, sans couper de libellé. */
+export function creerFluxSurnoms(table: TableSurnoms, envoyer: (texte: string) => void) {
+  let enAttente = "";
+  return {
+    ajouter(morceau: string) {
+      enAttente += morceau;
+      const coupe = pointDeCoupe(enAttente, table);
+      if (coupe === 0) return;
+      envoyer(restaurerSurnoms(enAttente.slice(0, coupe), table));
+      enAttente = enAttente.slice(coupe);
+    },
+    terminer() {
+      if (enAttente) envoyer(restaurerSurnoms(enAttente, table));
+      enAttente = "";
+    },
+  };
+}
+
 const listeDeTextes = z.array(z.string()).catch([]);
 
-const JOURS_SEMAINE = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
+const JOURSSEMAINE = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
 
 export async function construireContexte(session: SessionVerifiee): Promise<{
   contexte: ContexteAgent;
@@ -153,26 +217,33 @@ export async function construireContexte(session: SessionVerifiee): Promise<{
     };
   }
 
-  const [foyer, membres, stock, menu, preferences, quartier] = await Promise.all([
-    lireFoyer(session),
-    listerMembres(session),
-    lireStock(session),
-    lireMenuCourant(session),
-    prisma.learnedPreference.findMany({
-      where: { householdId, active: true },
-      select: { key: true, value: true, explanation: true },
-      orderBy: { updatedAt: "desc" },
-    }),
-    prisma.household.findUnique({
-      where: { id: householdId },
-      select: {
-        equipment: true,
-        neighborhood: { select: { commune: true } },
-      },
-    }),
-  ]);
+  const [foyer, membres, stock, menu, preferences, quartier, recettes, ingredients] =
+    await Promise.all([
+      lireFoyer(session),
+      listerMembres(session),
+      lireStock(session),
+      lireMenuCourant(session),
+      prisma.learnedPreference.findMany({
+        where: { householdId, active: true },
+        select: { key: true, value: true, explanation: true },
+        orderBy: { updatedAt: "desc" },
+      }),
+      prisma.household.findUnique({
+        where: { id: householdId },
+        select: {
+          equipment: true,
+          neighborhood: { select: { commune: true } },
+        },
+      }),
+      // Noms du catalogue : un surnom comme « Riz » n'abîme pas « Riz gras » auprès de l'IA
+      prisma.recipe.findMany({ select: { title: true } }),
+      prisma.ingredient.findMany({ select: { name: true } }),
+    ]);
 
-  const table = construireTableSurnoms(membres);
+  const table = construireTableSurnoms(membres, [
+    ...recettes.map((r) => r.title),
+    ...ingredients.map((i) => i.name),
+  ]);
   const membresAnonymes = numerotesParTranche(membres);
 
   const aujourdhui = dateDuJour();
@@ -215,7 +286,7 @@ export async function construireContexte(session: SessionVerifiee): Promise<{
 }
 
 function jourDeLaSemaine(): string {
-  return JOURS_SEMAINE[new Date().getDay()] ?? "lundi";
+  return JOURSSEMAINE[new Date().getDay()] ?? "lundi";
 }
 
 export function formaterContextePourPrompt(contexte: ContexteAgent): string {

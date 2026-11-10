@@ -13,7 +13,7 @@ type ConservationJours = {
   congelateur?: number;
 };
 
-const CLE_CONSERVATION: Record<StorageLocation, keyof ConservationJours> = {
+const CLECONSERVATION: Record<StorageLocation, keyof ConservationJours> = {
   pantry: "ambiant",
   fridge: "frigo",
   freezer: "congelateur",
@@ -24,7 +24,7 @@ function calculerExpiration(
   location: StorageLocation,
   dateAchat: Date,
 ): Date | null {
-  const cle = CLE_CONSERVATION[location];
+  const cle = CLECONSERVATION[location];
   const jours = shelfLifeDays[cle];
   if (jours === undefined || jours === null) return null;
   const expiration = new Date(dateAchat);

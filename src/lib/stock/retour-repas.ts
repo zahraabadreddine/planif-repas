@@ -33,7 +33,8 @@ export async function donnerRetour(
   });
 
   if (!repas) throw new ErreurApi("INTROUVABLE");
-  if (repas.mealPlan.householdId !== householdId) throw new ErreurApi("INTERDIT");
+  // Un repas d'un autre foyer est introuvable : on ne révèle pas qu'il existe
+  if (repas.mealPlan.householdId !== householdId) throw new ErreurApi("INTROUVABLE");
   if (repas.status !== "cooked") {
     throw new ErreurApi("DONNEESINVALIDES", "Ce repas n'a pas encore été cuisiné.");
   }

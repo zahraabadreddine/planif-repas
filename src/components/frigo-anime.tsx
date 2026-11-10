@@ -1,7 +1,7 @@
 import { Aubergine, Fish, PizzaSlice, Tomato } from "./illustrations/aliments";
 
 /** Lettres façon magnets de frigo, chacune d'une couleur */
-const MAGNET_COLORS = ["#F29CB0", "#344F30", "#F47230", "#2C4A4A", "#F9A11B", "#9F350B", "#8FC1C9"];
+const MAGNETCOLORS = ["#F29CB0", "#344F30", "#F47230", "#2C4A4A", "#F9A11B", "#9F350B", "#8FC1C9"];
 
 export function MagnetWord({
   word,
@@ -20,7 +20,7 @@ export function MagnetWord({
           aria-hidden="true"
           className="inline-block"
           style={{
-            color: MAGNET_COLORS[(i + offset) % MAGNET_COLORS.length],
+            color: MAGNETCOLORS[(i + offset) % MAGNETCOLORS.length],
             transform: `rotate(${((i * 37) % 11) - 5}deg)`,
           }}
         >
