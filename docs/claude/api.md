@@ -42,8 +42,9 @@ Routes Next.js sous `src/app/api/`. Toutes exigent une session sauf `register` e
 | GET | `/api/shopping-lists/:id/where-to-buy` | Découpage par lieu et magasins conseillés | EF-12 |
 | GET | `/api/stores` | Magasins triés par distance (latitude et longitude, ou quartier ; type) | EF-12 |
 | GET | `/api/stock` | Stock, produits à consommer vite en premier | EF-15 |
+| GET | `/api/ingredients` | Ingrédients et unités pour déclarer un achat : unités du marché + kg, avec leur équivalence (« 1 tas ≈ 250 g ») | EF-13 |
 | POST | `/api/stock/purchases` | Déclarer des achats (structurés ou phrase) | EF-13 |
-| PATCH | `/api/stock/:id` | Corriger une quantité (crée un mouvement de correction) | EF-14 |
+| PATCH | `/api/stock/:id` | Corriger une quantité, ou retirer une erreur de saisie avec 0 (crée un mouvement de correction) | EF-14 |
 | POST | `/api/stock/:id/thrown` | Déclarer un produit jeté | EF-14 |
 | GET | `/api/recipes` | Catalogue filtré (texte, durée maximale, cuisine, sans cuisson, faisable avec le stock) | EF-20 |
 | GET | `/api/recipes/:id` | Détail et étapes | EF-20 |

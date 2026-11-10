@@ -199,6 +199,36 @@ describe("POST /api/stock/purchases", () => {
     expect(r.status).toBe(404);
   });
 
+  it("refuse l'unité d'un autre ingrédient : pas de tomates « en bouteille » (400)", async () => {
+    const bouteille = "b1b2c3d4-e5f6-4a8b-9c0d-1e2f3a4b5c6d";
+    marketUnit.findMany.mockResolvedValue([
+      { id: bouteille, label: "bouteille", gramsEquivalent: 1000, ingredientId: UUID2 },
+    ]);
+    const r = await POST(
+      requete({
+        items: [{ ingredientId: UUID1, unitId: bouteille, quantity: 1, location: "pantry" }],
+      }),
+    );
+    expect(r.status).toBe(400);
+    expect(stockMovement.create).not.toHaveBeenCalled();
+  });
+
+  it("accepte le kg, unité générale proposée pour tous les ingrédients", async () => {
+    const kg = "c1b2c3d4-e5f6-4a8b-9c0d-1e2f3a4b5c6d";
+    marketUnit.findMany.mockResolvedValue([
+      { id: kg, label: "kg", gramsEquivalent: 1000, ingredientId: null },
+    ]);
+    stockItem.findFirst.mockResolvedValue(null);
+    stockItem.create.mockResolvedValue({ id: UUID1 });
+    const r = await POST(
+      requete({ items: [{ ingredientId: UUID1, unitId: kg, quantity: 0.5, location: "fridge" }] }),
+    );
+    expect(r.status).toBe(201);
+    expect(stockMovement.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ type: "purchase", quantity: 0.5, grams: 500 }),
+    });
+  });
+
   it("crée un nouveau StockItem et un mouvement purchase", async () => {
     stockItem.findFirst.mockResolvedValue(null);
     stockItem.create.mockResolvedValue({ id: UUID1 });

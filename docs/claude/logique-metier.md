@@ -40,6 +40,8 @@ Sans aucun relevé récent, on utilise l'estimation la plus récente de l'équip
 - À chaque ouverture de l'accueil : les articles à moins de 2 jours de `expiresAt` passent en `useSoon` (pas de tâche planifiée au MVP).
 - Repas marqué cuisiné : un mouvement `cooked` par ingrédient ; si le stock est insuffisant, on retire ce qui existe et on ne passe jamais sous zéro.
 - Produit jeté : mouvement `thrown` avec l'équivalent en grammes (sert à mesurer le gaspillage).
+- Déclarer un achat : les unités du marché propres à l'ingrédient, plus le kg (jamais le g ni le ml) ; une unité d'un autre ingrédient est refusée. 1000 au maximum par article.
+- Sur chaque aliment du frigo : **corriger** la quantité (mouvement `correction`, grammes du même signe que la quantité), **retirer** une erreur de saisie (correction à 0, jamais comptée comme gaspillée), **jeté** (mouvement `thrown`, compté dans le gaspillage). Rien n'est effacé ; ces actions sont cachées et refusées en lecture seule.
 
 ### Mode urgence (« pas le temps »)
 
