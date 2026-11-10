@@ -1522,7 +1522,7 @@ export const recettesDepart: RecetteDepart[] = [
     title: "Pain omelette",
     validated: true,
     cuisine: "ivoirienne",
-    mealTypes: ["breakfast"],
+    mealTypes: ["breakfast", "lunch", "dinner"],
     prepMinutes: 5,
     cookMinutes: 5,
     needsCooking: true,

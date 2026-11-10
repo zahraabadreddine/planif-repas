@@ -5,9 +5,8 @@ import { gererErreur } from "@/lib/erreurs";
 import { reorganiserUrgence } from "@/lib/planificateur/modification";
 import { lireCorps } from "@/lib/validation/requete";
 
-// strictObject : le foyer vient de la session, jamais de la requête.
 const emergencySchema = z.strictObject({
-  recipeId: z.uuid(),
+  recipeId: z.uuid({ error: "Choisis une recette." }),
 });
 
 /**
