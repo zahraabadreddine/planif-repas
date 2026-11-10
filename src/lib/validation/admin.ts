@@ -1,3 +1,4 @@
+import { nouveauMotDePasse } from "@/lib/validation/compte";
 import { z } from "zod";
 
 // Schémas de validation pour les routes d'administration (EF-21, EF-28, ENF-18).
@@ -85,6 +86,5 @@ export const magasinSchema = z.object({
 
 export type MagasinAdmin = z.infer<typeof magasinSchema>;
 
-export const resetPasswordSchema = z.object({
-  newPassword: z.string().min(8, "Le nouveau mot de passe doit faire au moins 8 caractères."),
-});
+// Même règle qu'à l'inscription : 8 caractères au moins, 72 octets au plus (limite de bcrypt)
+export const resetPasswordSchema = z.strictObject({ newPassword: nouveauMotDePasse });

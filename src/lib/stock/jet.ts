@@ -32,7 +32,8 @@ export async function declarerJet(
     });
 
     if (!article) throw new ErreurApi("INTROUVABLE");
-    if (article.householdId !== householdId) throw new ErreurApi("INTERDIT");
+    // Un article d'un autre foyer est introuvable : on ne révèle pas qu'il existe
+    if (article.householdId !== householdId) throw new ErreurApi("INTROUVABLE");
 
     const retiree = Math.min(quantiteJetee, article.quantity);
     const quantiteRestante = article.quantity - retiree;

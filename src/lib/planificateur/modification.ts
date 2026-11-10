@@ -21,7 +21,23 @@ import {
   versMenu,
   type MenuEnregistre,
 } from "./generation";
-import { verifierMenu, type CodeProbleme, type RecetteAVerifier } from "./verification";
+import {
+  NOUVEAUREPAS,
+  changerPortionsRepas,
+  decalerDiners,
+  echangerRepas,
+  versMenuVerifiable,
+  type Creneau,
+  type RepasPlace,
+} from "./reorganisation";
+import {
+  verifierMenu,
+  type CodeProbleme,
+  type Probleme,
+  type RecetteAVerifier,
+} from "./verification";
+import { dateDuJour } from "@/lib/foyer/age";
+import { dateSansHeure } from "@/lib/validation/menu";
 
 // Remplacement d'un repas du menu (EF-06). L'utilisatrice choisit, le code revérifie
 // allergies, régimes, créneau, temps et budget avant d'enregistrer (règles 1 et 2).
@@ -35,6 +51,7 @@ type RepasPlan = {
   slot: "breakfast" | "lunch" | "dinner";
   servings: number;
   leftoverFromId: string | null;
+  status?: "planned" | "cooked" | "skipped" | "replaced";
 };
 
 type Modification = {
@@ -99,6 +116,7 @@ function versMenuCompose(
   repas: RepasPlan[],
   modifications: Modification[],
   recettes: Map<string, RecetteAVerifier>,
+  weekStart: Date,
 ): MenuCompose {
   const apres = ordonner(repas).map((r) => ({
     ...r,
@@ -107,7 +125,7 @@ function versMenuCompose(
   const composes: RepasCompose[] = apres.map((r) => {
     const reste = r.leftoverFromId !== null;
     return {
-      jour: Math.round((r.date.getTime() - apres[0].date.getTime()) / MSPARJOUR),
+      jour: Math.round((r.date.getTime() - weekStart.getTime()) / MSPARJOUR),
       slot: r.slot === "lunch" ? "lunch" : "dinner",
       recetteId: r.recipeId,
       portions: r.servings,
@@ -144,6 +162,9 @@ export async function remplacerRepas(
   if (!cible) throw new ErreurApi("INTROUVABLE");
   const plan = cible.mealPlan;
   if (plan.status === "archived") throw new ErreurApi("MENUARCHIVE");
+  if (cible.status && cible.status !== "planned") {
+    throw new ErreurApi("REPASINCOMPATIBLE", "Un repas déjà cuisiné ne peut plus être remplacé.");
+  }
 
   const [catalogue, membres, contexte] = await Promise.all([
     chargerRecettes(),
@@ -174,9 +195,25 @@ export async function remplacerRepas(
     weekStart: plan.weekStart,
     budgetFcfa: contexte.budgetFcfa,
   };
-  const menu = versMenuCompose(repas, modifications, new Map(candidates.map((c) => [c.id, c])));
-  const problemes = verifierMenu(menu, candidates, restrictions, parametres);
-  if (problemes.length > 0) throw new ErreurApi(codeApi(problemes.map((p) => p.code)));
+  const menu = versMenuCompose(
+    repas,
+    modifications,
+    new Map(candidates.map((c) => [c.id, c])),
+    plan.weekStart,
+  );
+  // Des portions ont pu être changées par la famille (invités) : elles restent acceptées
+  const problemes = verifierMenu(menu, candidates, restrictions, parametres, {
+    portionsLibres: true,
+  });
+  if (problemes.length > 0) {
+    const code = codeApi(problemes.map((p) => p.code));
+    // La famille sait pourquoi : « Le dîner du jour 2 prend plus de 60 minutes. »
+    const message =
+      code === "REPASINCOMPATIBLE"
+        ? problemes.find((p) => p.code !== "BUDGETDEPASSE")?.message
+        : undefined;
+    throw new ErreurApi(code, message);
+  }
 
   await prisma.$transaction([
     ...modifications.map((m) =>
@@ -201,47 +238,131 @@ export async function remplacerRepas(
 }
 
 // ---------------------------------------------------------------------------
-// Déplacement d'un repas (EF-07) : changer la date et/ou le créneau.
+// Réorganisation demandée par la famille (EF-07, mode urgence) : déplacer ou échanger un repas,
+// changer les portions, décaler les dîners. Le code calcule la nouvelle semaine puis la revérifie
+// entièrement (allergies, temps du soir, créneaux, restes, budget) avant d'enregistrer (règle 1).
 // ---------------------------------------------------------------------------
 
-type Creneau = "breakfast" | "lunch" | "dinner";
+type PlanAModifier = {
+  id: string;
+  weekStart: Date;
+  status: "draft" | "active" | "archived";
+  meals: RepasPlan[];
+};
 
-export async function deplacerRepas(
-  session: SessionVerifiee,
-  repasId: string,
-  nouvelleDate?: string,
-  nouveauSlot?: Creneau,
-): Promise<RepasRemplace> {
+const jourDuMenu = (plan: PlanAModifier, date: Date) =>
+  Math.round((date.getTime() - plan.weekStart.getTime()) / MSPARJOUR);
+
+const dateDuMenu = (plan: PlanAModifier, jour: number) =>
+  new Date(plan.weekStart.getTime() + jour * MSPARJOUR);
+
+function versPlaces(plan: PlanAModifier): RepasPlace[] {
+  return plan.meals.map((r) => ({
+    id: r.id,
+    recipeId: r.recipeId,
+    jour: jourDuMenu(plan, r.date),
+    slot: r.slot,
+    servings: r.servings,
+    leftoverFromId: r.leftoverFromId,
+  }));
+}
+
+/** Ce qu'il faut pour revérifier une semaine modifiée : catalogue, restrictions, budget. */
+async function chargerPourModifier(session: SessionVerifiee, plan: PlanAModifier) {
   const householdId = exigerFoyer(session);
-  const cible = await prisma.plannedMeal.findFirst({
-    where: { id: repasId, mealPlan: { householdId } },
-    include: { mealPlan: { include: { meals: true } } },
-  });
-  if (!cible) throw new ErreurApi("INTROUVABLE");
-  const plan = cible.mealPlan;
   if (plan.status === "archived") throw new ErreurApi("MENUARCHIVE");
+  const [catalogue, membres, contexte] = await Promise.all([
+    chargerRecettes(),
+    listerMembres(session),
+    chargerContexte(householdId, plan.weekStart),
+  ]);
+  const maintenant = new Date();
+  const parametres: ParametresComposition = {
+    personnes: Math.max(1, membres.length),
+    weekStart: plan.weekStart,
+    budgetFcfa: contexte.budgetFcfa,
+  };
+  return {
+    catalogue,
+    candidates: catalogue.map((r) => versCandidate(r, maintenant)),
+    restrictions: restrictionsDuFoyer(membres),
+    equipement: contexte.equipement,
+    parametres,
+  };
+}
 
-  const dateFinale = nouvelleDate ? new Date(nouvelleDate + "T00:00:00Z") : cible.date;
-  const slotFinal = nouveauSlot ?? cible.slot;
+type Verification = Awaited<ReturnType<typeof chargerPourModifier>>;
 
-  const debut = plan.weekStart.getTime();
-  const fin = debut + 7 * MSPARJOUR;
-  if (dateFinale.getTime() < debut || dateFinale.getTime() >= fin) {
-    throw new ErreurApi("DONNEESINVALIDES", "La date doit rester dans la semaine du menu.");
-  }
+/** Erreur lisible pour la famille : le premier problème trouvé par la vérification. */
+function erreurDeVerification(problemes: Probleme[]): ErreurApi {
+  if (problemes.every((p) => p.code === "BUDGETDEPASSE")) return new ErreurApi("BUDGETDEPASSE");
+  const probleme = problemes.find((p) => p.code !== "BUDGETDEPASSE") ?? problemes[0];
+  return new ErreurApi("REPASINCOMPATIBLE", probleme.message);
+}
 
-  const conflit = plan.meals.find(
-    (r) => r.id !== repasId && r.date.getTime() === dateFinale.getTime() && r.slot === slotFinal,
-  );
-  if (conflit) {
-    throw new ErreurApi("DONNEESINVALIDES", "Un repas occupe déjà ce créneau.");
-  }
-
-  await prisma.plannedMeal.update({
-    where: { id: repasId },
-    data: { date: dateFinale, slot: slotFinal },
+/** Revérifie toute la semaine ; renvoie le menu vérifié ou lève une erreur claire. */
+function verifierSemaine(places: RepasPlace[], verif: Verification): MenuCompose {
+  const couts = new Map(verif.candidates.map((c) => [c.id, c.coutParPortionFcfa]));
+  const menu = versMenuVerifiable(places, (id) => couts.get(id) ?? 0);
+  const problemes = verifierMenu(menu, verif.candidates, verif.restrictions, verif.parametres, {
+    portionsLibres: true,
   });
+  if (problemes.length > 0) throw erreurDeVerification(problemes);
+  return menu;
+}
 
+/** Enregistre la nouvelle semaine en une transaction : seuls les repas changés sont écrits. */
+async function enregistrerSemaine(
+  plan: PlanAModifier,
+  avant: RepasPlace[],
+  apres: RepasPlace[],
+  retires: string[],
+  totalFcfa: number,
+) {
+  const avantParId = new Map(avant.map((r) => [r.id, r]));
+  // Un repas déjà cuisiné (ou passé) appartient à l'historique : il ne bouge plus
+  const statuts = new Map(plan.meals.map((r) => [r.id, r.status ?? "planned"]));
+  const fige = (id: string) => statuts.has(id) && statuts.get(id) !== "planned";
+  const change = (r: RepasPlace) => {
+    const a = avantParId.get(r.id);
+    return (
+      !a ||
+      a.recipeId !== r.recipeId ||
+      a.jour !== r.jour ||
+      a.slot !== r.slot ||
+      a.servings !== r.servings ||
+      a.leftoverFromId !== r.leftoverFromId
+    );
+  };
+  if (apres.some((r) => change(r) && fige(r.id)) || retires.some(fige)) {
+    throw new ErreurApi(
+      "REPASINCOMPATIBLE",
+      "Un repas déjà cuisiné ne peut plus être déplacé ni modifié.",
+    );
+  }
+  await prisma.$transaction([
+    ...apres.filter(change).map((r) => {
+      const data = {
+        recipeId: r.recipeId,
+        date: dateDuMenu(plan, r.jour),
+        slot: r.slot,
+        servings: r.servings,
+        leftoverFromId: r.leftoverFromId,
+      };
+      return r.id === NOUVEAUREPAS
+        ? prisma.plannedMeal.create({ data: { ...data, mealPlanId: plan.id } })
+        : prisma.plannedMeal.update({ where: { id: r.id }, data });
+    }),
+    ...(retires.length > 0
+      ? [prisma.plannedMeal.deleteMany({ where: { id: { in: retires }, mealPlanId: plan.id } })]
+      : []),
+    prisma.mealPlan.update({ where: { id: plan.id }, data: { estimatedCostFcfa: totalFcfa } }),
+  ]);
+}
+
+/** Après une modification, la liste de courses d'un menu actif est refaite. */
+async function relire(session: SessionVerifiee, plan: PlanAModifier): Promise<RepasRemplace> {
+  const householdId = exigerFoyer(session);
   const liste = plan.status === "active" ? await genererListe(session, plan.id) : null;
   const enregistre = await prisma.mealPlan.findFirst({
     where: { id: plan.id, householdId },
@@ -251,52 +372,127 @@ export async function deplacerRepas(
   return { menu: versMenu(enregistre), liste };
 }
 
-// ---------------------------------------------------------------------------
-// Changement de portions (EF-07) : ajuster le nombre de portions d'un repas.
-// ---------------------------------------------------------------------------
+/** Repas du foyer de la session et son menu ; un repas d'un autre foyer est introuvable. */
+async function chargerRepas(session: SessionVerifiee, repasId: string) {
+  const cible = await prisma.plannedMeal.findFirst({
+    where: { id: repasId, mealPlan: { householdId: exigerFoyer(session) } },
+    include: { mealPlan: { include: { meals: true } } },
+  });
+  if (!cible) throw new ErreurApi("INTROUVABLE");
+  return { cible, plan: cible.mealPlan as PlanAModifier };
+}
 
+/**
+ * Déplace un repas à une autre date ou un autre créneau de la semaine. Si la place est prise,
+ * les deux repas échangent leur place ; un dîner cuisiné en double emmène son reste.
+ */
+export async function deplacerRepas(
+  session: SessionVerifiee,
+  repasId: string,
+  nouvelleDate?: string,
+  nouveauSlot?: Creneau,
+): Promise<RepasRemplace> {
+  const { cible, plan } = await chargerRepas(session, repasId);
+  const verif = await chargerPourModifier(session, plan);
+  const avant = versPlaces(plan);
+  const jour = jourDuMenu(plan, nouvelleDate ? dateSansHeure(nouvelleDate) : cible.date);
+  const apres = echangerRepas(avant, repasId, jour, nouveauSlot ?? cible.slot);
+  const menu = verifierSemaine(apres, verif);
+  await enregistrerSemaine(plan, avant, apres, [], menu.totalFcfa);
+  return relire(session, plan);
+}
+
+/** Change les portions d'un repas (invités) ; un dîner en double garde son reste du lendemain. */
 export async function changerPortions(
   session: SessionVerifiee,
   repasId: string,
   servings: number,
 ): Promise<RepasRemplace> {
+  const { plan } = await chargerRepas(session, repasId);
+  const verif = await chargerPourModifier(session, plan);
+  const avant = versPlaces(plan);
+  const apres = changerPortionsRepas(avant, repasId, servings);
+  const menu = verifierSemaine(apres, verif);
+  await enregistrerSemaine(plan, avant, apres, [], menu.totalFcfa);
+  return relire(session, plan);
+}
+
+export type ReorganisationUrgence = RepasRemplace & {
+  ancienneRecette: string;
+  // Vrai si le dîner prévu ce soir a glissé au lendemain ; sinon il a été remplacé
+  decale: boolean;
+  message: string;
+};
+
+/**
+ * Mode urgence (§11) : le plat rapide est servi ce soir et le dîner prévu glisse au lendemain,
+ * comme tous les dîners suivants ; le dernier de la semaine sort du menu.
+ * Si la semaine ne peut pas glisser (temps du soir, restes…), seul le dîner de ce soir est remplacé.
+ */
+export async function reorganiserUrgence(
+  session: SessionVerifiee,
+  recetteRapideId: string,
+): Promise<ReorganisationUrgence> {
   const householdId = exigerFoyer(session);
-  const cible = await prisma.plannedMeal.findFirst({
-    where: { id: repasId, mealPlan: { householdId } },
-    include: { mealPlan: { include: { meals: true } } },
+  const actif = await prisma.mealPlan.findFirst({
+    where: { householdId, status: "active" },
+    include: { meals: { include: { recipe: { select: { title: true } } } } },
+    orderBy: { weekStart: "desc" },
   });
-  if (!cible) throw new ErreurApi("INTROUVABLE");
-  const plan = cible.mealPlan;
-  if (plan.status === "archived") throw new ErreurApi("MENUARCHIVE");
+  if (!actif) {
+    throw new ErreurApi("DONNEESINVALIDES", "Aucun menu actif. Génère d'abord un menu.");
+  }
+  // Date du jour à Abidjan : les dates de repas sont des dates sans heure (minuit UTC)
+  const aujourdhui = dateSansHeure(dateDuJour()).getTime();
+  const ceSoir = actif.meals.find(
+    (m) => m.slot === "dinner" && m.status === "planned" && m.date.getTime() === aujourdhui,
+  );
+  if (!ceSoir) throw new ErreurApi("DONNEESINVALIDES", "Aucun dîner prévu ce soir à remplacer.");
+  const ancienneRecette = ceSoir.recipe.title;
 
-  const catalogue = await chargerRecettes();
-  const maintenant = new Date();
-  const candidates = catalogue.map((r) => versCandidate(r, maintenant));
+  const plan: PlanAModifier = actif;
+  const verif = await chargerPourModifier(session, plan);
+  const rapide = verif.catalogue.find((r) => r.id === recetteRapideId);
+  if (!rapide) throw new ErreurApi("INTROUVABLE");
+  if (!rapide.mealTypes.includes("dinner")) {
+    throw new ErreurApi(
+      "REPASINCOMPATIBLE",
+      "Ce plat ne se mange pas le soir : choisis-en un autre.",
+    );
+  }
+  if (
+    incompatibilites(ingredientsAFiltrer(rapide), verif.restrictions).length > 0 ||
+    equipementManquant(rapide.tags, verif.equipement).length > 0
+  ) {
+    throw new ErreurApi("REPASINCOMPATIBLE");
+  }
 
-  const modifications: Modification[] = [
-    { id: cible.id, recipeId: cible.recipeId, servings, leftoverFromId: cible.leftoverFromId },
-  ];
-
-  const repas = ordonner(plan.meals);
-  const recettesMap = new Map(candidates.map((c) => [c.id, c]));
-  const menu = versMenuCompose(repas, modifications, recettesMap);
-
-  await prisma.$transaction([
-    prisma.plannedMeal.update({
-      where: { id: repasId },
-      data: { servings },
-    }),
-    prisma.mealPlan.update({
-      where: { id: plan.id },
-      data: { estimatedCostFcfa: menu.totalFcfa },
-    }),
-  ]);
-
-  const liste = plan.status === "active" ? await genererListe(session, plan.id) : null;
-  const enregistre = await prisma.mealPlan.findFirst({
-    where: { id: plan.id, householdId },
-    include: avecRepas,
-  });
-  if (!enregistre) throw new ErreurApi("ERREURSERVEUR");
-  return { menu: versMenu(enregistre), liste };
+  const avant = versPlaces(plan);
+  try {
+    const { repas: apres, retires } = decalerDiners(
+      avant,
+      jourDuMenu(plan, ceSoir.date),
+      recetteRapideId,
+      verif.parametres.personnes,
+    );
+    const menu = verifierSemaine(apres, verif);
+    await enregistrerSemaine(plan, avant, apres, retires, menu.totalFcfa);
+    // En général demain soir ; demain midi si ce dîner était cuisiné en double l'avant-dernier soir
+    const moment = apres.find((r) => r.id === ceSoir.id)?.slot === "lunch" ? "midi" : "soir";
+    return {
+      ...(await relire(session, plan)),
+      ancienneRecette,
+      decale: true,
+      message: `« ${ancienneRecette} » est décalé à demain ${moment}.`,
+    };
+  } catch (erreur) {
+    if (!(erreur instanceof ErreurApi) || erreur.code !== "REPASINCOMPATIBLE") throw erreur;
+    // La semaine ne peut pas glisser : on remplace seulement le dîner de ce soir
+    return {
+      ...(await remplacerRepas(session, ceSoir.id, recetteRapideId)),
+      ancienneRecette,
+      decale: false,
+      message: `« ${ancienneRecette} » ne peut pas être décalé à demain : il est remplacé ce soir.`,
+    };
+  }
 }

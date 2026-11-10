@@ -22,7 +22,8 @@ export async function suggestionsUrgence(
       ...r,
       totalMinutes: r.prepMinutes + r.cookMinutes,
     }))
-    .filter((r) => r.totalMinutes <= maxMinutes)
+    // Le plat d'urgence remplace le dîner de ce soir : pas de petit-déjeuner proposé
+    .filter((r) => r.totalMinutes <= maxMinutes && r.mealTypes.includes("dinner"))
     .sort((a, b) => {
       if (a.utiliseUseSoon !== b.utiliseUseSoon) return a.utiliseUseSoon ? -1 : 1;
       return a.totalMinutes - b.totalMinutes;

@@ -6,12 +6,13 @@ import {
   creerClient,
   estSimule,
   prochaineReponseSimulee,
-  MAX_TOURS_OUTILS,
-  MODELE_CONVERSATION,
+  MAXTOURSOUTILS,
+  MODELECONVERSATION,
 } from "./client";
-import { PROMPT_SYSTEME } from "./prompt";
+import { PROMPTSYSTEME } from "./prompt";
 import {
   construireContexte,
+  creerFluxSurnoms,
   formaterContextePourPrompt,
   remplacerSurnoms,
   restaurerSurnoms,
@@ -26,7 +27,7 @@ export type ResultatOrchestration = {
   tokensOut: number;
 };
 
-const MAX_MESSAGES_HISTORIQUE = 20;
+const MESSAGESHISTORIQUEMAX = 20;
 
 export async function orchestrer(
   session: SessionVerifiee,
@@ -48,13 +49,13 @@ export async function orchestrer(
   await enregistrerMessage(conv.id, "user", messageAnonyme);
 
   const historique = await chargerHistorique(conv.id);
-  const messagesApi = construireMessagesApi(historique);
+  const messagesApi = construireMessagesApi(historique, table);
 
   const systeme = [
-    PROMPT_SYSTEME,
+    PROMPTSYSTEME,
     "",
     "Contexte actuel du foyer :",
-    formaterContextePourPrompt(contexte),
+    remplacerSurnoms(formaterContextePourPrompt(contexte), table),
   ].join("\n");
 
   let reponseTexte: string;
@@ -72,8 +73,9 @@ export async function orchestrer(
   }
 
   const reponseFinale = restaurerSurnoms(reponseTexte, table);
-  await enregistrerMessage(conv.id, "assistant", reponseFinale, {
-    model: MODELE_CONVERSATION,
+  // Enregistrée anonymisée, comme le message de la famille : l'historique renvoyé à l'IA ne contient aucun surnom
+  await enregistrerMessage(conv.id, "assistant", remplacerSurnoms(reponseTexte, table), {
+    model: MODELECONVERSATION,
     tokensIn,
     tokensOut,
   });
@@ -116,13 +118,13 @@ export async function orchestrerStream(
     await enregistrerMessage(conv.id, "user", messageAnonyme);
 
     const historique = await chargerHistorique(conv.id);
-    const messagesApi = construireMessagesApi(historique);
+    const messagesApi = construireMessagesApi(historique, table);
 
     const systeme = [
-      PROMPT_SYSTEME,
+      PROMPTSYSTEME,
       "",
       "Contexte actuel du foyer :",
-      formaterContextePourPrompt(contexte),
+      remplacerSurnoms(formaterContextePourPrompt(contexte), table),
     ].join("\n");
 
     let texteComplet: string;
@@ -132,7 +134,7 @@ export async function orchestrerStream(
     if (estSimule()) {
       const r = await boucleSimulee(session, conv.id, messagesApi, table);
       texteComplet = r.texte;
-      envoyer({ type: "text", delta: texteComplet });
+      envoyer({ type: "text", delta: restaurerSurnoms(texteComplet, table) });
     } else {
       const r = await boucleReelleStream(session, conv.id, systeme, messagesApi, table, envoyer);
       texteComplet = r.texte;
@@ -140,9 +142,8 @@ export async function orchestrerStream(
       tokensOut = r.tokensOut;
     }
 
-    const reponseFinale = restaurerSurnoms(texteComplet, table);
-    await enregistrerMessage(conv.id, "assistant", reponseFinale, {
-      model: MODELE_CONVERSATION,
+    await enregistrerMessage(conv.id, "assistant", remplacerSurnoms(texteComplet, table), {
+      model: MODELECONVERSATION,
       tokensIn,
       tokensOut,
     });
@@ -159,7 +160,14 @@ export async function orchestrerStream(
 
 // --- Quota IA (ENF-18) ---
 
-const QUOTA_JOURNALIER = Number(process.env.AI_DAILY_QUOTA) || 100;
+/** Messages par foyer et par jour sans AIDAILYQUOTA (ou avec une valeur invalide). */
+export const QUOTAPARDEFAUT = 100;
+
+/** Lu à chaque appel : une valeur changée dans .env est prise en compte au redémarrage du serveur. */
+export function quotaJournalier(): number {
+  const valeur = Number(process.env.AIDAILYQUOTA);
+  return Number.isInteger(valeur) && valeur > 0 ? valeur : QUOTAPARDEFAUT;
+}
 
 async function verifierQuotaIA(householdId: string) {
   const debutJournee = new Date();
@@ -173,7 +181,7 @@ async function verifierQuotaIA(householdId: string) {
     },
   });
 
-  if (count >= QUOTA_JOURNALIER) {
+  if (count >= quotaJournalier()) {
     throw new ErreurApi(
       "QUOTAATTEINT",
       "Tu as atteint la limite de messages pour aujourd'hui. Réessaie demain !",
@@ -228,20 +236,22 @@ async function chargerHistorique(conversationId: string) {
   return prisma.message.findMany({
     where: { conversationId },
     orderBy: { createdAt: "asc" },
-    take: MAX_MESSAGES_HISTORIQUE + 10,
+    take: MESSAGESHISTORIQUEMAX + 10,
     select: { role: true, content: true },
   });
 }
 
-function construireMessagesApi(
+/** Derniers messages, ré-anonymisés par sécurité : un ancien message peut contenir un surnom. */
+export function construireMessagesApi(
   historique: { role: string; content: unknown }[],
+  table: TableSurnoms,
 ): Anthropic.Messages.MessageParam[] {
-  const derniers = historique.slice(-MAX_MESSAGES_HISTORIQUE);
+  const derniers = historique.slice(-MESSAGESHISTORIQUEMAX);
   return derniers
     .filter((m) => m.role === "user" || m.role === "assistant")
     .map((m) => ({
       role: m.role as "user" | "assistant",
-      content: String(m.content),
+      content: remplacerSurnoms(String(m.content), table),
     }));
 }
 
@@ -260,11 +270,11 @@ async function boucleReelle(
   let tokensOut = 0;
   let messagesCourants = [...messages];
 
-  for (let tour = 0; tour < MAX_TOURS_OUTILS; tour++) {
+  for (let tour = 0; tour < MAXTOURSOUTILS; tour++) {
     let reponse: Anthropic.Messages.Message;
     try {
       reponse = await client.messages.create({
-        model: MODELE_CONVERSATION,
+        model: MODELECONVERSATION,
         max_tokens: 1024,
         system: [{ type: "text", text: systeme, cache_control: { type: "ephemeral" } }],
         tools: outils,
@@ -274,7 +284,7 @@ async function boucleReelle(
       if (tour === 0) {
         try {
           reponse = await client.messages.create({
-            model: MODELE_CONVERSATION,
+            model: MODELECONVERSATION,
             max_tokens: 1024,
             system: [{ type: "text", text: systeme, cache_control: { type: "ephemeral" } }],
             tools: outils,
@@ -343,12 +353,13 @@ async function boucleReelleStream(
   let tokensOut = 0;
   let messagesCourants = [...messages];
   let texteAccumule = "";
+  const flux = creerFluxSurnoms(table, (texte) => envoyer({ type: "text", delta: texte }));
 
-  for (let tour = 0; tour < MAX_TOURS_OUTILS; tour++) {
+  for (let tour = 0; tour < MAXTOURSOUTILS; tour++) {
     let reponse: Anthropic.Messages.Message;
     try {
       const stream = client.messages.stream({
-        model: MODELE_CONVERSATION,
+        model: MODELECONVERSATION,
         max_tokens: 1024,
         system: [{ type: "text", text: systeme, cache_control: { type: "ephemeral" } }],
         tools: outils,
@@ -357,7 +368,7 @@ async function boucleReelleStream(
 
       stream.on("text", (delta) => {
         texteAccumule += delta;
-        envoyer({ type: "text", delta: restaurerSurnoms(delta, table) });
+        flux.ajouter(delta);
       });
 
       reponse = await stream.finalMessage();
@@ -365,7 +376,7 @@ async function boucleReelleStream(
       if (tour === 0) {
         try {
           const stream = client.messages.stream({
-            model: MODELE_CONVERSATION,
+            model: MODELECONVERSATION,
             max_tokens: 1024,
             system: [{ type: "text", text: systeme, cache_control: { type: "ephemeral" } }],
             tools: outils,
@@ -373,7 +384,7 @@ async function boucleReelleStream(
           });
           stream.on("text", (delta) => {
             texteAccumule += delta;
-            envoyer({ type: "text", delta: restaurerSurnoms(delta, table) });
+            flux.ajouter(delta);
           });
           reponse = await stream.finalMessage();
         } catch {
@@ -388,6 +399,7 @@ async function boucleReelleStream(
     tokensOut += reponse.usage.output_tokens;
 
     if (reponse.stop_reason === "end_turn" || reponse.stop_reason !== "tool_use") {
+      flux.terminer();
       return { texte: texteAccumule, tokensIn, tokensOut };
     }
 
@@ -424,6 +436,7 @@ async function boucleReelleStream(
     }
   }
 
+  flux.terminer();
   return {
     texte:
       texteAccumule ||
@@ -433,10 +446,19 @@ async function boucleReelleStream(
   };
 }
 
-async function traiterAppelsOutils(
+/**
+ * Arguments d'un outil écrits par l'IA, avec les libellés (« Enfant 1 ») remis en surnoms :
+ * une préférence enregistrée parle d'« Awa », comme la famille.
+ */
+export function argumentsAvecSurnoms(input: unknown, table: TableSurnoms): unknown {
+  return JSON.parse(restaurerSurnoms(JSON.stringify(input ?? {}), table));
+}
+
+/** Exécute les outils demandés ; leurs résultats et erreurs repartent vers l'IA sans aucun surnom. */
+export async function traiterAppelsOutils(
   session: SessionVerifiee,
   contenu: Anthropic.Messages.ContentBlock[],
-  _table: TableSurnoms,
+  table: TableSurnoms,
   conversationId: string,
 ): Promise<Anthropic.Messages.ToolResultBlockParam[]> {
   const resultats: Anthropic.Messages.ToolResultBlockParam[] = [];
@@ -453,19 +475,19 @@ async function traiterAppelsOutils(
       continue;
     }
     try {
-      const input = outil.schema.parse(bloc.input);
+      const input = outil.schema.parse(argumentsAvecSurnoms(bloc.input, table));
       const resultat = await outil.executer(session, input, { conversationId });
       resultats.push({
         type: "tool_result",
         tool_use_id: bloc.id,
-        content: JSON.stringify(resultat),
+        content: remplacerSurnoms(JSON.stringify(resultat), table),
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Erreur interne de l'outil";
       resultats.push({
         type: "tool_result",
         tool_use_id: bloc.id,
-        content: JSON.stringify({ erreur: message }),
+        content: remplacerSurnoms(JSON.stringify({ erreur: message }), table),
         is_error: true,
       });
     }
@@ -490,7 +512,7 @@ async function boucleSimulee(
 ): Promise<{ texte: string }> {
   void messages;
 
-  for (let tour = 0; tour < MAX_TOURS_OUTILS; tour++) {
+  for (let tour = 0; tour < MAXTOURSOUTILS; tour++) {
     const reponse = prochaineReponseSimulee();
     if (!reponse) {
       return { texte: "Je suis Umi, ton assistant cuisine. Comment puis-je t'aider ?" };
@@ -504,16 +526,15 @@ async function boucleSimulee(
       const outil = OUTILS.get(appel.nom);
       if (!outil) continue;
       try {
-        const input = outil.schema.parse(appel.input);
+        const input = outil.schema.parse(argumentsAvecSurnoms(appel.input, table));
         const resultat = await outil.executer(session, input, { conversationId });
         await enregistrerMessage(
           conversationId,
           "tool",
-          JSON.stringify({
-            toolUseId: appel.id,
-            nom: appel.nom,
-            resultat,
-          }),
+          remplacerSurnoms(
+            JSON.stringify({ toolUseId: appel.id, nom: appel.nom, resultat }),
+            table,
+          ),
         );
       } catch {
         await enregistrerMessage(

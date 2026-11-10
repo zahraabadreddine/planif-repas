@@ -31,6 +31,13 @@ export type CodeProbleme =
 
 export type Probleme = { code: CodeProbleme; message: string };
 
+/**
+ * portionsLibres : la famille a pu changer des portions (invités). Un repas peut alors servir
+ * plus ou moins que le foyer, et un dîner en double couvre ses portions et celles de son reste.
+ * Sans cette option, les portions doivent être celles composées par le code.
+ */
+export type OptionsVerification = { portionsLibres?: boolean };
+
 const SLOTS: RepasCompose["slot"][] = ["lunch", "dinner"];
 
 const nomCreneau = (repas: RepasCompose) =>
@@ -89,8 +96,16 @@ function verifierRecette(
 }
 
 /** Un reste suit le dîner de la veille, même recette, cuisinée en double ; il ne coûte rien. */
-function verifierReste(menu: MenuCompose, repas: RepasCompose, personnes: number): Probleme[] {
+function verifierReste(
+  menu: MenuCompose,
+  repas: RepasCompose,
+  personnes: number,
+  options: OptionsVerification,
+): Probleme[] {
   const diner = repas.resteDe === null ? undefined : menu.repas[repas.resteDe];
+  const portionsCoherentes = options.portionsLibres
+    ? diner !== undefined && repas.portions >= 1 && diner.portions > repas.portions
+    : diner?.portions === 2 * personnes && repas.portions === personnes;
   const coherent =
     repas.slot === "lunch" &&
     diner !== undefined &&
@@ -98,8 +113,7 @@ function verifierReste(menu: MenuCompose, repas: RepasCompose, personnes: number
     diner.jour === repas.jour - 1 &&
     diner.recetteId === repas.recetteId &&
     diner.resteDe === null &&
-    diner.portions === 2 * personnes &&
-    repas.portions === personnes &&
+    portionsCoherentes &&
     repas.coutFcfa === 0;
   return coherent
     ? []
@@ -112,11 +126,21 @@ function verifierReste(menu: MenuCompose, repas: RepasCompose, personnes: number
 }
 
 /** Un dîner cuisiné en double doit avoir son reste le lendemain midi. */
-function verifierDouble(menu: MenuCompose, indice: number, personnes: number): Probleme[] {
+function verifierDouble(
+  menu: MenuCompose,
+  indice: number,
+  personnes: number,
+  options: OptionsVerification,
+): Probleme[] {
   const repas = menu.repas[indice];
-  if (repas.portions === personnes) return [];
-  const reste = menu.repas.some((r) => r.resteDe === indice);
-  if (repas.slot === "dinner" && repas.portions === 2 * personnes && reste) return [];
+  const reste = menu.repas.find((r) => r.resteDe === indice);
+  if (options.portionsLibres) {
+    // Le reste vérifie déjà que le dîner couvre ses propres portions et les siennes
+    if (repas.portions >= 1 && (!reste || repas.slot === "dinner")) return [];
+  } else {
+    if (repas.portions === personnes) return [];
+    if (repas.slot === "dinner" && repas.portions === 2 * personnes && reste) return [];
+  }
   return [
     {
       code: "RESTEINCOHERENT",
@@ -159,6 +183,7 @@ export function verifierMenu(
   recettes: RecetteAVerifier[],
   restrictions: RestrictionAFiltrer[],
   parametres: ParametresComposition,
+  options: OptionsVerification = {},
 ): Probleme[] {
   const parId = new Map(recettes.map((r) => [r.id, r]));
   const problemes = verifierCreneaux(menu);
@@ -175,7 +200,7 @@ export function verifierMenu(
     }
     problemes.push(...verifierRecette(repas, recette, restrictions, parametres));
     if (repas.resteDe !== null) {
-      problemes.push(...verifierReste(menu, repas, parametres.personnes));
+      problemes.push(...verifierReste(menu, repas, parametres.personnes, options));
       return;
     }
     if (cuisinees.has(repas.recetteId)) {
@@ -185,7 +210,7 @@ export function verifierMenu(
       });
     }
     cuisinees.add(repas.recetteId);
-    problemes.push(...verifierDouble(menu, indice, parametres.personnes));
+    problemes.push(...verifierDouble(menu, indice, parametres.personnes, options));
   });
 
   return [...problemes, ...verifierCouts(menu, parId, parametres.budgetFcfa)];

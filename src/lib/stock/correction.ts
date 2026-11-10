@@ -31,9 +31,11 @@ export async function corrigerStock(
     });
 
     if (!article) throw new ErreurApi("INTROUVABLE");
-    if (article.householdId !== householdId) throw new ErreurApi("INTERDIT");
+    // Un article d'un autre foyer est introuvable : on ne révèle pas qu'il existe
+    if (article.householdId !== householdId) throw new ErreurApi("INTROUVABLE");
 
-    const delta = nouvelleQuantite - article.quantity;
+    // Arrondi à trois décimales : 2 - 1,1 donne 0,9 et non 0,8999999999999999
+    const delta = Math.round((nouvelleQuantite - article.quantity) * 1000) / 1000;
     if (delta === 0) {
       return {
         stockItemId: article.id,
@@ -44,7 +46,8 @@ export async function corrigerStock(
       };
     }
 
-    const grams = Math.abs(delta) * article.unit.gramsEquivalent;
+    // Même signe que la quantité : positif si on en ajoute, négatif si on en retire (règle 5)
+    const grams = delta * article.unit.gramsEquivalent;
     const nouveauStatut = nouvelleQuantite <= 0 ? "used" : article.status;
 
     await tx.stockMovement.create({

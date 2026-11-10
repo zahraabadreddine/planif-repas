@@ -2,11 +2,11 @@ import Anthropic from "@anthropic-ai/sdk";
 
 // Wrapper SDK Anthropic (§10). Le simulateur s'active quand ANTHROPICAPIKEY est vide.
 
-export const MODELE_CONVERSATION = "claude-sonnet-5-5";
-export const MODELE_SIMPLE = "claude-haiku-4-5-20251001";
-export const MODELE_MENU = "claude-opus-5-5";
+export const MODELECONVERSATION = "claude-sonnet-5-5";
+export const MODELESIMPLE = "claude-haiku-4-5-20251001";
+export const MODELEMENU = "claude-opus-5-5";
 
-export const MAX_TOURS_OUTILS = 8;
+export const MAXTOURSOUTILS = 8;
 
 let clientSingleton: Anthropic | null = null;
 

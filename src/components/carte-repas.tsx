@@ -4,7 +4,7 @@ import { ArrowRight, SwapIcon } from "./icones";
 import { fcfa } from "@/lib/format";
 import type { MealSlot, Recipe } from "@/lib/types";
 
-const SLOT_LABEL: Record<MealSlot, string> = { lunch: "à midi", dinner: "le soir" };
+const SLOTLABEL: Record<MealSlot, string> = { lunch: "à midi", dinner: "le soir" };
 
 type Props = {
   recipe: Recipe;
@@ -28,7 +28,7 @@ export function MealCard({ recipe, slot, tag, delay = 0, onChanger }: Props) {
         <Plate colors={recipe.colors} size={84} className="animate-float" />
       </div>
 
-      <p className="font-hand text-[19px] font-bold leading-none text-carmin">{SLOT_LABEL[slot]}</p>
+      <p className="font-hand text-[19px] font-bold leading-none text-carmin">{SLOTLABEL[slot]}</p>
       <h3 className="mt-0.5 font-display text-[19px] font-semibold leading-tight">{recipe.name}</h3>
       <p className="mt-0.5 text-[13px] font-bold text-cacao">
         {recipe.minutes} min · {fcfa(recipe.costFcfa, false)} F

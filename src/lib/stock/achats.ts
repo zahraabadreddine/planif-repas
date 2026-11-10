@@ -13,7 +13,7 @@ type ConservationJours = {
   congelateur?: number;
 };
 
-const CLE_CONSERVATION: Record<StorageLocation, keyof ConservationJours> = {
+const CLECONSERVATION: Record<StorageLocation, keyof ConservationJours> = {
   pantry: "ambiant",
   fridge: "frigo",
   freezer: "congelateur",
@@ -24,7 +24,7 @@ function calculerExpiration(
   location: StorageLocation,
   dateAchat: Date,
 ): Date | null {
-  const cle = CLE_CONSERVATION[location];
+  const cle = CLECONSERVATION[location];
   const jours = shelfLifeDays[cle];
   if (jours === undefined || jours === null) return null;
   const expiration = new Date(dateAchat);
@@ -63,7 +63,7 @@ export async function declarerAchats(
     }),
     prisma.marketUnit.findMany({
       where: { id: { in: unitIds } },
-      select: { id: true, label: true, gramsEquivalent: true },
+      select: { id: true, label: true, gramsEquivalent: true, ingredientId: true },
     }),
   ]);
 
@@ -74,8 +74,13 @@ export async function declarerAchats(
     if (!ingredientMap.has(article.ingredientId)) {
       throw new ErreurApi("INTROUVABLE", "Un ingrédient n'existe pas dans le catalogue.");
     }
-    if (!unitMap.has(article.unitId)) {
+    const unite = unitMap.get(article.unitId);
+    if (!unite) {
       throw new ErreurApi("INTROUVABLE", "Une unité n'existe pas dans le catalogue.");
+    }
+    // Une unité générale (kg) ou propre à cet ingrédient : pas de crevettes « en bouteille »
+    if (unite.ingredientId && unite.ingredientId !== article.ingredientId) {
+      throw new ErreurApi("DONNEESINVALIDES", "Cette unité ne correspond pas à cet ingrédient.");
     }
   }
 

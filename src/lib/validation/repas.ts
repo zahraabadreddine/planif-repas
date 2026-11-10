@@ -24,8 +24,15 @@ export const modificationRepasSchema = z
       .max(20, "Vingt portions maximum.")
       .optional(),
   })
-  .refine((d) => d.recipeId || d.date || d.slot || d.servings !== undefined, {
-    message: "Indique au moins un champ à modifier.",
-  });
+  // Une seule sorte de changement à la fois : sinon un échec au milieu laisserait le menu à moitié modifié
+  .refine(
+    (d) =>
+      [
+        d.recipeId !== undefined,
+        d.date !== undefined || d.slot !== undefined,
+        d.servings !== undefined,
+      ].filter(Boolean).length === 1,
+    { message: "Change soit la recette, soit la date ou le créneau, soit les portions." },
+  );
 
 export type ModificationRepasDemande = z.infer<typeof modificationRepasSchema>;

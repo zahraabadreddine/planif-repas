@@ -5,10 +5,11 @@ import type { SessionVerifiee } from "@/lib/auth/garde";
 import { ErreurApi } from "@/lib/erreurs";
 import { enregistrerFoyer, lireFoyer } from "@/lib/foyer/profil";
 import { activerMenu } from "@/lib/planificateur/generation";
-import { remplacerRepas } from "@/lib/planificateur/modification";
+import { remplacerRepas, reorganiserUrgence } from "@/lib/planificateur/modification";
 import { declarerAchats } from "@/lib/stock/achats";
 import type { ArticleAchat } from "@/lib/validation/stock";
-import { CUISINES, type Cuisine } from "@/lib/validation/foyer";
+import { CUISINES, foyerSchema, type Cuisine } from "@/lib/validation/foyer";
+import { erreursParChamp } from "@/lib/validation/compte";
 import type { Prisma } from "@prisma/client";
 
 const valeursCuisines = CUISINES.map((c) => c.valeur) as [Cuisine, ...Cuisine[]];
@@ -54,7 +55,7 @@ function validerPayload<T>(schema: z.ZodType<T>, payload: unknown): T {
   return resultat.data;
 }
 
-const EXPIRATION_HEURES = 24;
+const EXPIRATIONHEURES = 24;
 
 export type PropositionCreee = {
   id: string;
@@ -73,7 +74,7 @@ export async function creerProposition(
   payload: Record<string, unknown>,
 ): Promise<PropositionCreee> {
   const expiresAt = new Date();
-  expiresAt.setHours(expiresAt.getHours() + EXPIRATION_HEURES);
+  expiresAt.setHours(expiresAt.getHours() + EXPIRATIONHEURES);
 
   const proposition = await prisma.agentProposal.create({
     data: {
@@ -151,45 +152,68 @@ export async function rejeterProposition(
  * Accepte une proposition : le code revérifie tout avant d'appliquer (règle 1).
  * Chaque type a sa logique d'application propre.
  */
+/** Choix de la famille au moment de confirmer (le plat d'urgence parmi les options proposées). */
+export type ChoixConfirmation = { recetteId?: string };
+
 export async function accepterProposition(
   session: SessionVerifiee,
   id: string,
+  choix: ChoixConfirmation = {},
 ): Promise<{ id: string; status: "accepted"; resultat: Record<string, unknown> }> {
   const proposition = await chargerProposition(session, id);
-  const payload = proposition.payload;
+  const appliquer = preparerApplication(session, proposition.type, proposition.payload, choix);
 
-  let resultat: Record<string, unknown>;
-
-  switch (proposition.type) {
-    case "profileUpdate":
-      resultat = await appliquerProfileUpdate(
-        session,
-        validerPayload(profileUpdatePayload, payload),
-      );
-      break;
-    case "weekPlan":
-      resultat = await appliquerWeekPlan(session, validerPayload(weekPlanPayload, payload));
-      break;
-    case "mealChange":
-      resultat = await appliquerMealChange(session, validerPayload(mealChangePayload, payload));
-      break;
-    case "purchase":
-      resultat = await appliquerPurchase(session, validerPayload(purchasePayload, payload));
-      break;
-    case "emergency":
-      resultat = await appliquerEmergency(session, validerPayload(emergencyPayload, payload));
-      break;
-    default:
-      throw new ErreurApi("DONNEESINVALIDES", "Type de proposition inconnu.");
-  }
-
+  // Réservée avant d'être appliquée : un second clic trouve la proposition déjà prise
+  // et n'applique rien une deuxième fois (des achats ne sont jamais comptés deux fois).
   const { count } = await prisma.agentProposal.updateMany({
     where: { id: proposition.id, status: "pending" },
     data: { status: "accepted" },
   });
   if (count === 0) throw new ErreurApi("DONNEESINVALIDES", "Cette proposition a déjà été traitée.");
 
-  return { id: proposition.id, status: "accepted", resultat };
+  try {
+    return { id: proposition.id, status: "accepted", resultat: await appliquer() };
+  } catch (erreur) {
+    // L'application a échoué (allergie, budget…) : la famille peut réessayer ou refuser.
+    await prisma.agentProposal.updateMany({
+      where: { id: proposition.id, status: "accepted" },
+      data: { status: "pending" },
+    });
+    throw erreur;
+  }
+}
+
+/** Valide le contenu de la proposition avant toute écriture, et renvoie son application. */
+function preparerApplication(
+  session: SessionVerifiee,
+  type: ProposalType,
+  payload: unknown,
+  choix: ChoixConfirmation,
+): () => Promise<Record<string, unknown>> {
+  switch (type) {
+    case "profileUpdate": {
+      const donnees = validerPayload(profileUpdatePayload, payload);
+      return () => appliquerProfileUpdate(session, donnees);
+    }
+    case "weekPlan": {
+      const donnees = validerPayload(weekPlanPayload, payload);
+      return () => appliquerWeekPlan(session, donnees);
+    }
+    case "mealChange": {
+      const donnees = validerPayload(mealChangePayload, payload);
+      return () => appliquerMealChange(session, donnees);
+    }
+    case "purchase": {
+      const donnees = validerPayload(purchasePayload, payload);
+      return () => appliquerPurchase(session, donnees);
+    }
+    case "emergency": {
+      const option = optionChoisie(validerPayload(emergencyPayload, payload), choix);
+      return () => appliquerEmergency(session, option);
+    }
+    default:
+      throw new ErreurApi("DONNEESINVALIDES", "Type de proposition inconnu.");
+  }
 }
 
 async function appliquerProfileUpdate(
@@ -206,7 +230,16 @@ async function appliquerProfileUpdate(
     shoppingDay: payload.shoppingDay !== undefined ? payload.shoppingDay : foyer.shoppingDay,
   };
 
-  const { foyer: mis } = await enregistrerFoyer(session, donnees);
+  // Mêmes règles que le formulaire du foyer (nom, budget, cuisines, jour des courses)
+  const verifie = foyerSchema.safeParse(donnees);
+  if (!verifie.success) {
+    throw new ErreurApi(
+      "DONNEESINVALIDES",
+      "Cette modification du foyer n'est pas valable.",
+      erreursParChamp(verifie.error),
+    );
+  }
+  const { foyer: mis } = await enregistrerFoyer(session, verifie.data);
   return { foyer: mis };
 }
 
@@ -241,55 +274,39 @@ async function appliquerPurchase(
   return { articles: resultats.length };
 }
 
+type OptionUrgence = { recetteId: string; titre: string };
+
+/**
+ * Le plat choisi par la famille parmi les options proposées par l'agent (la première par défaut).
+ * Un plat qui ne fait pas partie de la proposition est refusé : le choix reste dans ce que le code a vérifié.
+ */
+function optionChoisie(
+  payload: z.infer<typeof emergencyPayload>,
+  choix: ChoixConfirmation,
+): OptionUrgence {
+  const options = payload.options ?? [];
+  if (options.length === 0) throw new ErreurApi("DONNEESINVALIDES", "Aucune option d'urgence.");
+  if (!choix.recetteId) return options[0];
+  const option = options.find((o) => o.recetteId === choix.recetteId);
+  if (!option) {
+    throw new ErreurApi("DONNEESINVALIDES", "Ce plat ne fait pas partie des options proposées.");
+  }
+  return option;
+}
+
 async function appliquerEmergency(
   session: SessionVerifiee,
-  payload: z.infer<typeof emergencyPayload>,
+  recetteChoisie: OptionUrgence,
 ): Promise<Record<string, unknown>> {
-  const options = payload.options;
-  if (!options || options.length === 0) {
-    throw new ErreurApi("DONNEESINVALIDES", "Aucune option d'urgence.");
-  }
-
-  const householdId = session.householdId;
-  if (!householdId) throw new ErreurApi("FOYERMANQUANT");
-
-  const aujourdhui = new Date();
-  aujourdhui.setHours(0, 0, 0, 0);
-  const demain = new Date(aujourdhui);
-  demain.setDate(demain.getDate() + 1);
-
-  const plan = await prisma.mealPlan.findFirst({
-    where: { householdId, status: "active" },
-    include: { meals: { include: { recipe: { select: { id: true, title: true } } } } },
-    orderBy: { weekStart: "desc" },
-  });
-
-  if (!plan) {
-    throw new ErreurApi("DONNEESINVALIDES", "Aucun menu actif. Génère d'abord un menu.");
-  }
-
-  const repasCeSoir = plan.meals.find(
-    (m) =>
-      m.slot === "dinner" &&
-      m.status === "planned" &&
-      m.date.getTime() >= aujourdhui.getTime() &&
-      m.date.getTime() < demain.getTime(),
-  );
-
-  if (!repasCeSoir) {
-    throw new ErreurApi("DONNEESINVALIDES", "Aucun dîner prévu ce soir à remplacer.");
-  }
-
-  const ancienneRecette = repasCeSoir.recipe.title;
-  const recetteChoisie = options[0];
-
-  const { menu, liste } = await remplacerRepas(session, repasCeSoir.id, recetteChoisie.recetteId);
+  // Même réorganisation que l'écran d'urgence : le dîner prévu glisse au lendemain (§11)
+  const resultat = await reorganiserUrgence(session, recetteChoisie.recetteId);
 
   return {
-    message: `${recetteChoisie.titre} remplace le dîner de ce soir. « ${ancienneRecette} » peut être décalé à demain.`,
-    menuId: menu.id,
-    listeId: liste?.id ?? null,
-    ancienneRecette,
+    message: `${recetteChoisie.titre} ce soir. ${resultat.message}`,
+    menuId: resultat.menu.id,
+    listeId: resultat.liste?.id ?? null,
+    ancienneRecette: resultat.ancienneRecette,
     nouvelleRecette: recetteChoisie.titre,
+    decale: resultat.decale,
   };
 }

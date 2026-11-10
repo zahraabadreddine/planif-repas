@@ -75,11 +75,7 @@ describe("buildShoppingList", () => {
       ],
     });
 
-    const result = await buildShoppingList.executer(
-      SESSION,
-      { mealPlanId: "mp-1" },
-      CTX,
-    );
+    const result = await buildShoppingList.executer(SESSION, { mealPlanId: "mp-1" }, CTX);
     const articles = result.articles as Record<string, unknown>[];
 
     expect(result.listeId).toBe("list-1");
@@ -159,11 +155,7 @@ describe("recordMealFeedback", () => {
     });
 
     await expect(
-      recordMealFeedback.executer(
-        SESSION,
-        { plannedMealId: "meal-1", cooked: true },
-        CTX,
-      ),
+      recordMealFeedback.executer(SESSION, { plannedMealId: "meal-1", cooked: true }, CTX),
     ).rejects.toThrow();
   });
 
@@ -171,11 +163,7 @@ describe("recordMealFeedback", () => {
     mocks.plannedMealFindUnique.mockResolvedValue(null);
 
     await expect(
-      recordMealFeedback.executer(
-        SESSION,
-        { plannedMealId: "meal-1", cooked: true },
-        CTX,
-      ),
+      recordMealFeedback.executer(SESSION, { plannedMealId: "meal-1", cooked: true }, CTX),
     ).rejects.toThrow();
   });
 

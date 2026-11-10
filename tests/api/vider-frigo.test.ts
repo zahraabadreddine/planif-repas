@@ -1,20 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ErreurApi } from "@/lib/erreurs";
 
-const HOUSEHOLD_ID = "hh-1111-1111-1111-111111111111";
-const INGREDIENT_TOMATE = "ing-tomate-0000-0000-000000000000";
-const INGREDIENT_OIGNON = "ing-oignon-0000-0000-000000000000";
-const INGREDIENT_ARACHIDE = "ing-arachi-0000-0000-000000000000";
-const RECIPE_1 = "rec-11111-1111-1111-111111111111";
-const RECIPE_2 = "rec-22222-2222-2222-222222222222";
-const RECIPE_ARACHIDE = "rec-arach-0000-0000-000000000000";
+const HOUSEHOLDID = "hh-1111-1111-1111-111111111111";
+const INGREDIENTTOMATE = "ing-tomate-0000-0000-000000000000";
+const INGREDIENTOIGNON = "ing-oignon-0000-0000-000000000000";
+const INGREDIENTARACHIDE = "ing-arachi-0000-0000-000000000000";
+const RECIPE1 = "rec-11111-1111-1111-111111111111";
+const RECIPE2 = "rec-22222-2222-2222-222222222222";
+const RECIPEARACHIDE = "rec-arach-0000-0000-000000000000";
 
-const {
-  stockItem,
-  householdMember,
-  recipe,
-  exigerSession,
-} = vi.hoisted(() => ({
+const { stockItem, householdMember, recipe, exigerSession } = vi.hoisted(() => ({
   stockItem: { findMany: vi.fn() },
   householdMember: { findMany: vi.fn() },
   recipe: { findMany: vi.fn() },
@@ -35,7 +30,7 @@ import { suggererRecettes } from "@/lib/stock/vider-frigo";
 const session = {
   userId: "user-1",
   role: "user" as const,
-  householdId: HOUSEHOLD_ID,
+  householdId: HOUSEHOLDID,
   acces: { canWrite: true } as never,
 };
 
@@ -59,7 +54,7 @@ const unitTas = { gramsEquivalent: 300 };
 
 function stockTomate(quantity: number, status = "ok") {
   return {
-    ingredientId: INGREDIENT_TOMATE,
+    ingredientId: INGREDIENTTOMATE,
     quantity,
     status,
     unit: unitTas,
@@ -68,7 +63,7 @@ function stockTomate(quantity: number, status = "ok") {
 
 function stockOignon(quantity: number, status = "ok") {
   return {
-    ingredientId: INGREDIENT_OIGNON,
+    ingredientId: INGREDIENTOIGNON,
     quantity,
     status,
     unit: unitTas,
@@ -77,7 +72,7 @@ function stockOignon(quantity: number, status = "ok") {
 
 function recetteSauce() {
   return {
-    id: RECIPE_1,
+    id: RECIPE1,
     title: "Sauce tomate",
     cuisine: "ivoirienne",
     prepMinutes: 10,
@@ -88,14 +83,14 @@ function recetteSauce() {
     validated: true,
     ingredients: [
       {
-        ingredientId: INGREDIENT_TOMATE,
+        ingredientId: INGREDIENTTOMATE,
         quantity: 2,
         optional: false,
         ingredient: { name: "Tomate", category: "légume", allergens: [] },
         unit: unitTas,
       },
       {
-        ingredientId: INGREDIENT_OIGNON,
+        ingredientId: INGREDIENTOIGNON,
         quantity: 1,
         optional: false,
         ingredient: { name: "Oignon", category: "légume", allergens: [] },
@@ -107,7 +102,7 @@ function recetteSauce() {
 
 function recetteRapide() {
   return {
-    id: RECIPE_2,
+    id: RECIPE2,
     title: "Salade tomate",
     cuisine: "ivoirienne",
     prepMinutes: 5,
@@ -118,7 +113,7 @@ function recetteRapide() {
     validated: true,
     ingredients: [
       {
-        ingredientId: INGREDIENT_TOMATE,
+        ingredientId: INGREDIENTTOMATE,
         quantity: 1,
         optional: false,
         ingredient: { name: "Tomate", category: "légume", allergens: [] },
@@ -130,7 +125,7 @@ function recetteRapide() {
 
 function recetteArachide() {
   return {
-    id: RECIPE_ARACHIDE,
+    id: RECIPEARACHIDE,
     title: "Sauce arachide",
     cuisine: "ivoirienne",
     prepMinutes: 15,
@@ -141,14 +136,14 @@ function recetteArachide() {
     validated: true,
     ingredients: [
       {
-        ingredientId: INGREDIENT_ARACHIDE,
+        ingredientId: INGREDIENTARACHIDE,
         quantity: 2,
         optional: false,
         ingredient: { name: "Pâte d'arachide", category: "oléagineux", allergens: ["arachide"] },
         unit: unitTas,
       },
       {
-        ingredientId: INGREDIENT_TOMATE,
+        ingredientId: INGREDIENTTOMATE,
         quantity: 1,
         optional: false,
         ingredient: { name: "Tomate", category: "légume", allergens: [] },
@@ -212,13 +207,10 @@ describe("suggererRecettes", () => {
     stockItem.findMany.mockResolvedValue([
       stockTomate(5),
       stockOignon(3),
-      { ingredientId: INGREDIENT_ARACHIDE, quantity: 5, status: "ok", unit: unitTas },
+      { ingredientId: INGREDIENTARACHIDE, quantity: 5, status: "ok", unit: unitTas },
     ]);
     recipe.findMany.mockResolvedValue([recetteSauce(), recetteArachide()]);
-    householdMember.findMany.mockResolvedValue([
-      membreSansRestriction,
-      membreAllergieArachide,
-    ]);
+    householdMember.findMany.mockResolvedValue([membreSansRestriction, membreAllergieArachide]);
 
     const resultat = await suggererRecettes(session);
 
@@ -228,10 +220,7 @@ describe("suggererRecettes", () => {
   });
 
   it("les recettes utilisant des produits bientôt périmés passent en premier", async () => {
-    stockItem.findMany.mockResolvedValue([
-      stockTomate(5, "useSoon"),
-      stockOignon(3),
-    ]);
+    stockItem.findMany.mockResolvedValue([stockTomate(5, "useSoon"), stockOignon(3)]);
     recipe.findMany.mockResolvedValue([recetteRapide(), recetteSauce()]);
 
     const resultat = await suggererRecettes(session);
@@ -272,7 +261,7 @@ describe("suggererRecettes", () => {
       ingredients: [
         ...recetteRapide().ingredients,
         {
-          ingredientId: INGREDIENT_OIGNON,
+          ingredientId: INGREDIENTOIGNON,
           quantity: 1,
           optional: true,
           ingredient: { name: "Oignon", category: "légume", allergens: [] },

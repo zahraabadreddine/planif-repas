@@ -19,9 +19,16 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/lib/db", () => ({
   prisma: {
     conversation: { create: mocks.conversationCreate, findUnique: mocks.conversationFindUnique },
-    message: { findMany: mocks.messageFindMany, create: mocks.messageCreate, count: mocks.agentMessageCount },
+    message: {
+      findMany: mocks.messageFindMany,
+      create: mocks.messageCreate,
+      count: mocks.agentMessageCount,
+    },
     learnedPreference: { findMany: mocks.learnedPreferenceFindMany },
     household: { findUnique: mocks.householdFindUnique },
+    // Noms du catalogue protégés du remplacement des surnoms
+    recipe: { findMany: async () => [] },
+    ingredient: { findMany: async () => [] },
   },
 }));
 
@@ -35,9 +42,7 @@ vi.mock("@/lib/planificateur/generation", () => ({
 vi.mock("@/lib/foyer/age", () => ({ dateDuJour: () => "2026-11-06" }));
 
 vi.mock("@/lib/agent/client", async () => {
-  const actual = await vi.importActual<typeof import("@/lib/agent/client")>(
-    "@/lib/agent/client",
-  );
+  const actual = await vi.importActual<typeof import("@/lib/agent/client")>("@/lib/agent/client");
   return {
     ...actual,
     estSimule: () => true,
@@ -45,10 +50,7 @@ vi.mock("@/lib/agent/client", async () => {
   };
 });
 
-import {
-  simulerReponses,
-  resetSimulation,
-} from "@/lib/agent/client";
+import { simulerReponses, resetSimulation } from "@/lib/agent/client";
 import { orchestrer } from "@/lib/agent/orchestrateur";
 import { OUTILS, outilsAnthropicSchema } from "@/lib/agent/tools";
 import type { SessionVerifiee } from "@/lib/auth/garde";

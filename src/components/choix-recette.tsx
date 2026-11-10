@@ -6,7 +6,7 @@ import { CloseIcon, ClockIcon } from "./icones";
 import { cx, fcfa } from "@/lib/format";
 import type { MealSlot, Recipe } from "@/lib/types";
 
-const SLOT_LABEL: Record<MealSlot, string> = { lunch: "midi", dinner: "ce soir" };
+const SLOTLABEL: Record<MealSlot, string> = { lunch: "midi", dinner: "ce soir" };
 
 type Props = {
   slot: MealSlot;
@@ -39,7 +39,7 @@ export function ChoixRecette({ slot, currentId, recipes, onChoose, onClose }: Pr
       >
         <div className="flex items-center justify-between">
           <h2 className="font-display text-xl font-semibold">
-            Changer le repas de {SLOT_LABEL[slot]}
+            Changer le repas de {SLOTLABEL[slot]}
           </h2>
           <button
             type="button"
