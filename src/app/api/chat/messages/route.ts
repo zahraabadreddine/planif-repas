@@ -79,6 +79,16 @@ function formaterProposition(p: { id: string; type: string; payload: unknown; st
 
   switch (p.type) {
     case "mealChange":
+      if (typeof data.portions === "number") {
+        return {
+          id: p.id,
+          type: p.type,
+          status: p.status,
+          title: `${data.portions} portions`,
+          label: `« ${data.ancienneRecette ?? "?"} »`,
+          summary: `Au lieu de ${data.anciennesPortions ?? "?"} : quantités et courses recalculées`,
+        };
+      }
       return {
         id: p.id,
         type: p.type,

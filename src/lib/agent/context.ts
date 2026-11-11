@@ -148,8 +148,14 @@ export function restaurerSurnoms(texte: string, table: TableSurnoms): string {
  * « Zoé » ne serait jamais remplacé. On borne donc par « ni lettre ni chiffre », accents compris.
  */
 function motEntier(mot: string): RegExp {
-  return new RegExp(`(?<![\\p{L}\\p{N}])${echapperRegex(mot)}(?![\\p{L}\\p{N}])`, "giu");
+  // Entre deux mots, n'importe quelle espace : les modèles écrivent souvent « Enfant 1 » avec une
+  // espace fine insécable (U+202F), que la remise des surnoms doit reconnaître aussi
+  const motif = echapperRegex(mot).replace(/\s+/g, "\\s+");
+  return new RegExp(`(?<![\\p{L}\\p{N}])${motif}(?![\\p{L}\\p{N}])`, "giu");
 }
+
+/** Espaces insécables ramenées à une espace simple, sans changer la longueur du texte. */
+const espacesSimples = (texte: string) => texte.replace(/[  ]/g, " ");
 
 function echapperRegex(texte: string): string {
   return texte.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -163,7 +169,7 @@ export function pointDeCoupe(texte: string, table: TableSurnoms): number {
   const libelles = [...table.versSurnom.keys()];
   if (libelles.length === 0) return texte.length;
   let coupe = Math.max(0, texte.length - Math.max(...libelles.map((l) => l.length)));
-  const minuscules = texte.toLowerCase();
+  const minuscules = espacesSimples(texte).toLowerCase();
   for (const libelle of libelles) {
     for (let i = minuscules.indexOf(libelle); i !== -1; i = minuscules.indexOf(libelle, i + 1)) {
       if (i < coupe && coupe < i + libelle.length) coupe = i;

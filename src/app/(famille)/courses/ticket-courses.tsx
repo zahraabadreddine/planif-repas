@@ -124,6 +124,7 @@ type Props = { listeDeDepart: ListeEnregistree; peutModifier: boolean };
 export function TicketCourses({ listeDeDepart, peutModifier }: Props) {
   const [articles, setArticles] = useState(listeDeDepart.items);
   const [erreur, setErreur] = useState<string | null>(null);
+  const [rangement, setRangement] = useState<string | null>(null);
   const liste = { ...listeDeDepart, items: articles };
 
   const achetes = articles.filter((a) => a.checked).length;
@@ -139,13 +140,22 @@ export function TicketCourses({ listeDeDepart, peutModifier }: Props) {
     const checked = !article.checked;
     changer(article.id, checked);
     setErreur(null);
+    setRangement(null);
     try {
       const reponse = await fetch(`/api/shopping-lists/${listeDeDepart.id}/items/${article.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ checked }),
       });
-      if (reponse.ok) return;
+      if (reponse.ok) {
+        // Un article coché est rangé dans le stock, décoché il en repart
+        setRangement(
+          checked
+            ? `${article.ingredient} : ajouté à ton stock.`
+            : `${article.ingredient} : retiré de ton stock.`,
+        );
+        return;
+      }
       setErreur(
         await messageErreur(reponse, "L'article n'a pas pu être coché. Réessaie plus tard."),
       );
@@ -194,6 +204,9 @@ export function TicketCourses({ listeDeDepart, peutModifier }: Props) {
           <MessageErreur>{erreur}</MessageErreur>
         </div>
       )}
+      <p className="mt-2 min-h-5 font-hand text-[17px] font-bold text-foret" aria-live="polite">
+        {rangement}
+      </p>
 
       {/* Le ticket */}
       <div className="paper-shadow relative mt-5 animate-drop bg-[#FFFDF7] px-[18px] pb-3.5 pt-[18px]">

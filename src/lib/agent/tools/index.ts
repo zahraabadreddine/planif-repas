@@ -15,6 +15,10 @@ import { planEmergency } from "./plan-emergency";
 import { buildShoppingList } from "./build-shopping-list";
 import { recordMealFeedback } from "./record-meal-feedback";
 import { rememberPreference } from "./remember-preference";
+import { proposerIdeeFrigo } from "./proposer-idee-frigo";
+import { listerIngredientsPermis } from "./lister-ingredients-permis";
+import { proposerIdeePlat } from "./proposer-idee-plat";
+import { proposerRepasCuisine } from "./proposer-repas-cuisine";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const liste: OutilAgent<any>[] = [
@@ -23,6 +27,10 @@ const liste: OutilAgent<any>[] = [
   getStock,
   searchRecipes,
   findRecipesFromStock,
+  proposerIdeeFrigo,
+  listerIngredientsPermis,
+  proposerIdeePlat,
+  proposerRepasCuisine,
   findWhereToBuy,
   proposeProfileUpdate,
   generateWeekPlan,
@@ -41,6 +49,19 @@ export function outilsAnthropicSchema(): Anthropic.Messages.Tool[] {
     name: o.nom,
     description: o.description,
     input_schema: zodVersJsonSchema(o.schema),
+  }));
+}
+
+/** Les mêmes outils, sous une forme indépendante du fournisseur (utilisée pour Groq). */
+export function definitionsOutils(): {
+  nom: string;
+  description: string;
+  schema: Record<string, unknown>;
+}[] {
+  return liste.map((o) => ({
+    nom: o.nom,
+    description: o.description,
+    schema: zodVersJsonSchema(o.schema) as Record<string, unknown>,
   }));
 }
 

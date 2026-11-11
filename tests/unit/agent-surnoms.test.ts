@@ -244,3 +244,25 @@ describe("surnom qui est aussi un mot du catalogue", () => {
     ).toBe("Adulte 1 gras pour Adulte 1");
   });
 });
+
+describe("libellé écrit avec une espace insécable par le modèle", () => {
+  // Les modèles écrivent souvent « Enfant 1 » avec une espace fine insécable (U+202F)
+  const fine = "\u202F";
+
+  it("remet le surnom même avec une espace fine ou insécable", () => {
+    expect(restaurerSurnoms(`J'ai noté : Enfant${fine}1 n'aime pas le piment.`, table)).toBe(
+      "J'ai noté : Awa n'aime pas le piment.",
+    );
+    expect(restaurerSurnoms("Pour Adulte\u00A01 aussi", table)).toBe("Pour Papa aussi");
+  });
+
+  it("en flux aussi, même coupé juste avant l'espace fine", () => {
+    const affiches: string[] = [];
+    const flux = creerFluxSurnoms(table, (texte) => affiches.push(texte));
+    for (const morceau of ["J'ai noté : **Enfant", `${fine}1** préfère`, " sans piment."]) {
+      flux.ajouter(morceau);
+    }
+    flux.terminer();
+    expect(affiches.join("")).toBe("J'ai noté : **Awa** préfère sans piment.");
+  });
+});

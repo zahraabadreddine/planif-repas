@@ -5,10 +5,18 @@ import { ErreurApi } from "@/lib/erreurs";
 import {
   creerClient,
   estSimule,
+  fournisseurActif,
   prochaineReponseSimulee,
   MAXTOURSOUTILS,
   MODELECONVERSATION,
 } from "./client";
+import {
+  appelerGroq,
+  lireArguments,
+  modeleGroq,
+  versOutilsGroq,
+  type MessageGroq,
+} from "./fournisseurs/groq";
 import { PROMPTSYSTEME } from "./prompt";
 import {
   construireContexte,
@@ -18,7 +26,8 @@ import {
   restaurerSurnoms,
   type TableSurnoms,
 } from "./context";
-import { OUTILS, outilsAnthropicSchema } from "./tools";
+import { OUTILS, definitionsOutils, outilsAnthropicSchema } from "./tools";
+import type { CarteChat } from "./tools/types";
 
 export type ResultatOrchestration = {
   conversationId: string;
@@ -28,6 +37,15 @@ export type ResultatOrchestration = {
 };
 
 const MESSAGESHISTORIQUEMAX = 20;
+
+/** Recherches de recettes permises pour un même message : au-delà, Umi tournerait en rond. */
+export const RECHERCHESMAX = 2;
+
+/** Appels déjà faits pendant la réponse à un message, par outil. */
+type Compteur = Map<string, number>;
+
+/** Messages d'historique envoyés à Groq (demandes limitées à 8 000 jetons par minute). */
+export const HISTORIQUEGROQMAX = 6;
 
 export async function orchestrer(
   session: SessionVerifiee,
@@ -66,7 +84,10 @@ export async function orchestrer(
     const r = await boucleSimulee(session, conv.id, messagesApi, table);
     reponseTexte = r.texte;
   } else {
-    const r = await boucleReelle(session, conv.id, systeme, messagesApi, table);
+    const r =
+      fournisseurActif() === "groq"
+        ? await boucleGroq(session, conv.id, systeme, messagesApi, table)
+        : await boucleReelle(session, conv.id, systeme, messagesApi, table);
     reponseTexte = r.texte;
     tokensIn = r.tokensIn;
     tokensOut = r.tokensOut;
@@ -75,7 +96,7 @@ export async function orchestrer(
   const reponseFinale = restaurerSurnoms(reponseTexte, table);
   // Enregistrée anonymisée, comme le message de la famille : l'historique renvoyé à l'IA ne contient aucun surnom
   await enregistrerMessage(conv.id, "assistant", remplacerSurnoms(reponseTexte, table), {
-    model: MODELECONVERSATION,
+    model: modeleUtilise(),
     tokensIn,
     tokensOut,
   });
@@ -92,7 +113,8 @@ export type EvenementStream =
   | { type: "status"; status: string }
   | { type: "text"; delta: string }
   | { type: "done"; conversationId: string; tokensIn: number; tokensOut: number }
-  | { type: "error"; message: string };
+  | { type: "error"; message: string }
+  | CarteChat;
 
 export async function orchestrerStream(
   session: SessionVerifiee,
@@ -136,14 +158,17 @@ export async function orchestrerStream(
       texteComplet = r.texte;
       envoyer({ type: "text", delta: restaurerSurnoms(texteComplet, table) });
     } else {
-      const r = await boucleReelleStream(session, conv.id, systeme, messagesApi, table, envoyer);
+      const r =
+        fournisseurActif() === "groq"
+          ? await boucleGroq(session, conv.id, systeme, messagesApi, table, envoyer)
+          : await boucleReelleStream(session, conv.id, systeme, messagesApi, table, envoyer);
       texteComplet = r.texte;
       tokensIn = r.tokensIn;
       tokensOut = r.tokensOut;
     }
 
     await enregistrerMessage(conv.id, "assistant", remplacerSurnoms(texteComplet, table), {
-      model: MODELECONVERSATION,
+      model: modeleUtilise(),
       tokensIn,
       tokensOut,
     });
@@ -270,6 +295,7 @@ async function boucleReelle(
   let tokensOut = 0;
   let messagesCourants = [...messages];
 
+  const compteur: Compteur = new Map();
   for (let tour = 0; tour < MAXTOURSOUTILS; tour++) {
     let reponse: Anthropic.Messages.Message;
     try {
@@ -311,6 +337,8 @@ async function boucleReelle(
       reponse.content,
       table,
       conversationId,
+      undefined,
+      compteur,
     );
     messagesCourants = [
       ...messagesCourants,
@@ -355,6 +383,7 @@ async function boucleReelleStream(
   let texteAccumule = "";
   const flux = creerFluxSurnoms(table, (texte) => envoyer({ type: "text", delta: texte }));
 
+  const compteur: Compteur = new Map();
   for (let tour = 0; tour < MAXTOURSOUTILS; tour++) {
     let reponse: Anthropic.Messages.Message;
     try {
@@ -408,6 +437,8 @@ async function boucleReelleStream(
       reponse.content,
       table,
       conversationId,
+      envoyer,
+      compteur,
     );
 
     for (const bloc of reponse.content) {
@@ -454,45 +485,157 @@ export function argumentsAvecSurnoms(input: unknown, table: TableSurnoms): unkno
   return JSON.parse(restaurerSurnoms(JSON.stringify(input ?? {}), table));
 }
 
+/**
+ * Exécute un outil demandé par l'IA, quel que soit le fournisseur : arguments remis en surnoms puis
+ * vérifiés par zod, résultat ou erreur anonymisé avant de repartir vers l'IA (règles 1 et 7).
+ */
+export async function executerOutil(
+  session: SessionVerifiee,
+  appel: { nom: string; input: unknown },
+  table: TableSurnoms,
+  conversationId: string,
+  afficher?: (carte: CarteChat) => void,
+  compteur?: Compteur,
+): Promise<{ contenu: string; erreur: boolean }> {
+  const outil = OUTILS.get(appel.nom);
+  if (!outil) {
+    return { contenu: JSON.stringify({ erreur: `Outil inconnu : ${appel.nom}` }), erreur: true };
+  }
+  const deja = (compteur?.get(appel.nom) ?? 0) + 1;
+  compteur?.set(appel.nom, deja);
+  if (appel.nom === "searchRecipes" && deja > RECHERCHESMAX) {
+    return {
+      contenu: JSON.stringify({
+        erreur:
+          "Plus de recherche pour ce message : le catalogue n'a pas ce plat. Propose une idée avec listerIngredientsPermis puis proposerIdeePlat, ou réponds avec ce que tu as.",
+      }),
+      erreur: true,
+    };
+  }
+  try {
+    const input = outil.schema.parse(argumentsAvecSurnoms(appel.input, table));
+    const resultat = await outil.executer(session, input, { conversationId, afficher });
+    return { contenu: remplacerSurnoms(JSON.stringify(resultat), table), erreur: false };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Erreur interne de l'outil";
+    return { contenu: remplacerSurnoms(JSON.stringify({ erreur: message }), table), erreur: true };
+  }
+}
+
 /** Exécute les outils demandés ; leurs résultats et erreurs repartent vers l'IA sans aucun surnom. */
 export async function traiterAppelsOutils(
   session: SessionVerifiee,
   contenu: Anthropic.Messages.ContentBlock[],
   table: TableSurnoms,
   conversationId: string,
+  afficher?: (carte: CarteChat) => void,
+  compteur?: Compteur,
 ): Promise<Anthropic.Messages.ToolResultBlockParam[]> {
   const resultats: Anthropic.Messages.ToolResultBlockParam[] = [];
   for (const bloc of contenu) {
     if (bloc.type !== "tool_use") continue;
-    const outil = OUTILS.get(bloc.name);
-    if (!outil) {
-      resultats.push({
-        type: "tool_result",
-        tool_use_id: bloc.id,
-        content: JSON.stringify({ erreur: `Outil inconnu : ${bloc.name}` }),
-        is_error: true,
-      });
-      continue;
-    }
-    try {
-      const input = outil.schema.parse(argumentsAvecSurnoms(bloc.input, table));
-      const resultat = await outil.executer(session, input, { conversationId });
-      resultats.push({
-        type: "tool_result",
-        tool_use_id: bloc.id,
-        content: remplacerSurnoms(JSON.stringify(resultat), table),
-      });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Erreur interne de l'outil";
-      resultats.push({
-        type: "tool_result",
-        tool_use_id: bloc.id,
-        content: remplacerSurnoms(JSON.stringify({ erreur: message }), table),
-        is_error: true,
-      });
-    }
+    const { contenu: texte, erreur } = await executerOutil(
+      session,
+      { nom: bloc.name, input: bloc.input },
+      table,
+      conversationId,
+      afficher,
+      compteur,
+    );
+    resultats.push({
+      type: "tool_result",
+      tool_use_id: bloc.id,
+      content: texte,
+      ...(erreur ? { is_error: true } : {}),
+    });
   }
   return resultats;
+}
+
+/** Modèle qui répond vraiment, enregistré avec chaque message (ENF-18 : suivi du coût). */
+function modeleUtilise(): string {
+  return fournisseurActif() === "groq" ? modeleGroq() : MODELECONVERSATION;
+}
+
+/**
+ * Boucle d'outils avec Groq : mêmes limites et mêmes protections que la boucle Claude
+ * (8 tours au plus, outils vérifiés, surnoms jamais envoyés, libellés jamais coupés à l'affichage).
+ */
+async function boucleGroq(
+  session: SessionVerifiee,
+  conversationId: string,
+  systeme: string,
+  historique: Anthropic.Messages.MessageParam[],
+  table: TableSurnoms,
+  envoyer?: (evt: EvenementStream) => void,
+): Promise<{ texte: string; tokensIn: number; tokensOut: number }> {
+  const outils = versOutilsGroq(definitionsOutils());
+  // L'offre gratuite de Groq limite chaque demande à 8 000 jetons : seuls les derniers échanges partent
+  const messages: MessageGroq[] = [
+    { role: "system", content: systeme },
+    ...historique
+      .slice(-HISTORIQUEGROQMAX)
+      .map((m) => ({ role: m.role, content: String(m.content) }) as MessageGroq),
+  ];
+  const flux = envoyer
+    ? creerFluxSurnoms(table, (texte) => envoyer({ type: "text", delta: texte }))
+    : null;
+  let texteAccumule = "";
+  let tokensIn = 0;
+  let tokensOut = 0;
+
+  const compteur: Compteur = new Map();
+  for (let tour = 0; tour < MAXTOURSOUTILS; tour++) {
+    const reponse = await appelerGroq({
+      messages,
+      outils,
+      surTexte: flux ? (morceau) => flux.ajouter(morceau) : undefined,
+    });
+    tokensIn += reponse.tokensIn;
+    tokensOut += reponse.tokensOut;
+    texteAccumule += reponse.texte;
+
+    if (reponse.appels.length === 0) {
+      flux?.terminer();
+      return { texte: texteAccumule, tokensIn, tokensOut };
+    }
+
+    messages.push({
+      role: "assistant",
+      content: reponse.texte || null,
+      tool_calls: reponse.appels.map((a) => ({
+        id: a.id,
+        type: "function",
+        function: { name: a.nom, arguments: a.arguments || "{}" },
+      })),
+    });
+    for (const appel of reponse.appels) {
+      envoyer?.({ type: "status", status: `tool:${appel.nom}` });
+      const { contenu } = await executerOutil(
+        session,
+        { nom: appel.nom, input: lireArguments(appel.arguments) },
+        table,
+        conversationId,
+        envoyer,
+        compteur,
+      );
+      messages.push({ role: "tool", tool_call_id: appel.id, content: contenu });
+      await enregistrerMessage(
+        conversationId,
+        "tool",
+        JSON.stringify({ toolUseId: appel.id, nom: appel.nom, content: contenu }),
+      );
+    }
+  }
+
+  flux?.terminer();
+  return {
+    texte:
+      texteAccumule ||
+      "J'ai atteint la limite de recherches pour ce message. Peux-tu reformuler ta demande ?",
+    tokensIn,
+    tokensOut,
+  };
 }
 
 function extraireTexte(contenu: Anthropic.Messages.ContentBlock[]): string {

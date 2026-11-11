@@ -11,6 +11,7 @@ import { cx, fcfa, whatsappLink } from "@/lib/format";
 import { couleursAssiette } from "@/lib/couleurs-assiette";
 import type { MenuEnregistre, RepasEnregistre } from "@/lib/planificateur/generation";
 import type { MealSlot, Recipe } from "@/lib/types";
+import { BoutonCuisine } from "./bouton-cuisine";
 
 // Menu interactif (EF-06) : affiche le menu réel, permet de changer les recettes.
 
@@ -269,14 +270,21 @@ export function MenuInteractif({ menu, weeklyBudgetFcfa, peutModifier }: Props) 
 
       <div key={day.date} className="mt-3.5 flex flex-col gap-3.5">
         {day.meals.map((repas, i) => (
-          <MealCard
-            key={repas.id}
-            recipe={versRecetteUI(repas)}
-            slot={repas.slot as SlotUI}
-            tag={repas.leftoverFromId ? "restes" : undefined}
-            delay={i * 90}
-            onChanger={peutModifier ? () => ouvrirChoix(repas) : undefined}
-          />
+          <div key={repas.id} className="flex flex-col gap-1.5">
+            <MealCard
+              recipe={versRecetteUI(repas)}
+              slot={repas.slot as SlotUI}
+              tag={repas.leftoverFromId ? "restes" : undefined}
+              delay={i * 90}
+              onChanger={peutModifier ? () => ouvrirChoix(repas) : undefined}
+            />
+            {/* Un menu validé : cuisiner retire les ingrédients du stock (un reste ne retire rien) */}
+            {!estBrouillon && peutModifier && !repas.leftoverFromId && (
+              <div className="pl-1">
+                <BoutonCuisine repasId={repas.id} dejaCuisine={repas.status === "cooked"} />
+              </div>
+            )}
+          </div>
         ))}
       </div>
 

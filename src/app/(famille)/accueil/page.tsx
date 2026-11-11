@@ -12,6 +12,7 @@ import { nombreDeNotes } from "@/lib/foyer/notes";
 import { rafraichirPeremption } from "@/lib/stock/peremption";
 import { lireMenuCourant } from "@/lib/planificateur/generation";
 import { listeDuMenuActif } from "@/lib/courses/generation";
+import { BoutonCuisine } from "@/app/(famille)/menu/bouton-cuisine";
 
 export default async function HomePage() {
   // Sans foyer décrit, on invite le parent à le faire (EF-03). La garde de session est dans le layout.
@@ -125,32 +126,45 @@ export default async function HomePage() {
 
       {/* Repas de ce soir */}
       {dinerCeSoir ? (
-        <section className="wonky-lg relative mt-5 h-[188px] animate-pop bg-palme p-5 text-creme">
-          <Tape className="-top-[11px] left-[26px] -rotate-[5deg]" />
-          <SauceBowl size={156} className="absolute -right-1.5 top-[18px] animate-float" />
-          <HandNote className="relative text-2xl text-or">ce soir&nbsp;→</HandNote>
-          <h2 className="relative mt-1.5 max-w-[180px] font-display text-[27px] font-semibold leading-[1.02]">
-            {dinerCeSoir.recipe.title}
-          </h2>
-          <p className="relative mt-2 text-sm font-bold opacity-90">
-            {dinerCeSoir.recipe.minutes} min · pour {dinerCeSoir.servings} ·{" "}
-            {fcfa(dinerCeSoir.recipe.coutFcfa, false)} F
-          </p>
-          <div className="relative mt-3.5 flex gap-2">
-            <Link
-              href={`/recettes/${dinerCeSoir.recipe.id}`}
-              className="press wonky flex h-11 items-center bg-or px-4 text-sm font-extrabold text-foret"
-            >
-              Voir la recette
-            </Link>
-            <Link
-              href="/chat"
-              className="flex h-11 items-center px-2 text-sm font-extrabold underline decoration-wavy underline-offset-[5px]"
-            >
-              changer
-            </Link>
-          </div>
-        </section>
+        <>
+          <section className="wonky-lg relative mt-5 h-[188px] animate-pop bg-palme p-5 text-creme">
+            <Tape className="-top-[11px] left-[26px] -rotate-[5deg]" />
+            <SauceBowl size={156} className="absolute -right-1.5 top-[18px] animate-float" />
+            <HandNote className="relative text-2xl text-or">ce soir&nbsp;→</HandNote>
+            <h2 className="relative mt-1.5 max-w-[180px] font-display text-[27px] font-semibold leading-[1.02]">
+              {dinerCeSoir.recipe.title}
+            </h2>
+            <p className="relative mt-2 text-sm font-bold opacity-90">
+              {dinerCeSoir.recipe.minutes} min · pour {dinerCeSoir.servings} ·{" "}
+              {fcfa(dinerCeSoir.recipe.coutFcfa, false)} F
+            </p>
+            <div className="relative mt-3.5 flex gap-2">
+              <Link
+                href={`/recettes/${dinerCeSoir.recipe.id}`}
+                className="press wonky flex h-11 items-center bg-or px-4 text-sm font-extrabold text-foret"
+              >
+                Voir la recette
+              </Link>
+              <Link
+                href="/chat"
+                className="flex h-11 items-center px-2 text-sm font-extrabold underline decoration-wavy underline-offset-[5px]"
+              >
+                changer
+              </Link>
+            </div>
+          </section>
+          {/* Une fois cuisiné, ses ingrédients sortent du stock */}
+          {menu?.status === "active" &&
+            session?.acces !== "view" &&
+            !dinerCeSoir.leftoverFromId && (
+              <div className="mt-2.5 pl-1">
+                <BoutonCuisine
+                  repasId={dinerCeSoir.id}
+                  dejaCuisine={dinerCeSoir.status === "cooked"}
+                />
+              </div>
+            )}
+        </>
       ) : (
         !sansFoyer && (
           <section className="wonky-lg relative mt-5 h-[188px] animate-pop bg-palme p-5 text-creme">
