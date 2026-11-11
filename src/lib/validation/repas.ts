@@ -10,6 +10,9 @@ export const remplacementSchema = z.strictObject({
 export type RemplacementDemande = z.infer<typeof remplacementSchema>;
 
 // Modification d'un repas : déplacer, remplacer, changer les portions (EF-07).
+
+/** Portions maximum d'un repas, sur la page Menu comme avec Umi. */
+export const PORTIONSMAX = 50;
 const creneaux = ["breakfast", "lunch", "dinner"] as const;
 
 export const modificationRepasSchema = z
@@ -21,7 +24,7 @@ export const modificationRepasSchema = z
       .number({ error: "Le nombre de portions est obligatoire." })
       .int("Le nombre de portions doit être entier.")
       .min(1, "Au moins une portion.")
-      .max(20, "Vingt portions maximum.")
+      .max(PORTIONSMAX, `${PORTIONSMAX} portions maximum.`)
       .optional(),
   })
   // Une seule sorte de changement à la fois : sinon un échec au milieu laisserait le menu à moitié modifié
