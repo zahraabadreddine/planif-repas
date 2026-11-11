@@ -4,8 +4,11 @@ import { exigerEcriture } from "@/lib/auth/garde";
 import { ErreurApi, gererErreur } from "@/lib/erreurs";
 import { accepterProposition } from "@/lib/agent/proposals";
 
-// Corps facultatif : le plat d'urgence choisi parmi les options de la proposition.
-const choixSchema = z.strictObject({ recetteId: z.string().min(1).max(64).optional() });
+// Corps facultatif : le plat d'urgence choisi, ou l'accord pour un menu de fête hors budget.
+const choixSchema = z.strictObject({
+  recetteId: z.string().min(1).max(64).optional(),
+  depassementAccepte: z.boolean().optional(),
+});
 
 /** Lit le choix de la famille ; un corps vide garde la première option. */
 async function lireChoix(requete: NextRequest) {

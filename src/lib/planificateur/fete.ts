@@ -148,12 +148,14 @@ export async function composerFete(
 export async function appliquerFete(
   session: SessionVerifiee,
   demande: DemandeFete,
+  // La famille a vu le dépassement sur la carte et décidé d'ajouter le menu quand même
+  depassementAccepte = false,
 ): Promise<{ menuId: string; plats: number }> {
   const householdId = session.householdId;
   if (!householdId) throw new ErreurApi("FOYERMANQUANT");
 
   const fete = await composerFete(session, demande);
-  if (fete.depassementFcfa > 0) {
+  if (fete.depassementFcfa > 0 && !depassementAccepte) {
     throw new ErreurApi(
       "DONNEESINVALIDES",
       `Ce menu dépasse ton budget de ${fete.depassementFcfa} FCFA : retire ou remplace un plat.`,
