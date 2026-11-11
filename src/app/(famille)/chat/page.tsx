@@ -50,7 +50,13 @@ type PropositionCarte = {
   options?: { recetteId: string; titre: string }[];
   // Proposition de menu de fête : le menu chiffré par le code
   fete?: MenuFete;
+  // Menu de la semaine : les repas proposés, un jour par ligne, et le lien vers la page Menu
+  details?: string[];
+  lien?: { href: string; texte: string };
 };
+
+/** Ce que la carte d'une proposition peut afficher en plus du titre et du résumé. */
+type DetailsProposition = Pick<PropositionCarte, "details" | "lien">;
 
 /** Une proposition en attente devient une carte du chat (la fête a sa propre carte). */
 function carteProposition(p: PropositionCarte): MessageChat {
@@ -552,6 +558,8 @@ function ProposalCard({
   onAnswer: (id: string, status: "accepted" | "rejected", recetteId?: string) => void;
 }) {
   const options = proposal.options ?? [];
+  // Le détail envoyé par le serveur (repas du menu proposé), quand il y en a
+  const { details = [], lien } = proposal as AgentProposal & DetailsProposition;
   return (
     <div className="paper-shadow relative mt-2 w-[296px] max-w-full -rotate-1 animate-slide-up self-start rounded-md bg-white px-3.5 pb-3 pt-3.5">
       <Tape color="bg-lagon" className="-top-3 left-[110px] rotate-3" />
@@ -559,6 +567,21 @@ function ProposalCard({
         <p className="font-hand text-lg font-bold leading-none text-carmin">{proposal.label}</p>
         <p className="mt-0.5 font-display text-lg font-semibold leading-tight">{proposal.title}</p>
         <p className="mt-0.5 text-[13px] font-bold text-cacao">{proposal.summary}</p>
+        {details.length > 0 && (
+          <ul className="mt-2 flex flex-col gap-0.5 text-[12.5px] font-semibold leading-snug">
+            {details.map((ligne) => (
+              <li key={ligne}>{ligne}</li>
+            ))}
+          </ul>
+        )}
+        {lien && (
+          <Link
+            href={lien.href}
+            className="mt-1.5 inline-flex min-h-11 items-center text-sm font-extrabold text-palme underline underline-offset-4"
+          >
+            {lien.texte}
+          </Link>
+        )}
       </div>
       {proposal.status === "pending" && options.length > 1 ? (
         <div className="mt-3 flex flex-col gap-2 border-t-2 border-dashed border-sable pt-2.5">
