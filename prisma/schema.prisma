@@ -183,6 +183,8 @@ model Household {
   conversations      Conversation[]
   learnedPreferences LearnedPreference[]
   invitations        HouseholdInvitation[]
+  // Plats propres au foyer (idées d'Umi gardées par la famille), invisibles des autres foyers
+  recipes            Recipe[]
 
   @@index([neighborhoodId])
 }
@@ -335,14 +337,18 @@ model Recipe {
   leftoverIdeas Json         @default("[]")
   source        RecipeSource @default(team)
   validated     Boolean      @default(false)
+  // Vide : catalogue de l'équipe. Rempli : plat du foyer, visible de lui seul (règle 4)
+  householdId   String?      @db.Uuid
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
 
+  household    Household?         @relation(fields: [householdId], references: [id], onDelete: Cascade)
   ingredients  RecipeIngredient[]
   dishRatings  DishRating[]
   plannedMeals PlannedMeal[]
 
   @@index([validated])
+  @@index([householdId])
 }
 
 model RecipeIngredient {
@@ -434,6 +440,9 @@ model PlannedMeal {
   slot           MealSlot
   servings       Int
   status         MealStatus @default(planned)
+  // Vide : repas ordinaire. « entrée », « plat », « accompagnement » ou « dessert » : un des plats
+  // d'un repas de fête, qui en compte plusieurs au même créneau
+  course         String?
   leftoverFromId String?    @db.Uuid
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
