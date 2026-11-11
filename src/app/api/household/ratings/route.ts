@@ -1,9 +1,20 @@
 import { NextResponse } from "next/server";
-import { exigerEcriture } from "@/lib/auth/garde";
+import { exigerSession, exigerEcriture } from "@/lib/auth/garde";
 import { gererErreur } from "@/lib/erreurs";
-import { noterPlat } from "@/lib/foyer/notes";
+import { noterPlat, platsDuFoyer } from "@/lib/foyer/notes";
 import { noteSchema } from "@/lib/validation/note";
 import { lireCorps } from "@/lib/validation/requete";
+
+/** GET /api/household/ratings : liste les plats à noter du foyer (EF-04). */
+export async function GET() {
+  try {
+    const session = await exigerSession();
+    const plats = await platsDuFoyer(session);
+    return NextResponse.json({ dishes: plats });
+  } catch (erreur) {
+    return gererErreur(erreur);
+  }
+}
 
 /**
  * POST /api/household/ratings : note un plat pour le foyer de la session (EF-04).

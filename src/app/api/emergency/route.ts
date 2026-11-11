@@ -5,9 +5,8 @@ import { gererErreur } from "@/lib/erreurs";
 import { creneauUrgence, reorganiserUrgence } from "@/lib/planificateur/modification";
 import { lireCorps } from "@/lib/validation/requete";
 
-// strictObject : le foyer vient de la session, jamais de la requête.
 const emergencySchema = z.strictObject({
-  recipeId: z.uuid(),
+  recipeId: z.uuid({ error: "Choisis une recette." }),
   // Le repas montré à l'écran : un choix fait à 11 h 59 reste un petit déjeuner à 12 h 01
   creneau: z.enum(["breakfast", "lunch", "dinner"]).optional(),
 });

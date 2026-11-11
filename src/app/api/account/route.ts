@@ -10,6 +10,29 @@ const suppressionSchema = z.object({
   password: z.string().min(1, { error: "Le mot de passe est obligatoire." }),
 });
 
+/** GET /api/account : renvoie les infos du compte connecté. */
+export async function GET() {
+  try {
+    const { userId } = await exigerSession();
+    const utilisatrice = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        fullName: true,
+        email: true,
+        createdAt: true,
+        householdId: true,
+        consentHealthAt: true,
+        consentLocationAt: true,
+      },
+    });
+    if (!utilisatrice) throw new ErreurApi("NONCONNECTE");
+    return NextResponse.json({ account: utilisatrice });
+  } catch (erreur) {
+    return gererErreur(erreur);
+  }
+}
+
 /** DELETE /api/account : supprime le compte de l'utilisatrice connectée (ENF-16). */
 export async function DELETE(requete: Request) {
   try {
