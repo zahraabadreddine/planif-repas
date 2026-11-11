@@ -157,6 +157,35 @@ export async function chargerContexte(householdId: string, weekStart: Date) {
   };
 }
 
+/** Noms des ingrédients principaux répétés, dans l'ordre et sans doublon (la note est lue par la famille). */
+export function nomsIngredients(
+  ids: string[],
+  recettes: { ingredients: { id: string; name: string }[] }[],
+): string[] {
+  const noms = new Map(recettes.flatMap((r) => r.ingredients.map((i) => [i.id, i.name] as const)));
+  return [...new Set(ids.map((id) => (noms.get(id) ?? "un ingrédient").toLowerCase()))];
+}
+
+const IDENTIFIANT = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
+
+/** Remplace les identifiants d'une ancienne note par les noms des ingrédients (« poulet »). */
+export function noteAvecNoms(note: string, noms: Map<string, string>): string {
+  return note.replace(IDENTIFIANT, (id) =>
+    (noms.get(id.toLowerCase()) ?? "un ingrédient").toLowerCase(),
+  );
+}
+
+/** Les menus créés avant la correction gardent des identifiants dans leur note : on les traduit à la lecture. */
+async function noteLisible(note: string | null): Promise<string | null> {
+  const ids = note?.match(IDENTIFIANT);
+  if (!note || !ids) return note;
+  const ingredients = await prisma.ingredient.findMany({
+    where: { id: { in: [...new Set(ids.map((id) => id.toLowerCase()))] } },
+    select: { id: true, name: true },
+  });
+  return noteAvecNoms(note, new Map(ingredients.map((i) => [i.id, i.name])));
+}
+
 /** Génère le brouillon du menu de la semaine ; un brouillon existant pour cette semaine est remplacé. */
 export async function genererMenu(
   session: SessionVerifiee,
@@ -211,7 +240,10 @@ export async function genererMenu(
         estimatedCostFcfa: menu.totalFcfa,
         generationNotes:
           menu.principauxRepetes.length > 0
-            ? `Servi deux fois faute d'assez de recettes : ${menu.principauxRepetes.join(", ")}.`
+            ? `Servi deux fois faute d'assez de recettes : ${nomsIngredients(
+                menu.principauxRepetes,
+                recettes.map((r) => ({ ingredients: r.ingredients.map((l) => l.ingredient) })),
+              ).join(", ")}.`
             : null,
       },
     });
@@ -279,7 +311,9 @@ export async function lireMenuCourant(session: SessionVerifiee): Promise<MenuEnr
       include: avecRepas,
       orderBy: { createdAt: "desc" },
     }));
-  return menu ? enrichirAvecCout(versMenu(menu)) : null;
+  if (!menu) return null;
+  const lu = await enrichirAvecCout(versMenu(menu));
+  return { ...lu, generationNotes: await noteLisible(lu.generationNotes) };
 }
 
 /** Valide un menu : il devient le seul actif du foyer et sa liste de courses est calculée. */

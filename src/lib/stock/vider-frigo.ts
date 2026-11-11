@@ -66,7 +66,11 @@ function recetteFaisable(
  * Les allergènes sont filtrés par le code (règle §3.2).
  * Les quantités sont calculées par le code (règle §3.3).
  */
-export async function suggererRecettes(session: SessionVerifiee): Promise<SuggestionRecette[]> {
+export async function suggererRecettes(
+  session: SessionVerifiee,
+  // Pour un nombre de personnes donné par la famille (invités) ; sinon tout le foyer
+  nbPersonnes?: number,
+): Promise<SuggestionRecette[]> {
   const householdId = session.householdId;
   if (!householdId) throw new ErreurApi("FOYERMANQUANT");
 
@@ -98,7 +102,7 @@ export async function suggererRecettes(session: SessionVerifiee): Promise<Sugges
 
   const stockGrammes = stockEnGrammes(articles);
   const restrictions = restrictionsDuFoyer(membres);
-  const nbMembres = Math.max(membres.length, 1);
+  const nbMembres = nbPersonnes ?? Math.max(membres.length, 1);
 
   const ingredientsUseSoon = new Set(
     articles.filter((a) => a.status === "useSoon").map((a) => a.ingredientId),

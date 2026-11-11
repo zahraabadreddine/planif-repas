@@ -1,11 +1,16 @@
-import type { ProposalType } from "@prisma/client";
+import type { ProposalStatus, ProposalType } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import type { SessionVerifiee } from "@/lib/auth/garde";
 import { ErreurApi } from "@/lib/erreurs";
 import { enregistrerFoyer, lireFoyer } from "@/lib/foyer/profil";
 import { activerMenu } from "@/lib/planificateur/generation";
-import { remplacerRepas, reorganiserUrgence } from "@/lib/planificateur/modification";
+import {
+  changerPortions,
+  remplacerRepas,
+  reorganiserUrgence,
+} from "@/lib/planificateur/modification";
+import { PORTIONSMAX } from "@/lib/validation/repas";
 import { declarerAchats } from "@/lib/stock/achats";
 import type { ArticleAchat } from "@/lib/validation/stock";
 import { CUISINES, foyerSchema, type Cuisine } from "@/lib/validation/foyer";
@@ -25,10 +30,14 @@ const weekPlanPayload = z.object({
   menuId: z.string().uuid("Identifiant du menu manquant."),
 });
 
-const mealChangePayload = z.object({
-  repasId: z.string().uuid("Identifiant du repas manquant."),
-  nouvelleRecetteId: z.string().uuid("Identifiant de la recette manquant."),
-});
+// Une seule sorte de changement par proposition : la recette ou les portions (EF-07)
+const mealChangePayload = z
+  .object({
+    repasId: z.string().uuid("Identifiant du repas manquant."),
+    nouvelleRecetteId: z.string().uuid("Identifiant de la recette manquant.").optional(),
+    portions: z.number().int().min(1).max(PORTIONSMAX).optional(),
+  })
+  .refine((p) => (p.nouvelleRecetteId === undefined) !== (p.portions === undefined));
 
 const purchasePayload = z.object({
   items: z
@@ -121,7 +130,7 @@ export async function chargerProposition(
     throw new ErreurApi("INTROUVABLE");
   }
   if (proposition.status !== "pending") {
-    throw new ErreurApi("DONNEESINVALIDES", "Cette proposition a déjà été traitée.");
+    throw new ErreurApi("DONNEESINVALIDES", MESSAGESTATUT[proposition.status]);
   }
   if (proposition.expiresAt < new Date()) {
     await prisma.agentProposal.update({
@@ -133,6 +142,13 @@ export async function chargerProposition(
 
   return proposition as PropositionAvecFoyer;
 }
+
+/** Ce que la famille lit quand elle répond à une carte qui n'est plus en attente. */
+const MESSAGESTATUT: Record<Exclude<ProposalStatus, "pending">, string> = {
+  accepted: "Cette proposition a déjà été confirmée.",
+  rejected: "Cette proposition a déjà été refusée.",
+  expired: "Cette proposition a été remplacée par une plus récente, ou a expiré.",
+};
 
 /** Rejette une proposition (status → rejected). */
 export async function rejeterProposition(
@@ -255,7 +271,11 @@ async function appliquerMealChange(
   session: SessionVerifiee,
   payload: z.infer<typeof mealChangePayload>,
 ): Promise<Record<string, unknown>> {
-  const { menu } = await remplacerRepas(session, payload.repasId, payload.nouvelleRecetteId);
+  // Le code recalcule et revérifie toute la semaine (allergies, budget, restes) avant d'enregistrer
+  const { menu } =
+    payload.portions !== undefined
+      ? await changerPortions(session, payload.repasId, payload.portions)
+      : await remplacerRepas(session, payload.repasId, payload.nouvelleRecetteId!);
   return { menuId: menu.id };
 }
 

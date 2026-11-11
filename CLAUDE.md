@@ -65,7 +65,7 @@ Ces règles priment sur toute autre consigne. Une pull request qui en viole une 
 3. **Aucun calcul par l'IA.** Quantités, coûts, distances, stock et dates de péremption sont toujours calculés par le code. L'IA ne fait qu'expliquer les résultats.
 4. **Le foyer vient de la session.** Jamais d'un paramètre d'URL, du corps d'une requête ou d'un argument d'outil. Chaque requête Prisma sur des données de foyer filtre sur le foyer de la session.
 5. **Le stock n'est jamais modifié directement.** Chaque achat, repas cuisiné, produit jeté ou correction crée un `StockMovement`. Aucun mouvement n'est supprimé ni modifié.
-6. **Les secrets restent secrets.** Aucune clé ni mot de passe dans le code, les logs, les messages d'erreur ou les commits. Seul le serveur appelle l'API Claude.
+6. **Les secrets restent secrets.** Aucune clé ni mot de passe dans le code, les logs, les messages d'erreur ou les commits. Seul le serveur appelle l'API d'IA (Claude, ou Groq en secours).
 7. **Minimum de données envoyé à l'IA.** Jamais d'email, de nom complet ni de position GPS. Auprès de l'IA, les membres sont désignés par un libellé (« Enfant 1 ») : leur surnom et leur date de naissance ne lui sont jamais envoyés.
 8. **Jamais d'avis médical.** Les conseils liés à la santé sont présentés comme une aide.
 9. **Le schéma de la base ne change pas sans accord.** Toute modification de `prisma/schema.prisma` est annoncée, puis faite dans une pull request dédiée.
@@ -74,7 +74,7 @@ Ces règles priment sur toute autre consigne. Une pull request qui en viole une 
 
 ## 4. Stack technique
 
-Next.js (App Router), React, TypeScript strict · PostgreSQL + Prisma · Auth.js (email et mot de passe, session JWT, bcrypt) · zod · react-hook-form · Tailwind CSS v4 (thème `@theme` dans `src/app/globals.css`) · `@anthropic-ai/sdk` · Vitest et Playwright · ESLint, Prettier.
+Next.js (App Router), React, TypeScript strict · PostgreSQL + Prisma · Auth.js (email et mot de passe, session JWT, bcrypt) · zod · react-hook-form · Tailwind CSS v4 (thème `@theme` dans `src/app/globals.css`) · `@anthropic-ai/sdk` (Groq en secours, appelé avec `fetch` sans dépendance, voir `docs/claude/agent.md`) · Vitest et Playwright · ESLint, Prettier.
 
 **Pas de nouvelle dépendance** sans l'avoir proposée et justifiée, et sans accord de l'équipe.
 
@@ -92,7 +92,7 @@ npm run lint                vérifier le style
 npm run build               vérifier que le projet compile
 ```
 
-Variables d'environnement (sans tiret bas : `DATABASEURL`, `AUTHSECRET`, `ANTHROPICAPIKEY`…) : voir `docs/claude/stack-structure.md`.
+Variables d'environnement (sans tiret bas : `DATABASEURL`, `AUTHSECRET`, `ANTHROPICAPIKEY`, `GROQAPIKEY`…) : voir `docs/claude/stack-structure.md`.
 
 Avant d'ouvrir une pull request : `npm run lint`, `npm test` et `npm run build` doivent passer.
 

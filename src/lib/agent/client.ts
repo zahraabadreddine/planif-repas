@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 
-// Wrapper SDK Anthropic (§10). Le simulateur s'active quand ANTHROPICAPIKEY est vide.
+// Wrapper SDK Anthropic (§10). Sans clé Claude, Groq est utilisé s'il a une clé ;
+// sans aucune clé, le simulateur répond.
 
 export const MODELECONVERSATION = "claude-sonnet-5-5";
 export const MODELESIMPLE = "claude-haiku-4-5-20251001";
@@ -19,6 +20,18 @@ export function creerClient(): Anthropic {
 /** Vrai si l'API Anthropic est configurée (clé non vide). */
 export function apiDisponible(): boolean {
   return (process.env.ANTHROPICAPIKEY ?? "").length > 0;
+}
+
+export type Fournisseur = "claude" | "groq";
+
+/**
+ * Fournisseur d'IA utilisé, choisi à un seul endroit (ENF-21) : Claude s'il a une clé (fournisseur
+ * prévu par CLAUDE.md), sinon Groq s'il en a une, sinon aucun (mode simulé).
+ */
+export function fournisseurActif(): Fournisseur | null {
+  if (apiDisponible()) return "claude";
+  if ((process.env.GROQAPIKEY ?? "").length > 0) return "groq";
+  return null;
 }
 
 // --- Simulateur pour les tests ---
@@ -47,5 +60,5 @@ export function prochaineReponseSimulee(): ReponseSimulee | null {
 }
 
 export function estSimule(): boolean {
-  return !apiDisponible() || fileSimulation.length > 0;
+  return fournisseurActif() === null || fileSimulation.length > 0;
 }

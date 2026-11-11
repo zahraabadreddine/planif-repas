@@ -1,3 +1,4 @@
+import { prisma } from "@/lib/db";
 import { z } from "zod";
 import type { SessionVerifiee } from "@/lib/auth/garde";
 import { genererMenu } from "@/lib/planificateur/generation";
@@ -31,6 +32,16 @@ async function executer(session: SessionVerifiee, input: Input, contexte: Contex
 
   const menu = await genererMenu(session, weekStart);
 
+  // Le nouveau brouillon remplace l'ancien : une carte de menu restée en attente ne mènerait plus à rien
+  await prisma.agentProposal.updateMany({
+    where: {
+      type: "weekPlan",
+      status: "pending",
+      conversation: { householdId: session.householdId! },
+    },
+    data: { status: "expired" },
+  });
+
   const proposition = await creerProposition(contexte.conversationId, "weekPlan", {
     menuId: menu.id,
     weekStart: weekStartStr,
@@ -51,15 +62,9 @@ async function executer(session: SessionVerifiee, input: Input, contexte: Contex
     expireA: proposition.expiresAt,
     menuId: menu.id,
     coutEstimeFcfa: menu.estimatedCostFcfa,
-    repas: menu.meals.map((r) => ({
-      date: r.date,
-      creneau: r.slot,
-      recette: r.recipe.title,
-      minutes: r.recipe.minutes,
-      coutFcfa: r.recipe.coutFcfa,
-    })),
+    nombreRepas: menu.meals.length,
     message:
-      "Voici le menu de la semaine. Confirme pour l'activer, ou dis-moi ce que tu veux changer.",
+      "Menu proposé : la famille voit le détail sur la carte de proposition. Ne recopie pas les repas ; dis en une phrase que le menu est prêt et qu'il faut le confirmer pour obtenir la liste de courses.",
   };
 }
 

@@ -11,14 +11,12 @@ async function executer(session: SessionVerifiee, input: Input, contexte: unknow
   const articles = await lireStock(session);
   return {
     total: articles.length,
+    // Court : chaque jeton compte, le résultat est renvoyé à l'IA à chaque tour
     articles: articles.map((a) => ({
       ingredient: a.ingredientName,
-      categorie: a.category,
-      quantite: a.quantity,
-      unite: a.unitLabel,
-      emplacement: a.location,
+      quantite: `${a.quantity} ${a.unitLabel}`,
       peremption: a.expiresAt ? a.expiresAt.slice(0, 10) : null,
-      statut: a.status,
+      ...(a.status === "useSoon" ? { aUtiliserVite: true } : {}),
     })),
   };
 }

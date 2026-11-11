@@ -14,7 +14,7 @@
 | Validation | zod (API, formulaires, outils de l'agent) |
 | Formulaires | react-hook-form + résolveur zod |
 | Style | Tailwind CSS v4 (via PostCSS) ; thème (couleurs, polices, animations) défini avec `@theme` dans `src/app/globals.css` |
-| IA | SDK officiel `@anthropic-ai/sdk` |
+| IA | SDK officiel `@anthropic-ai/sdk` ; Groq en secours (API compatible OpenAI, `fetch`, sans dépendance) |
 | Réponses en flux | Server-Sent Events depuis une route API |
 | Localisation | API de géolocalisation du navigateur, distance par formule de haversine |
 | Itinéraire | Lien Google Maps, sans clé d'API |
@@ -43,6 +43,8 @@ Les noms ci-dessous sont volontairement sans tiret bas. Le code les lit explicit
 | `DATABASEURL` | Adresse de connexion PostgreSQL | `schema.prisma` : `url = env("DATABASEURL")` |
 | `AUTHSECRET` | Secret de signature des sessions | Configuration Auth.js : `secret: process.env.AUTHSECRET` |
 | `ANTHROPICAPIKEY` | Clé de l'API Claude | Client Anthropic : `new Anthropic({ apiKey: process.env.ANTHROPICAPIKEY })` |
+| `GROQAPIKEY` | Clé de l'API Groq, utilisée seulement sans clé Claude | `src/lib/agent/fournisseurs/groq.ts` |
+| `GROQMODELE` | Modèle Groq (facultatif, `openai/gpt-oss-120b` par défaut) | `src/lib/agent/fournisseurs/groq.ts` |
 | `AIDAILYQUOTA` | Nombre maximum de messages à l'agent par foyer et par jour | Route du chat |
 | `SEEDADMINPASSWORD` | Mot de passe du compte admin créé par le seed | `prisma/seed.ts` (haché avec bcrypt) |
 | `SEEDDEMOPASSWORD` | Mot de passe des foyers de test et du foyer de démonstration | `prisma/seed.ts` et `npm run demo:reset` (haché avec bcrypt) |
@@ -81,7 +83,8 @@ planif-repas/
       page.tsx                  écran d'accueil animé (frigo)
     lib/
       agent/
-        client.ts               client Anthropic et choix du modèle
+        client.ts               client Anthropic, choix du fournisseur et du modèle
+        fournisseurs/groq.ts    fournisseur Groq de secours (fetch, flux, erreurs)
         prompt.ts               prompt système
         context.ts              construction du contexte envoyé à Claude
         tools/                  un fichier par outil (schéma zod + exécution)

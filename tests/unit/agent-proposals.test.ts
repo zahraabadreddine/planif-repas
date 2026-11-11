@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   enregistrerFoyer: vi.fn(),
   activerMenu: vi.fn(),
   remplacerRepas: vi.fn(),
+  changerPortions: vi.fn(),
   reorganiserUrgence: vi.fn(),
   declarerAchats: vi.fn(),
 }));
@@ -37,6 +38,7 @@ vi.mock("@/lib/planificateur/generation", () => ({
 }));
 vi.mock("@/lib/planificateur/modification", () => ({
   remplacerRepas: mocks.remplacerRepas,
+  changerPortions: mocks.changerPortions,
   reorganiserUrgence: mocks.reorganiserUrgence,
 }));
 vi.mock("@/lib/stock/achats", () => ({
@@ -122,16 +124,20 @@ describe("chargerProposition", () => {
     await expect(chargerProposition(SESSION, "prop-1")).rejects.toThrow("introuvable");
   });
 
-  it("refuse si la proposition est déjà traitée", async () => {
+  it.each([
+    ["accepted", "déjà été confirmée"],
+    ["rejected", "déjà été refusée"],
+    ["expired", "remplacée par une plus récente"],
+  ])("refuse une proposition %s avec un message clair", async (status, message) => {
     mocks.agentProposalFindUnique.mockResolvedValue({
       id: "prop-1",
-      type: "profileUpdate",
-      status: "accepted",
+      type: "weekPlan",
+      status,
       expiresAt: futur,
       payload: {},
       conversation: { householdId: "h1" },
     });
-    await expect(chargerProposition(SESSION, "prop-1")).rejects.toThrow("déjà été traitée");
+    await expect(chargerProposition(SESSION, "prop-1")).rejects.toThrow(message);
   });
 
   it("marque expirée et refuse si la proposition a expiré", async () => {
@@ -255,6 +261,30 @@ describe("accepterProposition", () => {
     expect(result.status).toBe("accepted");
     expect(result.resultat).toEqual({ menuId });
     expect(mocks.remplacerRepas).toHaveBeenCalledWith(SESSION, repasId, recetteId);
+  });
+
+  it("applique mealChange avec des portions : la semaine est recalculée et revérifiée", async () => {
+    const repasId = "c2c2c2c2-d3d3-4e4e-8f5f-a0a0a0a0a0a0";
+    const menuId = "a0a0a0a0-b1b1-4c2c-8d3d-e4e4e4e4e4e4";
+    mockProposition("mealChange", { repasId, portions: 12, anciennesPortions: 4 });
+    mocks.changerPortions.mockResolvedValue({ menu: { id: menuId } });
+
+    const result = await accepterProposition(SESSION, "prop-1");
+
+    expect(result.resultat).toEqual({ menuId });
+    expect(mocks.changerPortions).toHaveBeenCalledWith(SESSION, repasId, 12);
+    expect(mocks.remplacerRepas).not.toHaveBeenCalled();
+  });
+
+  it("refuse une proposition de repas qui change à la fois la recette et les portions", async () => {
+    mockProposition("mealChange", {
+      repasId: "c2c2c2c2-d3d3-4e4e-8f5f-a0a0a0a0a0a0",
+      nouvelleRecetteId: "d3d3d3d3-e4e4-4f5f-8a0a-b1b1b1b1b1b1",
+      portions: 30,
+    });
+    await expect(accepterProposition(SESSION, "prop-1")).rejects.toThrow("invalide");
+    expect(mocks.changerPortions).not.toHaveBeenCalled();
+    expect(mocks.remplacerRepas).not.toHaveBeenCalled();
   });
 
   it("applique purchase : déclare les achats", async () => {

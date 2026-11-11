@@ -30,6 +30,41 @@ async function executer(session: SessionVerifiee, input: Input, contexte: unknow
     filtres.cout = seuils.find((s) => s >= input.maxCoutFcfa!) ?? 6000;
   }
 
+  let { resultats, masquees } = await chercher(session, filtres, input);
+  let message: string | undefined;
+
+  // Des mots-clés qui ne sont dans aucun titre (« fête », « grand repas ») : on garde les autres critères,
+  // pour qu'Umi propose des plats sans relancer une recherche à chaque fois
+  if (resultats.length === 0 && (input.texte || input.ingredients?.length)) {
+    ({ resultats, masquees } = await chercher(
+      session,
+      { ...filtres, q: undefined },
+      {
+        ...input,
+        ingredients: undefined,
+      },
+    ));
+    message =
+      "Aucune recette ne correspond à ces mots-clés : voici les recettes qui respectent les autres critères. Ne relance pas la même recherche.";
+  }
+
+  return {
+    total: resultats.length,
+    masquees,
+    ...(message ? { message } : {}),
+    recettes: resultats.slice(0, 10).map((r) => ({
+      id: r.id,
+      titre: r.title,
+      cuisine: r.cuisine,
+      minutes: r.minutes,
+      portions: r.servings,
+      coutFcfa: r.cout.totalFcfa,
+      tags: r.tags,
+    })),
+  };
+}
+
+async function chercher(session: SessionVerifiee, filtres: Filtres, input: Input) {
   // listerCatalogue filtre les allergies par le code (règle 2)
   const { recettes, masquees } = await listerCatalogue(session, filtres);
 
@@ -45,19 +80,7 @@ async function executer(session: SessionVerifiee, input: Input, contexte: unknow
     );
   }
 
-  return {
-    total: resultats.length,
-    masquees,
-    recettes: resultats.slice(0, 10).map((r) => ({
-      id: r.id,
-      titre: r.title,
-      cuisine: r.cuisine,
-      minutes: r.minutes,
-      portions: r.servings,
-      coutFcfa: r.cout.totalFcfa,
-      tags: r.tags,
-    })),
-  };
+  return { resultats, masquees };
 }
 
 export const searchRecipes: OutilAgent<typeof schema> = {

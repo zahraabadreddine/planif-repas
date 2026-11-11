@@ -7,7 +7,17 @@ import { ChevronLeft, SendIcon } from "@/components/icones";
 import { UmiHead } from "@/components/umi";
 import { UrgencyButton } from "@/components/bouton-urgence";
 import { cx } from "@/lib/format";
+import { formaterTexteChat } from "@/lib/agent/texte-chat";
+import type { IdeeFrigo } from "@/lib/agent/idees-frigo";
+import type { RepasACuisiner } from "@/lib/agent/tools/types";
+import { BoutonCuisine } from "@/app/(famille)/menu/bouton-cuisine";
 import type { AgentProposal, ChatMessage } from "@/lib/types";
+
+// Une idée d'Umi vérifiée par le code, montrée sans rien enregistrer
+type MessageChat =
+  | ChatMessage
+  | { id: string; from: "agent"; kind: "idee"; idee: IdeeFrigo }
+  | { id: string; from: "agent"; kind: "cuisine"; repas: RepasACuisiner };
 
 const SUGGESTIONS = ["Vider le frigo", "Moins cher", "Une idée pour dimanche"];
 
@@ -21,7 +31,7 @@ let idCounter = 100;
 const newId = () => `m${idCounter++}`;
 
 export default function AssistantPage() {
-  const [messages, setMessages] = useState<ChatMessage[]>([
+  const [messages, setMessages] = useState<MessageChat[]>([
     {
       id: "m0",
       from: "agent",
@@ -32,7 +42,6 @@ export default function AssistantPage() {
   const [draft, setDraft] = useState("");
   const [typing, setTyping] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
-  const [erreur, setErreur] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -43,13 +52,13 @@ export default function AssistantPage() {
     const clean = text.trim();
     if (!clean || typing) return;
     setDraft("");
-    setErreur(null);
 
     setMessages((prev) => [...prev, { id: newId(), from: "user", kind: "text", text: clean }]);
     setTyping(true);
 
-    const agentMsgId = newId();
+    let agentMsgId = newId();
     let agentTextStarted = false;
+    let cartesRecues = false;
 
     try {
       const res = await fetch("/api/chat/messages", {
@@ -103,6 +112,22 @@ export default function AssistantPage() {
                 ),
               );
             }
+          } else if (eventType === "idee") {
+            cartesRecues = true;
+            const idee = payload.idee as IdeeFrigo;
+            setMessages((prev) => [...prev, { id: newId(), from: "agent", kind: "idee", idee }]);
+            // La suite du texte s'affiche sous la carte, dans une nouvelle bulle
+            agentMsgId = newId();
+            agentTextStarted = false;
+          } else if (eventType === "cuisine") {
+            cartesRecues = true;
+            const repas = payload.repas as RepasACuisiner;
+            setMessages((prev) => [
+              ...prev,
+              { id: newId(), from: "agent", kind: "cuisine", repas },
+            ]);
+            agentMsgId = newId();
+            agentTextStarted = false;
           } else if (eventType === "done") {
             setConversationId(payload.conversationId as string);
           } else if (eventType === "proposals") {
@@ -116,23 +141,28 @@ export default function AssistantPage() {
             }>;
             if (propositions?.length > 0) {
               for (const p of propositions) {
-                setMessages((prev) => [
-                  ...prev,
-                  {
-                    id: newId(),
-                    from: "agent",
-                    kind: "proposal",
-                    proposal: {
-                      id: p.id,
-                      type: p.type,
-                      title: p.title,
-                      label: p.label,
-                      summary: p.summary,
-                      options: p.options,
-                      status: "pending",
-                    },
-                  },
-                ]);
+                // Le serveur renvoie toutes les propositions en attente : une carte déjà affichée n'est pas dupliquée
+                setMessages((prev) =>
+                  prev.some((m) => m.kind === "proposal" && m.proposal.id === p.id)
+                    ? prev
+                    : [
+                        ...prev,
+                        {
+                          id: newId(),
+                          from: "agent",
+                          kind: "proposal",
+                          proposal: {
+                            id: p.id,
+                            type: p.type,
+                            title: p.title,
+                            label: p.label,
+                            summary: p.summary,
+                            options: p.options,
+                            status: "pending",
+                          },
+                        },
+                      ],
+                );
               }
             }
           } else if (eventType === "error") {
@@ -141,7 +171,7 @@ export default function AssistantPage() {
         }
       }
 
-      if (!agentTextStarted) {
+      if (!agentTextStarted && !cartesRecues) {
         setMessages((prev) => [
           ...prev,
           {
@@ -153,19 +183,15 @@ export default function AssistantPage() {
         ]);
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Une erreur est survenue.";
-      setErreur(msg);
-      if (!agentTextStarted) {
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: agentMsgId,
-            from: "agent",
-            kind: "text",
-            text: "Désolée, je n'ai pas pu répondre. Réessaie dans un instant.",
-          },
-        ]);
-      }
+      // Le message du serveur est déjà écrit pour la famille (quota, assistante indisponible…)
+      const msg =
+        err instanceof Error && err.message
+          ? err.message
+          : "Désolée, je n'ai pas pu répondre. Réessaie dans un instant.";
+      setMessages((prev) => [
+        ...prev,
+        { id: agentTextStarted ? newId() : agentMsgId, from: "agent", kind: "text", text: msg },
+      ]);
     } finally {
       setTyping(false);
     }
@@ -224,7 +250,8 @@ export default function AssistantPage() {
             : m,
         ),
       );
-      setErreur(msg);
+      // L'explication arrive sous la carte, là où la famille regarde
+      setMessages((prev) => [...prev, { id: newId(), from: "agent", kind: "text", text: msg }]);
     } finally {
       setTyping(false);
     }
@@ -257,17 +284,15 @@ export default function AssistantPage() {
           Conversation
         </HandNote>
 
-        {erreur && (
-          <p className="self-center rounded-lg bg-carmin/10 px-3 py-1.5 text-center text-[13px] font-bold text-carmin">
-            {erreur}
-          </p>
-        )}
-
         {messages.map((m) =>
           m.kind === "proposal" ? (
             <ProposalCard key={m.id} proposal={m.proposal} onAnswer={answerProposal} />
+          ) : m.kind === "idee" ? (
+            <IdeeCard key={m.id} idee={m.idee} />
+          ) : m.kind === "cuisine" ? (
+            <CuisineCard key={m.id} repas={m.repas} />
           ) : (
-            <p
+            <div
               key={m.id}
               className={cx(
                 "max-w-[280px] animate-slide-up px-3.5 py-2.5 text-[15px] leading-snug",
@@ -276,8 +301,8 @@ export default function AssistantPage() {
                   : "self-start rounded-[18px_22px_22px_4px] bg-sable font-semibold",
               )}
             >
-              {m.text}
-            </p>
+              {m.from === "user" ? <p>{m.text}</p> : <TexteAgent texte={m.text} />}
+            </div>
           ),
         )}
         {typing && (
@@ -296,10 +321,11 @@ export default function AssistantPage() {
             ))}
           </div>
         )}
-        <div ref={bottomRef} className="h-8" />
+        <div ref={bottomRef} className="h-[96px]" />
       </div>
 
-      <div className="fixed bottom-[98px] left-1/2 z-30 w-full max-w-[430px] -translate-x-1/2 bg-gradient-to-t from-creme from-80% to-transparent px-3 pt-3">
+      {/* Au-dessus du bouton urgence flottant du gabarit (102 px du bas), qui cachait la saisie */}
+      <div className="fixed bottom-[160px] left-1/2 z-30 w-full max-w-[430px] -translate-x-1/2 bg-gradient-to-t from-creme from-80% to-transparent px-3 pt-3">
         <div className="mb-2.5 flex flex-wrap gap-2 px-1">
           {SUGGESTIONS.map((s, i) => (
             <button
@@ -347,6 +373,111 @@ export default function AssistantPage() {
         </form>
       </div>
     </>
+  );
+}
+
+/** Réponse d'Umi : un paragraphe par ligne, des puces pour les listes, le gras conservé. */
+function TexteAgent({ texte }: { texte: string }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      {formaterTexteChat(texte).map((bloc, i) => {
+        const contenu = bloc.segments.map((s, j) =>
+          s.gras ? (
+            <strong key={j} className="font-extrabold">
+              {s.texte}
+            </strong>
+          ) : (
+            <span key={j}>{s.texte}</span>
+          ),
+        );
+        return bloc.type === "puce" ? (
+          <p key={i} className="flex gap-1.5">
+            <span aria-hidden="true">•</span>
+            <span>{contenu}</span>
+          </p>
+        ) : (
+          <p key={i}>{contenu}</p>
+        );
+      })}
+    </div>
+  );
+}
+
+/** Idée d'Umi : les quantités viennent du stock, les étapes de l'IA, vérifiées par le code. */
+function IdeeCard({ idee }: { idee: IdeeFrigo }) {
+  return (
+    <div className="paper-shadow relative mt-2 w-[296px] max-w-full rotate-1 animate-slide-up self-start rounded-md bg-white px-3.5 pb-3 pt-3.5">
+      <Tape color="bg-or" className="-top-3 left-[110px] -rotate-3" />
+      <p className="font-hand text-lg font-bold leading-none text-carmin">
+        Idée d&apos;Umi{idee.categorie ? ` · ${idee.categorie}` : ""}
+      </p>
+      <p className="mt-0.5 font-display text-lg font-semibold leading-tight">{idee.titre}</p>
+      <p className="mt-0.5 text-[13px] font-bold text-cacao">
+        Pour {idee.personnes} personne{idee.personnes > 1 ? "s" : ""}
+        {idee.minutes ? ` · environ ${idee.minutes} min` : ""}
+        {idee.aAcheter === undefined
+          ? " · rien à acheter"
+          : ` · ${idee.aAcheter.length} ingrédient${idee.aAcheter.length > 1 ? "s" : ""} à acheter`}
+      </p>
+      {idee.ingredients.length > 0 && (
+        <p className="mt-2.5 text-[13px] font-extrabold">Déjà chez toi :</p>
+      )}
+      <ul className="text-[13px] font-semibold">
+        {idee.ingredients.map((i) => (
+          <li key={i.nom} className="flex gap-1.5">
+            <span aria-hidden="true">•</span>
+            <span>
+              {i.nom} ({i.quantite})
+            </span>
+          </li>
+        ))}
+      </ul>
+      {idee.aAcheter && idee.aAcheter.length > 0 && (
+        <>
+          <p className="mt-2 text-[13px] font-extrabold">À acheter :</p>
+          <p className="text-[13px] font-semibold">{idee.aAcheter.join(", ")}</p>
+        </>
+      )}
+      {idee.duPlacard.length > 0 && (
+        <p className="mt-1 text-[13px] font-semibold">Du placard : {idee.duPlacard.join(", ")}</p>
+      )}
+      <ol className="mt-2 list-decimal pl-5 text-[13px] font-semibold">
+        {idee.etapes.map((etape, i) => (
+          <li key={i}>{etape}</li>
+        ))}
+      </ol>
+      <p className="mt-2.5 border-t-2 border-dashed border-sable pt-2 text-xs font-bold italic text-cacao">
+        Idée d&apos;Umi, pas une recette vérifiée par l&apos;équipe. Les allergies du foyer ont été
+        contrôlées par l&apos;application. Elle ne s&apos;ajoute pas encore au menu.
+      </p>
+    </div>
+  );
+}
+
+const CRENEAUX: Record<string, string> = {
+  breakfast: "petit déjeuner",
+  lunch: "déjeuner",
+  dinner: "dîner",
+};
+
+/** Repas que la famille dit avoir cuisiné : c'est elle qui confirme en appuyant (règle 1). */
+function CuisineCard({ repas }: { repas: RepasACuisiner }) {
+  const jour = new Intl.DateTimeFormat("fr-FR", {
+    weekday: "long",
+    day: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(`${repas.date}T00:00:00Z`));
+  return (
+    <div className="paper-shadow relative mt-2 w-[296px] max-w-full -rotate-1 animate-slide-up self-start rounded-md bg-white px-3.5 pb-3 pt-3.5">
+      <Tape color="bg-palme" className="-top-3 left-[110px] rotate-3" />
+      <p className="font-hand text-lg font-bold leading-none text-carmin">
+        {CRENEAUX[repas.creneau] ?? "repas"} du {jour}
+      </p>
+      <p className="mb-2.5 mt-0.5 font-display text-lg font-semibold leading-tight">
+        {repas.titre}
+      </p>
+      <BoutonCuisine repasId={repas.id} dejaCuisine={false} />
+    </div>
   );
 }
 

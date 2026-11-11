@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   plannedMealFindUnique: vi.fn(),
   recipeFindUnique: vi.fn(),
   ingredientFindMany: vi.fn(),
+  agentProposalUpdateMany: vi.fn(),
 }));
 
 vi.mock("@/lib/agent/proposals", () => ({
@@ -23,6 +24,7 @@ vi.mock("@/lib/db", () => ({
     plannedMeal: { findUnique: mocks.plannedMealFindUnique },
     recipe: { findUnique: mocks.recipeFindUnique },
     ingredient: { findMany: mocks.ingredientFindMany },
+    agentProposal: { updateMany: mocks.agentProposalUpdateMany },
   },
 }));
 
@@ -105,9 +107,27 @@ describe("generateWeekPlan", () => {
 
     expect(result.menuId).toBe("menu-1");
     expect(result.coutEstimeFcfa).toBe(22000);
-    expect(result.repas).toHaveLength(1);
-    expect((result.repas as Array<{ recette: string }>)[0].recette).toBe("Attiéké poisson");
+    expect(result.nombreRepas).toBe(1);
+    // Le détail est sur la carte : le modèle ne reçoit pas les repas à recopier
+    expect(result).not.toHaveProperty("repas");
     expect(mocks.genererMenu).toHaveBeenCalledWith(SESSION, new Date("2026-11-09T00:00:00Z"));
+    const [, , payload] = mocks.creerProposition.mock.calls[0];
+    expect(payload.meals[0].recette).toBe("Attiéké poisson");
+  });
+
+  it("fait expirer l'ancienne carte de menu du foyer, avant de créer la nouvelle", async () => {
+    mocks.genererMenu.mockResolvedValue({ id: "menu-3", estimatedCostFcfa: 21000, meals: [] });
+    mocks.creerProposition.mockResolvedValue({ ...PROPOSITION, type: "weekPlan" });
+
+    await generateWeekPlan.executer(SESSION, { weekStart: "2026-11-09" }, CTX);
+
+    expect(mocks.agentProposalUpdateMany).toHaveBeenCalledWith({
+      where: { type: "weekPlan", status: "pending", conversation: { householdId: "h1" } },
+      data: { status: "expired" },
+    });
+    expect(mocks.agentProposalUpdateMany.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.creerProposition.mock.invocationCallOrder[0],
+    );
   });
 
   it("utilise le lundi prochain par défaut", async () => {
