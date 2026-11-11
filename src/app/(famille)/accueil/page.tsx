@@ -131,7 +131,7 @@ export default async function HomePage() {
       {/* Repas de ce soir */}
       {dinerCeSoir ? (
         <>
-          <section className="wonky-lg relative mt-5 h-[188px] animate-pop bg-palme p-5 text-creme">
+          <section className="wonky-lg relative mt-5 min-h-[188px] animate-pop bg-palme p-5 text-creme">
             <Tape className="-top-[11px] left-[26px] -rotate-[5deg]" />
             <SauceBowl size={156} className="absolute -right-1.5 top-[18px] animate-float" />
             <HandNote className="relative text-2xl text-or">ce soir&nbsp;→</HandNote>
@@ -171,7 +171,7 @@ export default async function HomePage() {
         </>
       ) : (
         !sansFoyer && (
-          <section className="wonky-lg relative mt-5 h-[188px] animate-pop bg-palme p-5 text-creme">
+          <section className="wonky-lg relative mt-5 min-h-[188px] animate-pop bg-palme p-5 text-creme">
             <Tape className="-top-[11px] left-[26px] -rotate-[5deg]" />
             <SauceBowl size={156} className="absolute -right-1.5 top-[18px] animate-float" />
             <HandNote className="relative text-2xl text-or">ce soir&nbsp;→</HandNote>
