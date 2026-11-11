@@ -38,6 +38,15 @@ export type ResultatOrchestration = {
 
 const MESSAGESHISTORIQUEMAX = 20;
 
+/**
+ * Plafond de la réponse de Claude. Sa réflexion (toujours active sur Sonnet 5.5) compte dedans :
+ * trop bas, elle couperait la réponse. On ne paie que ce qui est réellement produit.
+ */
+const JETONSREPONSECLAUDE = 8000;
+
+/** Effort conseillé pour une discussion : réflexion courte, réponses plus rapides et moins chères. */
+const EFFORTCONVERSATION = "low" as const;
+
 /** Recherches de recettes permises pour un même message : au-delà, Umi tournerait en rond. */
 export const RECHERCHESMAX = 2;
 
@@ -327,7 +336,8 @@ async function boucleReelle(
     try {
       reponse = await client.messages.create({
         model: MODELECONVERSATION,
-        max_tokens: 1024,
+        max_tokens: JETONSREPONSECLAUDE,
+        output_config: { effort: EFFORTCONVERSATION },
         system: [{ type: "text", text: systeme, cache_control: { type: "ephemeral" } }],
         tools: outils,
         messages: messagesCourants,
@@ -337,7 +347,8 @@ async function boucleReelle(
         try {
           reponse = await client.messages.create({
             model: MODELECONVERSATION,
-            max_tokens: 1024,
+            max_tokens: JETONSREPONSECLAUDE,
+            output_config: { effort: EFFORTCONVERSATION },
             system: [{ type: "text", text: systeme, cache_control: { type: "ephemeral" } }],
             tools: outils,
             messages: messagesCourants,
@@ -415,7 +426,8 @@ async function boucleReelleStream(
     try {
       const stream = client.messages.stream({
         model: MODELECONVERSATION,
-        max_tokens: 1024,
+        max_tokens: JETONSREPONSECLAUDE,
+        output_config: { effort: EFFORTCONVERSATION },
         system: [{ type: "text", text: systeme, cache_control: { type: "ephemeral" } }],
         tools: outils,
         messages: messagesCourants,
@@ -432,7 +444,8 @@ async function boucleReelleStream(
         try {
           const stream = client.messages.stream({
             model: MODELECONVERSATION,
-            max_tokens: 1024,
+            max_tokens: JETONSREPONSECLAUDE,
+            output_config: { effort: EFFORTCONVERSATION },
             system: [{ type: "text", text: systeme, cache_control: { type: "ephemeral" } }],
             tools: outils,
             messages: messagesCourants,
