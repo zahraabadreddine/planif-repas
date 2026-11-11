@@ -49,6 +49,8 @@ export type ArticleCree = {
 export async function declarerAchats(
   session: SessionVerifiee,
   items: ArticleAchat[],
+  // Relie l'achat à son origine (un article de la liste de courses), jamais fournie par l'API
+  reference?: string,
 ): Promise<ArticleCree[]> {
   const householdId = session.householdId;
   if (!householdId) throw new ErreurApi("FOYERMANQUANT");
@@ -119,6 +121,7 @@ export async function declarerAchats(
             type: "purchase",
             quantity: article.quantity,
             grams,
+            reference,
           },
         }),
         prisma.stockItem.update({
@@ -160,6 +163,7 @@ export async function declarerAchats(
             type: "purchase",
             quantity: article.quantity,
             grams,
+            reference,
           },
         });
         return item;

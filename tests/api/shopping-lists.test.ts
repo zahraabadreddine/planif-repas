@@ -5,9 +5,12 @@ const { mealPlan, stockItem, shoppingList, shoppingListItem, exigerSession } = v
   mealPlan: { findFirst: vi.fn() },
   stockItem: { findMany: vi.fn() },
   shoppingList: { deleteMany: vi.fn(), create: vi.fn(), findFirst: vi.fn() },
-  shoppingListItem: { updateMany: vi.fn() },
+  shoppingListItem: { updateMany: vi.fn(), findFirst: vi.fn() },
   exigerSession: vi.fn(),
 }));
+// Le passage au stock est testé dans courses-vers-stock.test.ts
+const ajouterDepuisListe = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/stock/achat-liste", () => ({ ajouterDepuisListe, retirerDepuisListe: vi.fn() }));
 
 vi.mock("@/lib/db", () => {
   const prisma = {
@@ -310,20 +313,34 @@ describe("PATCH /api/shopping-lists/:id/items/:itemId", () => {
   });
 
   it("ne coche pas l'article d'un autre foyer (404)", async () => {
-    shoppingListItem.updateMany.mockResolvedValue({ count: 0 });
+    shoppingListItem.findFirst.mockResolvedValue(null);
     const reponse = await PATCH(requete("PATCH", { checked: true }), contexteArticle());
     expect(reponse.status).toBe(404);
+    expect(shoppingListItem.findFirst.mock.calls[0][0].where).toEqual({
+      id: ARTICLE,
+      listId: LISTE,
+      list: { householdId: "f1" },
+    });
+    expect(shoppingListItem.updateMany).not.toHaveBeenCalled();
   });
 
-  it("coche l'article et renvoie la liste à jour", async () => {
+  it("coche l'article, le range dans le stock et renvoie la liste à jour", async () => {
+    shoppingListItem.findFirst.mockResolvedValue({
+      id: ARTICLE,
+      ingredientId: "ing-1",
+      unitId: "unite-1",
+      quantity: 1,
+      ingredient: { shelfLifeDays: { ambiant: 3, frigo: 7 } },
+    });
     shoppingListItem.updateMany.mockResolvedValue({ count: 1 });
     shoppingList.findFirst.mockResolvedValue(listeLue);
     const reponse = await PATCH(requete("PATCH", { checked: true }), contexteArticle());
     expect(reponse.status).toBe(200);
     expect(shoppingListItem.updateMany).toHaveBeenCalledWith({
-      where: { id: ARTICLE, listId: LISTE, list: { householdId: "f1" } },
+      where: { id: ARTICLE, listId: LISTE, checked: false },
       data: { checked: true },
     });
+    expect(ajouterDepuisListe).toHaveBeenCalledTimes(1);
     expect((await reponse.json()).list.remainingFcfa).toBe(500);
   });
 });

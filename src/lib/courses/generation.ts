@@ -4,6 +4,7 @@ import type { SessionVerifiee } from "@/lib/auth/garde";
 import { ErreurApi } from "@/lib/erreurs";
 import { VILLE } from "@/lib/catalogue/recettes";
 import { listeDeCourses, type IngredientPourListe } from "./liste";
+import { ajouterDepuisListe, retirerDepuisListe, type Conservation } from "@/lib/stock/achat-liste";
 
 // Liste de courses enregistrée d'un menu (EF-09, EF-10). Le foyer vient toujours de la
 // session (règle 4) : une liste ou un menu d'un autre foyer est traité comme introuvable.
@@ -241,7 +242,10 @@ export async function listeDuMenuActif(session: SessionVerifiee): Promise<ListeD
   return { menuId: menu.id, liste: menu.shoppingList ? versListe(menu.shoppingList) : null };
 }
 
-/** Coche ou décoche un article d'une liste du foyer de la session. */
+/**
+ * Coche ou décoche un article d'une liste du foyer de la session.
+ * Coché, il arrive dans le stock ; décoché, il en repart (mouvements reliés à l'article).
+ */
 export async function cocherArticle(
   session: SessionVerifiee,
   listId: string,
@@ -249,10 +253,38 @@ export async function cocherArticle(
   checked: boolean,
 ): Promise<ListeEnregistree> {
   const householdId = exigerFoyer(session);
-  const { count } = await prisma.shoppingListItem.updateMany({
+  const article = await prisma.shoppingListItem.findFirst({
     where: { id: itemId, listId, list: { householdId } },
+    include: { ingredient: { select: { shelfLifeDays: true } } },
+  });
+  if (!article) throw new ErreurApi("INTROUVABLE");
+
+  // Seul le changement d'état touche au stock : un double clic n'ajoute rien deux fois
+  const { count } = await prisma.shoppingListItem.updateMany({
+    where: { id: itemId, listId, checked: !checked },
     data: { checked },
   });
-  if (count === 0) throw new ErreurApi("INTROUVABLE");
+  if (count > 0) {
+    try {
+      if (checked) {
+        await ajouterDepuisListe(session, {
+          id: article.id,
+          ingredientId: article.ingredientId,
+          unitId: article.unitId,
+          quantity: article.quantity,
+          conservation: article.ingredient.shelfLifeDays as Conservation,
+        });
+      } else {
+        await retirerDepuisListe(session, article.id);
+      }
+    } catch (erreur) {
+      // Le stock n'a pas suivi : la coche revient à son état d'avant
+      await prisma.shoppingListItem.updateMany({
+        where: { id: itemId, listId, checked },
+        data: { checked: !checked },
+      });
+      throw erreur;
+    }
+  }
   return lireListe(session, listId);
 }
