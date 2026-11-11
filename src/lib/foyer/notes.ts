@@ -98,8 +98,9 @@ const avecIngredients = {
 } as const;
 
 async function recettesANoter(id?: string): Promise<RecetteANoter[]> {
+  // Seul le catalogue de l'équipe se note : jamais le plat d'un autre foyer
   const recettes = await prisma.recipe.findMany({
-    where: id ? { id } : {},
+    where: { householdId: null, ...(id ? { id } : {}) },
     select: avecIngredients,
   });
   return recettes.map((r) => ({ ...r, ingredients: r.ingredients.map((l) => l.ingredient) }));

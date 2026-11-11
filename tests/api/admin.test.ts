@@ -5,6 +5,7 @@ const { prisma, exigerAdmin, hash } = vi.hoisted(() => {
   const mkCrud = () => ({
     findMany: vi.fn(),
     findUnique: vi.fn(),
+    findFirst: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
     delete: vi.fn(),
@@ -81,6 +82,8 @@ describe("GET /api/admin/recipes", () => {
     const body = await r.json();
     expect(body.recipes).toHaveLength(1);
     expect(body.recipes[0].title).toBe("Riz");
+    // Les plats propres à un foyer restent privés
+    expect(prisma.recipe.findMany.mock.calls[0][0].where).toEqual({ householdId: null });
   });
 });
 
@@ -91,17 +94,24 @@ describe("GET /api/admin/recipes/[id]", () => {
   });
 
   it("retourne la recette avec ses ingrédients", async () => {
-    prisma.recipe.findUnique.mockResolvedValue({ id: UUID, title: "Foutou" });
+    prisma.recipe.findFirst.mockResolvedValue({ id: UUID, title: "Foutou" });
     const r = await getRecipe(req(), params(UUID));
     expect(r.status).toBe(200);
     const body = await r.json();
     expect(body.recipe.title).toBe("Foutou");
   });
+
+  it("un plat propre à un foyer reste privé : introuvable pour l'administratrice", async () => {
+    prisma.recipe.findFirst.mockResolvedValue(null);
+    const r = await getRecipe(req(), params(UUID));
+    expect(r.status).toBe(404);
+    expect(prisma.recipe.findFirst.mock.calls[0][0].where).toEqual({ id: UUID, householdId: null });
+  });
 });
 
 describe("PUT /api/admin/recipes/[id]", () => {
   it("met à jour le champ validated seul (partiel)", async () => {
-    prisma.recipe.findUnique.mockResolvedValueOnce({ id: UUID, title: "Foutou" });
+    prisma.recipe.findFirst.mockResolvedValueOnce({ id: UUID, title: "Foutou" });
     prisma.recipe.update.mockResolvedValue({ id: UUID, validated: true });
     prisma.recipe.findUnique.mockResolvedValueOnce({ id: UUID, validated: true });
 
@@ -118,7 +128,7 @@ describe("PUT /api/admin/recipes/[id]", () => {
 
 describe("DELETE /api/admin/recipes/[id]", () => {
   it("supprime une recette existante", async () => {
-    prisma.recipe.findUnique.mockResolvedValue({ id: UUID });
+    prisma.recipe.findFirst.mockResolvedValue({ id: UUID });
     prisma.recipe.delete.mockResolvedValue({ id: UUID });
     const r = await deleteRecipe(req(), params(UUID));
     expect(r.status).toBe(200);

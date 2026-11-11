@@ -242,7 +242,10 @@ export async function construireContexte(session: SessionVerifiee): Promise<{
         },
       }),
       // Noms du catalogue : un surnom comme « Riz » n'abîme pas « Riz gras » auprès de l'IA
-      prisma.recipe.findMany({ select: { title: true } }),
+      prisma.recipe.findMany({
+        where: { OR: [{ householdId: null }, { householdId: session.householdId }] },
+        select: { title: true },
+      }),
       prisma.ingredient.findMany({ select: { name: true } }),
     ]);
 

@@ -9,6 +9,7 @@ import {
   type RestrictionAFiltrer,
 } from "@/lib/planificateur/filtres";
 import { normaliser } from "@/lib/validation/membre";
+import { grammesProposes } from "@/lib/catalogue/plats-foyer";
 import {
   RAISONALLERGIE,
   RAISONFOUR,
@@ -26,11 +27,15 @@ import {
 // L'IA propose, le code vérifie (règles 1 et 2) : seuls les ingrédients du catalogue sans danger
 // pour le foyer sont permis. Aucune quantité ni aucun prix n'est inventé (règle 3).
 
-export const CATEGORIESPLAT = ["entrée", "plat", "accompagnement", "dessert"] as const;
+export { CATEGORIESPLAT } from "@/lib/validation/plat-foyer";
+import type { CategoriePlat } from "@/lib/validation/plat-foyer";
+
+/** Ingrédient du catalogue, avec son identifiant quand il est connu (pour garder le plat). */
+type IngredientDuCatalogue = IngredientAFiltrer & { id?: string };
 
 export type PlatPropose = {
   titre: string;
-  categorie?: (typeof CATEGORIESPLAT)[number];
+  categorie?: CategoriePlat;
   ingredients: string[];
   etapes?: string[];
   personnes: number;
@@ -59,13 +64,13 @@ export function ingredientsPermis(
  */
 export function verifierPlat(
   plat: PlatPropose,
-  catalogue: IngredientAFiltrer[],
+  catalogue: IngredientDuCatalogue[],
   stock: AlimentAutorise[],
   restrictions: RestrictionAFiltrer[],
   equipement: string[] = [],
 ): VerificationPlat {
   const parCle = new Map(catalogue.map((i) => [cle(i.name), i]));
-  const choisis: IngredientAFiltrer[] = [];
+  const choisis: IngredientDuCatalogue[] = [];
   for (const nom of plat.ingredients) {
     const ingredient = parCle.get(cle(nom));
     if (!ingredient) {
@@ -104,12 +109,21 @@ export function verifierPlat(
       aAcheter: choisis.filter((i) => !enStock.has(cle(i.name))).map((i) => i.name),
       duPlacard: [],
       etapes,
+      aGarder: choisis
+        .filter((i): i is IngredientDuCatalogue & { id: string } => Boolean(i.id))
+        .map((i) => ({
+          ingredientId: i.id,
+          nom: i.name,
+          grammes: grammesProposes(i.category, plat.personnes),
+        })),
     },
   };
 }
 
-async function lireCatalogue(): Promise<IngredientAFiltrer[]> {
-  return prisma.ingredient.findMany({ select: { name: true, category: true, allergens: true } });
+async function lireCatalogue(): Promise<IngredientDuCatalogue[]> {
+  return prisma.ingredient.findMany({
+    select: { id: true, name: true, category: true, allergens: true },
+  });
 }
 
 /** Ingrédients que l'IA peut utiliser pour imaginer un plat (règle 2 : filtrés avant qu'elle les voie). */

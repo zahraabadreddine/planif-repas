@@ -11,6 +11,7 @@ import { formaterTexteChat } from "@/lib/agent/texte-chat";
 import type { IdeeFrigo } from "@/lib/agent/idees-frigo";
 import type { RepasACuisiner } from "@/lib/agent/tools/types";
 import { BoutonCuisine } from "@/app/(famille)/menu/bouton-cuisine";
+import { GarderPlat } from "./garder-plat";
 import type { AgentProposal, ChatMessage } from "@/lib/types";
 
 // Une idée d'Umi vérifiée par le code, montrée sans rien enregistrer
@@ -448,8 +449,12 @@ function IdeeCard({ idee }: { idee: IdeeFrigo }) {
       </ol>
       <p className="mt-2.5 border-t-2 border-dashed border-sable pt-2 text-xs font-bold italic text-cacao">
         Idée d&apos;Umi, pas une recette vérifiée par l&apos;équipe. Les allergies du foyer ont été
-        contrôlées par l&apos;application. Elle ne s&apos;ajoute pas encore au menu.
+        contrôlées par l&apos;application.
+        {idee.aGarder?.length
+          ? " Garde-la pour la mettre dans un menu de fête."
+          : " Elle ne s'ajoute pas au menu."}
       </p>
+      <GarderPlat idee={idee} />
     </div>
   );
 }
