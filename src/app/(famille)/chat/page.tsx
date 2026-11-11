@@ -107,7 +107,11 @@ export default function AssistantPage() {
       })
       .catch(() => {})
       .finally(() => {
-        if (!annule) setChargement(false);
+        if (annule) return;
+        setChargement(false);
+        // Un lien peut préparer un message (/chat?message=…) : il est seulement écrit, la famille l'envoie
+        const prepare = new URLSearchParams(window.location.search).get("message");
+        if (prepare) setDraft(prepare.slice(0, 500));
       });
     return () => {
       annule = true;

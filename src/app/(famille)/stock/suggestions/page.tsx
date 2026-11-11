@@ -16,7 +16,18 @@ type SuggestionRecette = {
   difficulty: number;
   tags: string[];
   utiliseUseSoon: boolean;
+  // Seulement pour les recettes faisables pour moins de personnes que le foyer
+  personnes?: number;
 };
+
+type Reponse = {
+  completes: SuggestionRecette[];
+  pourMoins: SuggestionRecette[];
+  personnesFoyer: number;
+};
+
+/** Message déjà écrit pour Umi : il imagine un plat avec seulement ce qu'il reste (rien n'est envoyé seul). */
+const LIENUMI = `/chat?message=${encodeURIComponent("Je veux vider mon frigo sans rien acheter.")}`;
 
 const POSTITS = [
   { paper: "bg-or", pin: "bg-tomate", tilt: -2, ink: "text-carmin" },
@@ -33,6 +44,8 @@ function difficulteLabel(d: number): string {
 
 export default function SuggestionsPage() {
   const [suggestions, setSuggestions] = useState<SuggestionRecette[]>([]);
+  const [pourMoins, setPourMoins] = useState<SuggestionRecette[]>([]);
+  const [personnesFoyer, setPersonnesFoyer] = useState(0);
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState<string | null>(null);
 
@@ -42,7 +55,11 @@ export default function SuggestionsPage() {
         if (!r.ok) throw new Error("Impossible de charger les suggestions");
         return r.json();
       })
-      .then(setSuggestions)
+      .then((r: Reponse) => {
+        setSuggestions(r.completes);
+        setPourMoins(r.pourMoins);
+        setPersonnesFoyer(r.personnesFoyer);
+      })
       .catch(() => setErreur("Impossible de charger les suggestions."))
       .finally(() => setChargement(false));
   }, []);
@@ -75,17 +92,47 @@ export default function SuggestionsPage() {
       )}
 
       {!chargement && !erreur && suggestions.length === 0 && (
-        <div className="mt-8 flex flex-col items-center gap-3">
+        <div className="mt-6 flex flex-col items-center gap-3">
           <p className="text-center font-hand text-xl font-bold text-canard">
-            Aucune recette possible avec le stock actuel.
+            {pourMoins.length > 0
+              ? `Pas de recette complète pour ${personnesFoyer} avec ce qu'il reste.`
+              : "Pas de recette complète avec ce qu'il reste : surtout de petites quantités."}
+          </p>
+          <p className="text-center text-sm font-bold text-cacao">
+            Umi peut imaginer un plat avec seulement ce que tu as.
           </p>
           <Link
+            href={LIENUMI}
+            className="press wonky flex min-h-11 items-center border-[2.5px] border-foret bg-or px-4 py-2 font-display text-base font-bold text-puce shadow-[0_3px_0_#13260F]"
+          >
+            Demander une idée à Umi
+          </Link>
+          <Link
             href="/stock"
-            className="press wonky border-[2.5px] border-foret bg-or px-4 py-2 font-display text-base font-bold text-puce shadow-[0_3px_0_#13260F]"
+            className="flex min-h-11 items-center text-sm font-extrabold text-carmin underline decoration-wavy underline-offset-4"
           >
             Ajouter des courses
           </Link>
         </div>
+      )}
+
+      {!chargement && !erreur && pourMoins.length > 0 && (
+        <section className="mt-6 w-full">
+          <h2 className="mb-3 font-hand text-xl font-bold text-puce">Pour moins de personnes</h2>
+          <ul className="flex flex-col gap-2">
+            {pourMoins.map((recette) => (
+              <li
+                key={recette.id}
+                className="flex min-h-11 items-center justify-between gap-3 rounded-md border-2 border-foret/30 bg-creme px-3 py-2"
+              >
+                <span className="font-display text-base font-bold text-puce">{recette.title}</span>
+                <span className="whitespace-nowrap font-hand text-base font-bold text-carmin">
+                  pour {recette.personnes} pers.
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
 
       {!chargement && !erreur && suggestions.length > 0 && (

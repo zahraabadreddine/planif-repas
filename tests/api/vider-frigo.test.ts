@@ -300,7 +300,7 @@ describe("suggererRecettes", () => {
 // ─── GET /api/stock/suggestions ──────────────────────────────────
 
 describe("GET /api/stock/suggestions", () => {
-  it("renvoie les suggestions en JSON", async () => {
+  it("renvoie les recettes complètes, celles pour moins de personnes et la taille du foyer", async () => {
     stockItem.findMany.mockResolvedValue([stockTomate(3), stockOignon(2)]);
     recipe.findMany.mockResolvedValue([recetteSauce()]);
 
@@ -308,8 +308,26 @@ describe("GET /api/stock/suggestions", () => {
     const corps = await reponse.json();
 
     expect(reponse.status).toBe(200);
-    expect(corps).toHaveLength(1);
-    expect(corps[0].title).toBe("Sauce tomate");
+    expect(corps.completes).toHaveLength(1);
+    expect(corps.completes[0].title).toBe("Sauce tomate");
+    expect(corps.pourMoins).toEqual([]);
+    expect(typeof corps.personnesFoyer).toBe("number");
+  });
+
+  it("avec un petit stock : pas de recette pour les 4, mais pour 2 personnes", async () => {
+    householdMember.findMany.mockResolvedValue(
+      ["a", "b", "c", "d"].map((id) => ({ ...membreSansRestriction, id })),
+    );
+    // La sauce pour 4 demande 2 tas de tomates (150 g par personne) : 1 tas suffit pour 2
+    stockItem.findMany.mockResolvedValue([stockTomate(1), stockOignon(1)]);
+    recipe.findMany.mockResolvedValue([recetteSauce()]);
+
+    const corps = await (await GET()).json();
+
+    expect(corps.completes).toEqual([]);
+    expect(corps.pourMoins).toHaveLength(1);
+    expect(corps.pourMoins[0]).toMatchObject({ title: "Sauce tomate", personnes: 2 });
+    expect(corps.personnesFoyer).toBe(4);
   });
 
   it("401 sans session", async () => {
