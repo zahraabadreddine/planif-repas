@@ -12,6 +12,7 @@ import { couleursAssiette } from "@/lib/couleurs-assiette";
 import type { MenuEnregistre, RepasEnregistre } from "@/lib/planificateur/generation";
 import type { MealSlot, Recipe } from "@/lib/types";
 import { BoutonCuisine } from "./bouton-cuisine";
+import { CATEGORIESPLAT } from "@/lib/validation/plat-foyer";
 
 // Menu interactif (EF-06) : affiche le menu réel, permet de changer les recettes.
 
@@ -71,7 +72,7 @@ function jourDuMenu(date: string): { short: string; label: string } {
 
 /** Midi avant le soir ; un repas de fête dans l'ordre entrée, plat, accompagnement, dessert. */
 const ORDRECRENEAU = ["breakfast", "lunch", "dinner"];
-const ORDREPLATS = ["entrée", "plat", "accompagnement", "dessert"];
+const ORDREPLATS: readonly string[] = CATEGORIESPLAT;
 function ordreDuJour(a: RepasEnregistre, b: RepasEnregistre): number {
   return (
     ORDRECRENEAU.indexOf(a.slot) - ORDRECRENEAU.indexOf(b.slot) ||

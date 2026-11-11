@@ -2,7 +2,7 @@ import { z } from "zod";
 import type { SessionVerifiee } from "@/lib/auth/garde";
 import { suggestionsUrgence } from "@/lib/urgence/suggestion";
 import { creerProposition } from "@/lib/agent/proposals";
-import { creneauDuMoment } from "@/lib/planificateur/moment";
+import { creneauUrgence } from "@/lib/planificateur/modification";
 import type { ContexteOutil, OutilAgent } from "./types";
 
 const schema = z
@@ -21,7 +21,7 @@ type Input = z.infer<typeof schema>;
 
 async function executer(session: SessionVerifiee, input: Input, contexte: ContexteOutil) {
   // Le repas du moment, gardé dans la proposition : il ne change pas si la famille confirme plus tard
-  const creneau = creneauDuMoment();
+  const creneau = await creneauUrgence(session);
   const options = await suggestionsUrgence(session, input.maxMinutes, input.nbPersonnes, creneau);
 
   if (options.length === 0) {

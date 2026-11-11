@@ -46,7 +46,11 @@ export default async function HomePage() {
 
   // Repas de ce soir (Abidjan = UTC+0, toISOString donne la bonne date)
   const todayIso = new Date().toISOString().slice(0, 10);
-  const dinerCeSoir = menu?.meals.find((m) => m.date === todayIso && m.slot === "dinner") ?? null;
+  // Un dîner ordinaire ; un soir de fête, ses plats sont présentés ensemble
+  const dinerCeSoir =
+    menu?.meals.find((m) => m.date === todayIso && m.slot === "dinner" && !m.course) ?? null;
+  const platsDeFeteCeSoir =
+    menu?.meals.filter((m) => m.date === todayIso && m.slot === "dinner" && m.course).length ?? 0;
 
   // Compteurs et budget
   const mealsCount = menu?.meals.length ?? 0;
@@ -172,14 +176,19 @@ export default async function HomePage() {
             <SauceBowl size={156} className="absolute -right-1.5 top-[18px] animate-float" />
             <HandNote className="relative text-2xl text-or">ce soir&nbsp;→</HandNote>
             <h2 className="relative mt-1.5 max-w-[200px] font-display text-[27px] font-semibold leading-[1.02]">
-              Pas de repas prévu
+              {platsDeFeteCeSoir > 0 ? "Repas de fête" : "Pas de repas prévu"}
             </h2>
+            {platsDeFeteCeSoir > 0 && (
+              <p className="relative mt-2 text-sm font-bold opacity-90">
+                {platsDeFeteCeSoir} plat{platsDeFeteCeSoir > 1 ? "s" : ""} au menu
+              </p>
+            )}
             <div className="relative mt-5 flex gap-2">
               <Link
-                href="/chat"
+                href={platsDeFeteCeSoir > 0 ? "/menu" : "/chat"}
                 className="press wonky flex h-11 items-center bg-or px-4 text-sm font-extrabold text-foret"
               >
-                Demander un menu à Umi
+                {platsDeFeteCeSoir > 0 ? "Voir les plats" : "Demander un menu à Umi"}
               </Link>
             </div>
           </section>

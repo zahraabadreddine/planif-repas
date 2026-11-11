@@ -65,7 +65,7 @@ Un fichier par outil dans `src/lib/agent/tools/`, avec son schéma d'entrée zod
 | `proposerRepasCuisine` | repas du menu | Carte avec le bouton « C'est cuisiné » : la famille appuie, le code retire les ingrédients du stock ; l'IA n'écrit rien |
 | `listerIngredientsPermis` | aucune | Lecture ; ingrédients du catalogue sans allergène ni régime interdit, retirés par le code |
 | `proposerIdeePlat` | titre, catégorie, ingrédients du catalogue, étapes, personnes | Carte « Idée d'Umi » d'un plat hors catalogue, vérifiée par le code ; ni quantité ni prix ; rien n'est enregistré |
-| `proposerMenuFete` | date, créneau, personnes, budget, plats (recette et catégorie) | Carte « Menu de fête » : coût et budget calculés par le code ; la famille l'ajoute à son menu (`POST /api/meal-plans/fete`, tout revérifié) |
+| `proposerMenuFete` | date, créneau, personnes, budget, plats (recette et catégorie) | Proposition (`mealChange` avec le menu de fête) : coût et budget calculés par le code ; la carte « Menu de fête » se confirme comme toute proposition, et le code revérifie tout |
 | `proposerIdeeFrigo` | titre, aliments autorisés, étapes, personnes, minutes | Carte « Idée d'Umi » vérifiée par le code, rien n'est enregistré |
 | `recordPurchase` | lignes : ingrédient, quantité, unité, rangement | Proposition |
 | `planEmergency` | type (pas le temps), minutes, nombre de personnes | Proposition |

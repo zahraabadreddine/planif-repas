@@ -12,14 +12,15 @@ import {
   restrictionsDuFoyer,
   type RestrictionAFiltrer,
 } from "@/lib/planificateur/filtres";
-import type { CategoriePlat } from "@/lib/validation/plat-foyer";
+import { CATEGORIESPLAT, type CategoriePlat } from "@/lib/validation/plat-foyer";
+import { dateSansHeure } from "@/lib/validation/menu";
 import type { DemandeFete } from "@/lib/validation/fete";
 
 // Menu de fête : plusieurs plats au même repas, pour beaucoup de personnes, avec un budget
 // propre. Tout est vérifié et calculé par le code (règles 1, 2 et 3) ; la famille confirme.
 
 /** Ordre d'un repas de fête, pour l'affichage et la carte. */
-export const ORDRECATEGORIES: CategoriePlat[] = ["entrée", "plat", "accompagnement", "dessert"];
+export const ORDRECATEGORIES: readonly CategoriePlat[] = CATEGORIESPLAT;
 
 export type PlatChiffre = {
   recetteId: string;
@@ -140,9 +141,6 @@ export async function composerFete(
   return chiffrerFete(demande, plats);
 }
 
-/** Jour ISO → date sans heure, comme les dates de repas en base. */
-const jour = (iso: string) => new Date(`${iso}T00:00:00Z`);
-
 /**
  * Met le menu de fête dans le menu de la semaine, à la place du repas prévu à ce créneau.
  * Le code revérifie tout à la confirmation (règle 1) ; un menu hors budget est refusé.
@@ -163,7 +161,7 @@ export async function appliquerFete(
   }
 
   // Le menu de la semaine qui contient ce jour : le menu validé d'abord, sinon le brouillon
-  const date = jour(demande.date);
+  const date = dateSansHeure(demande.date);
   const debutPossible = new Date(date);
   debutPossible.setUTCDate(debutPossible.getUTCDate() - 6);
   const menus = await prisma.mealPlan.findMany({

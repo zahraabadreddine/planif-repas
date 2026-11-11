@@ -46,7 +46,7 @@ Sans aucun relevé récent, on utilise l'estimation la plus récente de l'équip
 ### Mode urgence (« pas le temps »)
 
 1. Le repas remplacé est **celui du moment**, à l'heure d'Abidjan : avant 12 h le petit déjeuner, de 12 h à 17 h le déjeuner, ensuite le dîner. Recettes faisables **uniquement avec le stock**, dans le temps donné, pour le nombre de personnes, allergènes exclus, et qui se mangent à ce moment.
-   - **Déjeuner** : le déjeuner prévu glisse au midi libre suivant, et les suivants avec lui ; les midis de restes ne bougent pas, le dernier déjeuner sans place sort du menu. Des restes ce midi ne sont jamais remplacés (ce serait les jeter). Sans déjeuner à remplacer, c'est le dîner.
+   - **Déjeuner** : le déjeuner prévu glisse au midi libre suivant, et les suivants avec lui ; les midis de restes ne bougent pas, le dernier déjeuner sans place sort du menu. Des restes ce midi ne sont jamais remplacés (ce serait les jeter). Sans déjeuner prévu aujourd'hui (déjà cuisiné ou absent), l'écran propose directement les plats du dîner. Les midis de fête ne reçoivent jamais un déjeuner ordinaire ; une fête plus tard dans la semaine empêche les dîners de glisser (seul ce soir est remplacé).
    - **Petit déjeuner** : les menus n'en ont pas ; le plat rapide est ajouté au menu de ce matin pour que « C'est cuisiné » retire ses ingrédients du stock.
    - Un repas de fête n'est jamais remplacé.
 2. 2 ou 3 options classées par rapidité. Si aucune : solution de secours honnête.

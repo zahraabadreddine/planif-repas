@@ -11,6 +11,8 @@ import {
   reorganiserUrgence,
 } from "@/lib/planificateur/modification";
 import { PORTIONSMAX } from "@/lib/validation/repas";
+import { feteSchema } from "@/lib/validation/fete";
+import { appliquerFete } from "@/lib/planificateur/fete";
 import { MOMENTS } from "@/lib/planificateur/moment";
 import { declarerAchats } from "@/lib/stock/achats";
 import type { ArticleAchat } from "@/lib/validation/stock";
@@ -39,6 +41,9 @@ const mealChangePayload = z
     portions: z.number().int().min(1).max(PORTIONSMAX).optional(),
   })
   .refine((p) => (p.nouvelleRecetteId === undefined) !== (p.portions === undefined));
+
+// Menu de fête proposé par l'agent : la carte garde les coûts calculés, seule la demande compte
+const fetePayload = z.object({ fete: z.object(feteSchema.shape) });
 
 const purchasePayload = z.object({
   items: z
@@ -219,6 +224,10 @@ function preparerApplication(
       return () => appliquerWeekPlan(session, donnees);
     }
     case "mealChange": {
+      if (typeof payload === "object" && payload !== null && "fete" in payload) {
+        const { fete } = validerPayload(fetePayload, payload);
+        return () => appliquerFete(session, fete);
+      }
       const donnees = validerPayload(mealChangePayload, payload);
       return () => appliquerMealChange(session, donnees);
     }

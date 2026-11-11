@@ -2,8 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { exigerEcriture } from "@/lib/auth/garde";
 import { gererErreur } from "@/lib/erreurs";
-import { reorganiserUrgence } from "@/lib/planificateur/modification";
-import { creneauDuMoment } from "@/lib/planificateur/moment";
+import { creneauUrgence, reorganiserUrgence } from "@/lib/planificateur/modification";
 import { lireCorps } from "@/lib/validation/requete";
 
 // strictObject : le foyer vient de la session, jamais de la requête.
@@ -21,7 +20,11 @@ export async function POST(requete: Request) {
   try {
     const session = await exigerEcriture();
     const { recipeId, creneau } = await lireCorps(requete, emergencySchema);
-    const resultat = await reorganiserUrgence(session, recipeId, creneau ?? creneauDuMoment());
+    const resultat = await reorganiserUrgence(
+      session,
+      recipeId,
+      creneau ?? (await creneauUrgence(session)),
+    );
     return NextResponse.json({
       plan: resultat.menu,
       list: resultat.liste,

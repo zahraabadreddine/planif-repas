@@ -7,7 +7,7 @@ import type { StorageLocation } from "@prisma/client";
 // Déclaration des achats (EF-13). Le foyer vient de la session (règle 4).
 // Chaque achat crée un StockMovement de type `purchase` (règle 5).
 
-type ConservationJours = {
+export type ConservationJours = {
   ambiant?: number;
   frigo?: number;
   congelateur?: number;

@@ -34,6 +34,9 @@ const GRAMMESPARCATEGORIE: Record<string, number> = {
   epice: 1,
 };
 
+/** Étiquette des plats gardés par une famille (durée inconnue, jamais dans le catalogue de l'équipe). */
+export const TAGPLATDUFOYER = "plat-du-foyer";
+
 /** Pour une catégorie inconnue : une portion moyenne. */
 const GRAMMESPARDEFAUT = 50;
 
@@ -102,7 +105,7 @@ export async function enregistrerPlatDuFoyer(
       needsCooking: true,
       servings: plat.personnes,
       difficulty: 2,
-      tags: ["plat-du-foyer", ...(plat.categorie ? [plat.categorie] : [])],
+      tags: [TAGPLATDUFOYER, ...(plat.categorie ? [plat.categorie] : [])],
       // Même format que les recettes de l'équipe, pour s'afficher sur la fiche
       steps: plat.etapes.map((text) => ({ text, minutes: 0 })),
       source: "ai",

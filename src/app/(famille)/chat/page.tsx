@@ -21,7 +21,7 @@ type MessageChat =
   | ChatMessage
   | { id: string; from: "agent"; kind: "idee"; idee: IdeeFrigo }
   | { id: string; from: "agent"; kind: "cuisine"; repas: RepasACuisiner }
-  | { id: string; from: "agent"; kind: "fete"; fete: MenuFete };
+  | { id: string; from: "agent"; kind: "fete"; fete: MenuFete; propositionId: string };
 
 const SUGGESTIONS = ["Vider le frigo", "Moins cher", "Une idée pour dimanche"];
 
@@ -48,10 +48,15 @@ type PropositionCarte = {
   label: string;
   summary: string;
   options?: { recetteId: string; titre: string }[];
+  // Proposition de menu de fête : le menu chiffré par le code
+  fete?: MenuFete;
 };
 
-/** Une proposition en attente devient une carte du chat. */
+/** Une proposition en attente devient une carte du chat (la fête a sa propre carte). */
 function carteProposition(p: PropositionCarte): MessageChat {
+  if (p.fete) {
+    return { id: newId(), from: "agent", kind: "fete", fete: p.fete, propositionId: p.id };
+  }
   return {
     id: newId(),
     from: "agent",
@@ -114,7 +119,7 @@ export default function AssistantPage() {
 
   async function send(text: string) {
     const clean = text.trim();
-    if (!clean || typing) return;
+    if (!clean || typing || chargement) return;
     setDraft("");
 
     setMessages((prev) => [...prev, { id: newId(), from: "user", kind: "text", text: clean }]);
@@ -192,48 +197,21 @@ export default function AssistantPage() {
             ]);
             agentMsgId = newId();
             agentTextStarted = false;
-          } else if (eventType === "fete") {
-            cartesRecues = true;
-            const fete = payload.fete as MenuFete;
-            setMessages((prev) => [...prev, { id: newId(), from: "agent", kind: "fete", fete }]);
-            agentMsgId = newId();
-            agentTextStarted = false;
           } else if (eventType === "done") {
             setConversationId(payload.conversationId as string);
           } else if (eventType === "proposals") {
-            const propositions = payload.propositions as Array<{
-              id: string;
-              type: string;
-              title: string;
-              label: string;
-              summary: string;
-              options?: { recetteId: string; titre: string }[];
-            }>;
-            if (propositions?.length > 0) {
-              for (const p of propositions) {
-                // Le serveur renvoie toutes les propositions en attente : une carte déjà affichée n'est pas dupliquée
-                setMessages((prev) =>
-                  prev.some((m) => m.kind === "proposal" && m.proposal.id === p.id)
-                    ? prev
-                    : [
-                        ...prev,
-                        {
-                          id: newId(),
-                          from: "agent",
-                          kind: "proposal",
-                          proposal: {
-                            id: p.id,
-                            type: p.type,
-                            title: p.title,
-                            label: p.label,
-                            summary: p.summary,
-                            options: p.options,
-                            status: "pending",
-                          },
-                        },
-                      ],
-                );
-              }
+            const propositions = payload.propositions as PropositionCarte[];
+            for (const p of propositions ?? []) {
+              // Le serveur renvoie toutes les propositions en attente : une carte déjà affichée n'est pas dupliquée
+              setMessages((prev) =>
+                prev.some(
+                  (m) =>
+                    (m.kind === "proposal" && m.proposal.id === p.id) ||
+                    (m.kind === "fete" && m.propositionId === p.id),
+                )
+                  ? prev
+                  : [...prev, carteProposition(p)],
+              );
             }
           } else if (eventType === "error") {
             throw new Error((payload.message as string) ?? "Erreur inconnue.");
@@ -371,7 +349,7 @@ export default function AssistantPage() {
           ) : m.kind === "cuisine" ? (
             <CuisineCard key={m.id} repas={m.repas} />
           ) : m.kind === "fete" ? (
-            <CarteFete key={m.id} fete={m.fete} />
+            <CarteFete key={m.id} fete={m.fete} propositionId={m.propositionId} />
           ) : (
             <div
               key={m.id}
@@ -413,7 +391,7 @@ export default function AssistantPage() {
               key={s}
               type="button"
               onClick={() => send(s)}
-              disabled={typing}
+              disabled={typing || chargement}
               className={cx(
                 "press h-[38px] px-3 text-[13px] font-extrabold",
                 SUGGESTIONSTYLE[i % SUGGESTIONSTYLE.length],
@@ -440,13 +418,13 @@ export default function AssistantPage() {
             onChange={(e) => setDraft(e.target.value)}
             placeholder="Dis-moi ce qui se passe…"
             autoComplete="off"
-            disabled={typing}
+            disabled={typing || chargement}
             className="h-[54px] min-w-0 flex-1 rounded-[16px_20px_18px_14px] border-2 border-foret bg-white px-4 text-[15px] font-semibold placeholder:text-cacao/60 disabled:opacity-60"
           />
           <button
             type="submit"
             aria-label="Envoyer"
-            disabled={typing}
+            disabled={typing || chargement}
             className="press blob flex h-[54px] w-[54px] shrink-0 items-center justify-center bg-sirop text-puce disabled:opacity-60"
           >
             <SendIcon />

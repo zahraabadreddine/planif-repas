@@ -2,7 +2,8 @@ import { exigerSession } from "@/lib/auth/garde";
 import { listerMembres } from "@/lib/foyer/membres";
 import { restrictionsDuFoyer } from "@/lib/planificateur/filtres";
 import { suggestionsUrgence } from "@/lib/urgence/suggestion";
-import { MOMENTS, creneauDuMoment } from "@/lib/planificateur/moment";
+import { MOMENTS } from "@/lib/planificateur/moment";
+import { creneauUrgence } from "@/lib/planificateur/modification";
 import UrgenceInteractif, { type OptionUrgenceClient } from "./urgence-interactif";
 
 const MAXMINUTES = 30;
@@ -13,7 +14,7 @@ export default async function UrgencePage() {
   const restrictions = restrictionsDuFoyer(membres);
 
   // Le repas du moment, à l'heure d'Abidjan : avant 12 h, de 12 h à 17 h, ensuite le soir
-  const creneau = creneauDuMoment();
+  const creneau = await creneauUrgence(session);
   const suggestions = await suggestionsUrgence(session, MAXMINUTES, undefined, creneau);
 
   const options: OptionUrgenceClient[] = suggestions.map((s) => ({

@@ -108,6 +108,8 @@ export function decalerDejeuners(
   jourDepart: number,
   recetteRapideId: string,
   personnes: number,
+  // Midis d'un repas de fête : jamais occupés par un déjeuner ordinaire
+  joursDeFete: number[] = [],
 ): Decalage {
   const copie = repas.map((r) => ({ ...r }));
   const ceMidi = copie.find((r) => r.slot === "lunch" && r.jour === jourDepart);
@@ -121,7 +123,7 @@ export function decalerDejeuners(
   );
   const places: number[] = [];
   for (let jour = jourDepart + 1; jour <= DERNIERJOUR; jour++) {
-    if (!midisDeRestes.has(jour)) places.push(jour);
+    if (!midisDeRestes.has(jour) && !joursDeFete.includes(jour)) places.push(jour);
   }
   const ordinaires = copie
     .filter((r) => r.slot === "lunch" && !r.leftoverFromId && r.jour >= jourDepart)

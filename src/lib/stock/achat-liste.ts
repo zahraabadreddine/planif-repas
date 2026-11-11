@@ -2,12 +2,13 @@ import type { StorageLocation } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import type { SessionVerifiee } from "@/lib/auth/garde";
 import { ErreurApi } from "@/lib/erreurs";
-import { declarerAchats } from "@/lib/stock/achats";
+import { declarerAchats, type ConservationJours } from "@/lib/stock/achats";
 
 // Un article coché sur la liste de courses arrive dans le stock ; décoché, il en repart.
 // Tout passe par des mouvements (règle 5) reliés à l'article par leur référence.
 
-export type Conservation = { ambiant?: number; frigo?: number; congelateur?: number };
+/** Durées de conservation d'un ingrédient (le même type que pour les achats). */
+export type Conservation = ConservationJours;
 
 /** Référence commune aux mouvements créés depuis un article de la liste. */
 export function referenceArticle(itemId: string): string {

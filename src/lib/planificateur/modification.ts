@@ -471,20 +471,8 @@ export async function reorganiserUrgence(
   creneau: MealSlot = creneauDuMoment(),
 ): Promise<ReorganisationUrgence> {
   if (creneau === "breakfast") return petitDejeunerUrgence(session, recetteRapideId);
-  if (creneau === "lunch") {
-    const midi = await dejeunerUrgence(session, recetteRapideId);
-    // Pas de déjeuner à remplacer aujourd'hui : le prochain repas est le dîner
-    if (midi) return midi;
-  }
-  const householdId = exigerFoyer(session);
-  const actif = await prisma.mealPlan.findFirst({
-    where: { householdId, status: "active" },
-    include: { meals: { include: { recipe: { select: { title: true } } } } },
-    orderBy: { weekStart: "desc" },
-  });
-  if (!actif) {
-    throw new ErreurApi("DONNEESINVALIDES", "Aucun menu actif. Génère d'abord un menu.");
-  }
+  if (creneau === "lunch") return dejeunerUrgence(session, recetteRapideId);
+  const actif = await menuActif(exigerFoyer(session));
   // Date du jour à Abidjan : les dates de repas sont des dates sans heure (minuit UTC)
   const aujourdhui = dateSansHeure(dateDuJour()).getTime();
   if (actif.meals.some((m) => m.course && m.slot === "dinner" && m.date.getTime() === aujourdhui)) {
@@ -500,29 +488,15 @@ export async function reorganiserUrgence(
   const ancienneRecette = ceSoir.recipe.title;
 
   const plan: PlanAModifier = { ...actif, meals: repasDeLaSemaine(actif.meals) };
-  // Une fête un soir suivant : les dîners ne glissent pas, seul ce soir est remplacé
-  const feteUnSoirSuivant = actif.meals.some(
-    (m) => m.course && m.slot === "dinner" && m.date.getTime() > aujourdhui,
-  );
+  // Une fête plus tard dans la semaine : les dîners (et les restes qui les suivent le midi) ne
+  // glissent pas, pour ne jamais tomber sur elle ; seul ce soir est remplacé
+  const feteApres = actif.meals.some((m) => m.course && m.date.getTime() > aujourdhui);
   const verif = await chargerPourModifier(session, plan);
-  const rapide = verif.catalogue.find((r) => r.id === recetteRapideId);
-  if (!rapide) throw new ErreurApi("INTROUVABLE");
-  if (!rapide.mealTypes.includes("dinner")) {
-    throw new ErreurApi(
-      "REPASINCOMPATIBLE",
-      "Ce plat ne se mange pas le soir : choisis-en un autre.",
-    );
-  }
-  if (
-    incompatibilites(ingredientsAFiltrer(rapide), verif.restrictions).length > 0 ||
-    equipementManquant(rapide.tags, verif.equipement).length > 0
-  ) {
-    throw new ErreurApi("REPASINCOMPATIBLE");
-  }
+  verifierPlatRapide(verif, recetteRapideId, "dinner");
 
   const avant = versPlaces(plan);
   try {
-    if (feteUnSoirSuivant) throw new ErreurApi("REPASINCOMPATIBLE");
+    if (feteApres) throw new ErreurApi("REPASINCOMPATIBLE");
     const { repas: apres, retires } = decalerDiners(
       avant,
       jourDuMenu(plan, ceSoir.date),
@@ -587,14 +561,11 @@ function verifierPlatRapide(
   return rapide;
 }
 
-/**
- * Urgence à midi : le plat rapide prend le déjeuner du jour et les déjeuners suivants glissent.
- * Renvoie null s'il n'y a pas de déjeuner à remplacer aujourd'hui (on passe alors au dîner).
- */
+/** Urgence à midi : le plat rapide prend le déjeuner du jour et les déjeuners suivants glissent. */
 async function dejeunerUrgence(
   session: SessionVerifiee,
   recetteRapideId: string,
-): Promise<ReorganisationUrgence | null> {
+): Promise<ReorganisationUrgence> {
   const actif = await menuActif(exigerFoyer(session));
   const aujourdhui = dateSansHeure(dateDuJour()).getTime();
   const duJour = actif.meals.filter((m) => m.slot === "lunch" && m.date.getTime() === aujourdhui);
@@ -605,7 +576,7 @@ async function dejeunerUrgence(
     );
   }
   const ceMidi = duJour.find((m) => m.status === "planned");
-  if (!ceMidi) return null;
+  if (!ceMidi) throw new ErreurApi("DONNEESINVALIDES", "Aucun déjeuner prévu ce midi à remplacer.");
   // Des restes déjà cuisinés : les remplacer, ce serait les jeter
   if (ceMidi.leftoverFromId) {
     throw new ErreurApi(
@@ -620,11 +591,15 @@ async function dejeunerUrgence(
 
   const avant = versPlaces(plan);
   try {
+    const joursDeFete = actif.meals
+      .filter((m) => m.course && m.slot === "lunch")
+      .map((m) => jourDuMenu(plan, m.date));
     const { repas: apres, retires } = decalerDejeuners(
       avant,
       jourDuMenu(plan, ceMidi.date),
       recetteRapideId,
       verif.parametres.personnes,
+      joursDeFete,
     );
     const menu = verifierSemaine(apres, verif);
     await enregistrerSemaine(plan, avant, apres, retires, menu.totalFcfa);
@@ -696,4 +671,28 @@ async function petitDejeunerUrgence(
     decale: false,
     message: `${rapide.title} ce matin. Appuie sur « C'est cuisiné » une fois prêt.`,
   };
+}
+
+/**
+ * Repas que le mode urgence remplacera : celui du moment (selon l'heure), sauf à midi quand
+ * aucun déjeuner n'est prévu aujourd'hui (déjà cuisiné ou absent) : c'est alors le dîner.
+ * L'écran propose les plats de ce repas-là, et l'envoie avec le choix de la famille.
+ */
+export async function creneauUrgence(
+  session: SessionVerifiee,
+  maintenant = new Date(),
+): Promise<MealSlot> {
+  const moment = creneauDuMoment(maintenant);
+  if (moment !== "lunch" || !session.householdId) return moment;
+  const aujourdhui = dateSansHeure(dateDuJour(maintenant));
+  const midi = await prisma.plannedMeal.findFirst({
+    where: {
+      slot: "lunch",
+      date: aujourdhui,
+      status: "planned",
+      mealPlan: { householdId: session.householdId, status: "active" },
+    },
+    select: { id: true },
+  });
+  return midi ? "lunch" : "dinner";
 }

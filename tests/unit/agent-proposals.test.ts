@@ -15,6 +15,8 @@ const mocks = vi.hoisted(() => ({
   declarerAchats: vi.fn(),
 }));
 
+const fete = vi.hoisted(() => ({ appliquerFete: vi.fn() }));
+vi.mock("@/lib/planificateur/fete", () => ({ appliquerFete: fete.appliquerFete }));
 vi.mock("@/lib/db", () => ({
   prisma: {
     agentProposal: {
@@ -285,6 +287,31 @@ describe("accepterProposition", () => {
     await expect(accepterProposition(SESSION, "prop-1")).rejects.toThrow("invalide");
     expect(mocks.changerPortions).not.toHaveBeenCalled();
     expect(mocks.remplacerRepas).not.toHaveBeenCalled();
+  });
+
+  it("applique un menu de fête proposé par Umi : seule la demande compte, le code revérifie", async () => {
+    const demande = {
+      date: "2026-11-12",
+      creneau: "lunch",
+      personnes: 20,
+      budgetFcfa: 100000,
+      plats: [{ recetteId: "a1a1a1a1-b2b2-4c3c-8d4d-e5e5e5e5e5e5", categorie: "entrée" }],
+    };
+    // La carte garde aussi les coûts calculés : ils ne sont pas repris tels quels
+    mockProposition("mealChange", { fete: { ...demande, totalFcfa: 1, depassementFcfa: 0 } });
+    fete.appliquerFete.mockResolvedValue({ menuId: "menu-1", plats: 1 });
+
+    const result = await accepterProposition(SESSION, "prop-1");
+
+    expect(fete.appliquerFete).toHaveBeenCalledWith(SESSION, demande);
+    expect(result.resultat).toEqual({ menuId: "menu-1", plats: 1 });
+    expect(mocks.remplacerRepas).not.toHaveBeenCalled();
+  });
+
+  it("refuse un menu de fête mal formé, sans rien appliquer", async () => {
+    mockProposition("mealChange", { fete: { date: "pas une date", plats: [] } });
+    await expect(accepterProposition(SESSION, "prop-1")).rejects.toThrow("invalide");
+    expect(fete.appliquerFete).not.toHaveBeenCalled();
   });
 
   it("applique purchase : déclare les achats", async () => {

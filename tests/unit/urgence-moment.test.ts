@@ -2,8 +2,9 @@ import { describe, expect, it, vi } from "vitest";
 
 // Mode urgence selon l'heure : le repas du moment est remplacé, le repas prévu glisse.
 
-const mocks = vi.hoisted(() => ({ suggererRecettes: vi.fn() }));
+const mocks = vi.hoisted(() => ({ suggererRecettes: vi.fn(), plannedMealFindFirst: vi.fn() }));
 vi.mock("@/lib/stock/vider-frigo", () => ({ suggererRecettes: mocks.suggererRecettes }));
+vi.mock("@/lib/db", () => ({ prisma: { plannedMeal: { findFirst: mocks.plannedMealFindFirst } } }));
 
 import { creneauDuMoment, MOMENTS } from "@/lib/planificateur/moment";
 import {
@@ -11,7 +12,7 @@ import {
   NOUVEAUREPAS,
   type RepasPlace,
 } from "@/lib/planificateur/reorganisation";
-import { repasDeLaSemaine } from "@/lib/planificateur/modification";
+import { creneauUrgence, repasDeLaSemaine } from "@/lib/planificateur/modification";
 import { suggestionsUrgence } from "@/lib/urgence/suggestion";
 import type { SessionVerifiee } from "@/lib/auth/garde";
 
@@ -141,5 +142,42 @@ describe("plats proposés selon le moment", () => {
     ]);
     const options = await suggestionsUrgence(SESSION, 30);
     expect(options.map((o) => o.title)).toEqual(["Garba"]);
+  });
+});
+
+describe("audit : l'urgence ne touche jamais une fête, et dit vrai sur le repas remplacé", () => {
+  const SESSION: SessionVerifiee = {
+    userId: "u1",
+    role: "user",
+    householdId: "h1",
+    acces: "proprietaire",
+  };
+
+  it("un déjeuner ordinaire ne glisse jamais sur le midi d'une fête", () => {
+    const semaine = [repas("L2", 2, "lunch"), repas("L3", 3, "lunch")];
+    // Le jour 3 est le midi de la fête : L2 passe directement au jour 4
+    const { repas: apres } = decalerDejeuners(semaine, 2, "rapide", 4, [3]);
+    expect(apres.find((r) => r.id === "L2")?.jour).toBe(4);
+    expect(apres.some((r) => r.slot === "lunch" && r.jour === 3 && r.id !== "L3")).toBe(false);
+  });
+
+  it("à midi sans déjeuner prévu aujourd'hui, l'écran propose les plats du dîner", async () => {
+    mocks.plannedMealFindFirst.mockResolvedValue(null);
+    expect(await creneauUrgence(SESSION, a("13:00"))).toBe("dinner");
+  });
+
+  it("à midi avec un déjeuner prévu, c'est bien le déjeuner", async () => {
+    mocks.plannedMealFindFirst.mockResolvedValue({ id: "midi" });
+    expect(await creneauUrgence(SESSION, a("13:00"))).toBe("lunch");
+    expect(mocks.plannedMealFindFirst.mock.calls.at(-1)?.[0].where).toMatchObject({
+      slot: "lunch",
+      status: "planned",
+      mealPlan: { householdId: "h1", status: "active" },
+    });
+  });
+
+  it("le matin et le soir ne dépendent que de l'heure", async () => {
+    expect(await creneauUrgence(SESSION, a("08:00"))).toBe("breakfast");
+    expect(await creneauUrgence(SESSION, a("19:00"))).toBe("dinner");
   });
 });

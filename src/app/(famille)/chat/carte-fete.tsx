@@ -15,10 +15,10 @@ const TITRES: Record<string, string> = {
 };
 
 /**
- * Menu de fête proposé par Umi : plats, coût et budget calculés par le code.
- * La famille le met dans sa semaine en appuyant (règle 1) ; le code revérifie tout.
+ * Menu de fête proposé par Umi : plats, coût et budget calculés par le code. C'est une
+ * proposition : la famille la confirme en appuyant (règle 1), le code revérifie tout.
  */
-export function CarteFete({ fete }: { fete: MenuFete }) {
+export function CarteFete({ fete, propositionId }: { fete: MenuFete; propositionId: string }) {
   const [etat, setEtat] = useState<"attente" | "envoi" | "fait">("attente");
   const [erreur, setErreur] = useState<string | null>(null);
   const jour = new Intl.DateTimeFormat("fr-FR", {
@@ -32,16 +32,9 @@ export function CarteFete({ fete }: { fete: MenuFete }) {
     setEtat("envoi");
     setErreur(null);
     try {
-      const reponse = await fetch("/api/meal-plans/fete", {
+      // Confirmer la proposition d'Umi : le code revérifie tout avant d'enregistrer (règle 1)
+      const reponse = await fetch(`/api/chat/proposals/${propositionId}/accept`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          date: fete.date,
-          creneau: fete.creneau,
-          personnes: fete.personnes,
-          budgetFcfa: fete.budgetFcfa,
-          plats: fete.plats.map((p) => ({ recetteId: p.recetteId, categorie: p.categorie })),
-        }),
       });
       if (!reponse.ok) {
         const corps = await reponse.json().catch(() => null);

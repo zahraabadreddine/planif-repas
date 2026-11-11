@@ -11,6 +11,17 @@ export function formaterProposition(p: {
 
   switch (p.type) {
     case "mealChange":
+      if (data.fete) {
+        return {
+          id: p.id,
+          type: p.type,
+          status: p.status,
+          title: "Menu de fête",
+          label: "Fête",
+          summary: "Confirme pour l'ajouter à ton menu",
+          fete: data.fete,
+        };
+      }
       if (typeof data.portions === "number") {
         return {
           id: p.id,

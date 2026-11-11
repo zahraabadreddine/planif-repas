@@ -19,6 +19,8 @@ vi.mock("@/lib/planificateur/generation", () => ({
 vi.mock("@/lib/urgence/suggestion", () => ({
   suggestionsUrgence: mocks.suggestionsUrgence,
 }));
+// Le créneau d'urgence lit le menu : ici, on le fixe
+vi.mock("@/lib/planificateur/modification", () => ({ creneauUrgence: async () => "dinner" }));
 vi.mock("@/lib/db", () => ({
   prisma: {
     plannedMeal: { findUnique: mocks.plannedMealFindUnique },
