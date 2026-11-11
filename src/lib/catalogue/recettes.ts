@@ -11,6 +11,7 @@ import type { Filtres } from "@/lib/validation/catalogue";
 import { coutRecette, meilleurPrix, type LignePourCout } from "./cout";
 import { afficherQuantite } from "./quantites";
 import { filtrerCatalogue, type RecetteResume } from "./recherche";
+import { recettesVisibles } from "./plats-foyer";
 
 // Catalogue et fiche recette (EF-20). Seules les recettes validées sont visibles.
 
@@ -34,9 +35,18 @@ export const avecIngredients = {
 
 export type LigneRecette = Awaited<ReturnType<typeof chargerRecettes>>[number];
 
-export function chargerRecettes(id?: string, toutesLesRecettes = false) {
+/**
+ * Recettes du catalogue validé de l'équipe ; avec un foyer, ses propres plats en plus
+ * (jamais ceux d'un autre foyer, règle 4).
+ */
+export function chargerRecettes(
+  id?: string,
+  toutesLesRecettes = false,
+  householdId?: string | null,
+) {
+  const visibles = householdId ? recettesVisibles(householdId) : { validated: true };
   return prisma.recipe.findMany({
-    where: { ...(toutesLesRecettes ? {} : { validated: true }), ...(id ? { id } : {}) },
+    where: { ...(toutesLesRecettes ? {} : visibles), ...(id ? { id } : {}) },
     include: avecIngredients,
     orderBy: { title: "asc" },
   });
@@ -80,7 +90,10 @@ function resumer(
 }
 
 export async function listerCatalogue(session: SessionVerifiee, filtres: Filtres) {
-  const [recettes, membres] = await Promise.all([chargerRecettes(), listerMembres(session)]);
+  const [recettes, membres] = await Promise.all([
+    chargerRecettes(undefined, false, session.householdId),
+    listerMembres(session),
+  ]);
   const restrictions = restrictionsDuFoyer(membres);
   const maintenant = new Date();
   return filtrerCatalogue(
@@ -129,7 +142,10 @@ export async function lireRecette(
 ): Promise<RecetteDetail | null> {
   // Un identifiant mal formé ne peut désigner aucune recette.
   if (!z.uuid().safeParse(id).success) return null;
-  const [[recette], membres] = await Promise.all([chargerRecettes(id), listerMembres(session)]);
+  const [[recette], membres] = await Promise.all([
+    chargerRecettes(id, false, session.householdId),
+    listerMembres(session),
+  ]);
   if (!recette) return null;
   const maintenant = new Date();
   const lignes = lignesPourCout(recette);

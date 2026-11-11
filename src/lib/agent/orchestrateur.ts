@@ -45,7 +45,31 @@ export const RECHERCHESMAX = 2;
 type Compteur = Map<string, number>;
 
 /** Messages d'historique envoyés à Groq (demandes limitées à 8 000 jetons par minute). */
-export const HISTORIQUEGROQMAX = 6;
+export const HISTORIQUEGROQMAX = 12;
+
+/** Longueur gardée d'une ancienne réponse d'Umi : les réponses de la famille restent entières. */
+const REPONSEANCIENNEMAX = 300;
+
+/**
+ * Historique allégé pour Groq : les messages de la famille restent entiers (ses réponses :
+ * nombre d'invités, date, budget…), les anciennes réponses d'Umi sont raccourcies.
+ */
+export function historiquePourGroq(
+  historique: { role: string; content: unknown }[],
+): { role: "user" | "assistant"; content: string }[] {
+  const derniers = historique.slice(-HISTORIQUEGROQMAX);
+  return derniers.map((m, i) => {
+    const texte = String(m.content);
+    const ancienne = m.role === "assistant" && i < derniers.length - 2;
+    return {
+      role: m.role === "assistant" ? "assistant" : "user",
+      content:
+        ancienne && texte.length > REPONSEANCIENNEMAX
+          ? `${texte.slice(0, REPONSEANCIENNEMAX)}…`
+          : texte,
+    };
+  });
+}
 
 export async function orchestrer(
   session: SessionVerifiee,
@@ -257,13 +281,15 @@ async function enregistrerMessage(
   });
 }
 
+/** Les derniers échanges de la famille et d'Umi, du plus ancien au plus récent. */
 async function chargerHistorique(conversationId: string) {
-  return prisma.message.findMany({
-    where: { conversationId },
-    orderBy: { createdAt: "asc" },
-    take: MESSAGESHISTORIQUEMAX + 10,
+  const derniers = await prisma.message.findMany({
+    where: { conversationId, role: { in: ["user", "assistant"] } },
+    orderBy: { createdAt: "desc" },
+    take: MESSAGESHISTORIQUEMAX,
     select: { role: true, content: true },
   });
+  return derniers.reverse();
 }
 
 /** Derniers messages, ré-anonymisés par sécurité : un ancien message peut contenir un surnom. */
@@ -573,9 +599,7 @@ async function boucleGroq(
   // L'offre gratuite de Groq limite chaque demande à 8 000 jetons : seuls les derniers échanges partent
   const messages: MessageGroq[] = [
     { role: "system", content: systeme },
-    ...historique
-      .slice(-HISTORIQUEGROQMAX)
-      .map((m) => ({ role: m.role, content: String(m.content) }) as MessageGroq),
+    ...(historiquePourGroq(historique) as MessageGroq[]),
   ];
   const flux = envoyer
     ? creerFluxSurnoms(table, (texte) => envoyer({ type: "text", delta: texte }))

@@ -13,8 +13,8 @@ export async function GET(requete: Request, { params }: Params) {
     const { id } = await params;
     if (!z.string().uuid().safeParse(id).success) throw new ErreurApi("INTROUVABLE");
 
-    const recette = await prisma.recipe.findUnique({
-      where: { id },
+    const recette = await prisma.recipe.findFirst({
+      where: { id, householdId: null },
       include: {
         ingredients: {
           include: { ingredient: true, unit: true },
@@ -34,7 +34,7 @@ export async function PUT(requete: Request, { params }: Params) {
     const { id } = await params;
     if (!z.string().uuid().safeParse(id).success) throw new ErreurApi("INTROUVABLE");
 
-    const existante = await prisma.recipe.findUnique({ where: { id } });
+    const existante = await prisma.recipe.findFirst({ where: { id, householdId: null } });
     if (!existante) throw new ErreurApi("INTROUVABLE");
 
     const corps = recetteUpdateSchema.parse(await requete.json());
@@ -78,7 +78,7 @@ export async function DELETE(requete: Request, { params }: Params) {
     const { id } = await params;
     if (!z.string().uuid().safeParse(id).success) throw new ErreurApi("INTROUVABLE");
 
-    const existante = await prisma.recipe.findUnique({ where: { id } });
+    const existante = await prisma.recipe.findFirst({ where: { id, householdId: null } });
     if (!existante) throw new ErreurApi("INTROUVABLE");
 
     await prisma.recipe.delete({ where: { id } });

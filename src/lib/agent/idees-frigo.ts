@@ -108,6 +108,8 @@ export type IdeeFrigo = {
   aAcheter?: string[];
   // Entrée, plat, accompagnement ou dessert, pour un repas de fête
   categorie?: string;
+  // Pour « Garder ce plat » : quantités proposées par le code, que la famille valide (règle 3)
+  aGarder?: { ingredientId: string; nom: string; grammes: number }[];
 };
 
 /** Un allergène nommé autrement (« cacahuètes ») ou une autre allergie écrite par le parent. */

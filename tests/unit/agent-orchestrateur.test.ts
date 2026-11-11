@@ -92,8 +92,9 @@ beforeEach(() => {
 // --- Tests du registre d'outils ---
 
 describe("registre d'outils", () => {
-  it("contient les 18 outils (7 lecture + 8 proposition + 3 écriture)", () => {
-    expect(OUTILS.size).toBe(18);
+  it("contient les 19 outils (7 lecture + 9 proposition + 3 écriture)", () => {
+    expect(OUTILS.size).toBe(19);
+    expect(OUTILS.has("proposerMenuFete")).toBe(true);
     expect(OUTILS.has("listerIngredientsPermis")).toBe(true);
     expect(OUTILS.has("proposerIdeePlat")).toBe(true);
     expect(OUTILS.has("proposerRepasCuisine")).toBe(true);
@@ -116,7 +117,7 @@ describe("registre d'outils", () => {
 
   it("génère le schéma Anthropic pour chaque outil", () => {
     const schemas = outilsAnthropicSchema();
-    expect(schemas).toHaveLength(18);
+    expect(schemas).toHaveLength(19);
     for (const s of schemas) {
       expect(s.name).toBeTruthy();
       expect(s.description).toBeTruthy();

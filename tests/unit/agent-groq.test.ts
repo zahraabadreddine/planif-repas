@@ -86,6 +86,7 @@ import {
 } from "@/lib/agent/fournisseurs/groq";
 import {
   HISTORIQUEGROQMAX,
+  historiquePourGroq,
   orchestrer,
   orchestrerStream,
   type EvenementStream,
@@ -388,20 +389,41 @@ describe("conversation complète avec Groq simulé", () => {
     expect(evenements.at(-1)).toMatchObject({ type: "done", conversationId: "conv-1" });
   });
 
-  it("seuls les derniers échanges partent chez Groq, pour rester sous la limite de jetons", async () => {
+  it("ce sont les DERNIERS échanges qui partent, sans les messages des outils", async () => {
+    // La base renvoie les plus récents d'abord (orderBy desc) : message 29 … message 10
     mocks.messageFindMany.mockResolvedValue(
-      Array.from({ length: 12 }, (_, i) => ({
+      Array.from({ length: 20 }, (_, i) => ({
         role: i % 2 === 0 ? "user" : "assistant",
-        content: `message ${i}`,
+        content: `message ${29 - i}`,
       })),
     );
     const fetchFn = vi.fn().mockResolvedValue(reponseGroq({ content: "Ok" }));
     vi.stubGlobal("fetch", fetchFn);
     await orchestrer(SESSION, null, "Bonjour");
+    expect(mocks.messageFindMany.mock.calls[0][0]).toMatchObject({
+      where: { role: { in: ["user", "assistant"] } },
+      orderBy: { createdAt: "desc" },
+    });
     const envoye = JSON.parse(fetchFn.mock.calls[0][1].body);
     expect(envoye.messages[0].role).toBe("system");
     expect(envoye.messages).toHaveLength(1 + HISTORIQUEGROQMAX);
-    expect(envoye.messages.at(-1).content).toBe("message 11");
+    // Du plus ancien gardé au plus récent : message 18 … message 29
+    expect(envoye.messages[1].content).toBe("message 18");
+    expect(envoye.messages.at(-1).content).toBe("message 29");
+  });
+
+  it("les réponses de la famille restent entières, les anciennes réponses d'Umi sont raccourcies", () => {
+    const long = "x".repeat(1000);
+    const allege = historiquePourGroq([
+      { role: "user", content: `On sera 20 personnes jeudi midi ${long}` },
+      { role: "assistant", content: long },
+      { role: "user", content: "Budget 100 000 FCFA" },
+      { role: "assistant", content: long },
+    ]);
+    expect(allege[0].content.length).toBeGreaterThan(1000);
+    expect(allege[1].content.length).toBeLessThan(310);
+    // Les deux derniers messages restent complets
+    expect(allege[3].content).toBe(long);
   });
 
   it("une panne de Groq devient un message clair dans le chat", async () => {

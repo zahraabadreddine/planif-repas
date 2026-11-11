@@ -20,8 +20,8 @@ export async function GET() {
     ] = await Promise.all([
       prisma.user.count(),
       prisma.household.count(),
-      prisma.recipe.count(),
-      prisma.recipe.count({ where: { validated: true } }),
+      prisma.recipe.count({ where: { householdId: null } }),
+      prisma.recipe.count({ where: { validated: true, householdId: null } }),
       prisma.ingredient.count(),
       prisma.price.count(),
       prisma.store.count(),

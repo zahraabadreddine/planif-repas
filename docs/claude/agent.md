@@ -65,6 +65,7 @@ Un fichier par outil dans `src/lib/agent/tools/`, avec son schéma d'entrée zod
 | `proposerRepasCuisine` | repas du menu | Carte avec le bouton « C'est cuisiné » : la famille appuie, le code retire les ingrédients du stock ; l'IA n'écrit rien |
 | `listerIngredientsPermis` | aucune | Lecture ; ingrédients du catalogue sans allergène ni régime interdit, retirés par le code |
 | `proposerIdeePlat` | titre, catégorie, ingrédients du catalogue, étapes, personnes | Carte « Idée d'Umi » d'un plat hors catalogue, vérifiée par le code ; ni quantité ni prix ; rien n'est enregistré |
+| `proposerMenuFete` | date, créneau, personnes, budget, plats (recette et catégorie) | Proposition (`mealChange` avec le menu de fête) : coût et budget calculés par le code ; la carte « Menu de fête » se confirme comme toute proposition, et le code revérifie tout |
 | `proposerIdeeFrigo` | titre, aliments autorisés, étapes, personnes, minutes | Carte « Idée d'Umi » vérifiée par le code, rien n'est enregistré |
 | `recordPurchase` | lignes : ingrédient, quantité, unité, rangement | Proposition |
 | `planEmergency` | type (pas le temps), minutes, nombre de personnes | Proposition |
@@ -78,7 +79,7 @@ Quand aucune recette du catalogue n'est faisable avec le stock, Umi peut imagine
 
 ### Idée de plat avec achats (fête, cuisine d'ailleurs)
 
-Quand le catalogue n'a pas les plats voulus, Umi peut en imaginer, un par carte. Le code ne lui donne que les ingrédients du catalogue sans danger pour le foyer, puis vérifie chaque plat : ingrédients du catalogue seulement, aucun aliment interdit cité, pas de four si le foyer n'en a pas. La carte sépare « déjà chez toi » (quantités du stock) et « à acheter » (sans quantité). Ni quantité ni prix ne sont inventés (règle 3), et l'idée n'entre pas dans le menu. Pour éviter qu'Umi tourne en rond, `searchRecipes` est limité à deux appels par message.
+Quand le catalogue n'a pas les plats voulus, Umi peut en imaginer, un par carte. Le code ne lui donne que les ingrédients du catalogue sans danger pour le foyer, puis vérifie chaque plat : ingrédients du catalogue seulement, aucun aliment interdit cité, pas de four si le foyer n'en a pas. La carte sépare « déjà chez toi » (quantités du stock) et « à acheter » (sans quantité). Ni quantité ni prix ne sont inventés (règle 3), et l'idée n'entre pas dans le menu. La famille peut garder une idée (« Garder ce plat ») : le code propose les quantités selon la catégorie de chaque ingrédient et le nombre de personnes, elle les valide ou les corrige, et le plat devient une recette de son foyer (`Recipe.householdId`), invisible des autres foyers et de l'administratrice. Le menu de fête place ensuite plusieurs plats au même créneau (`PlannedMeal.course`), avec un budget propre vérifié par le code ; un menu hors budget ne peut pas être enregistré. Pour éviter qu'Umi tourne en rond, `searchRecipes` est limité à deux appels par message.
 
 Un outil renvoie toujours des données structurées et courtes. En cas d'échec, il renvoie une erreur lisible que l'agent peut expliquer.
 

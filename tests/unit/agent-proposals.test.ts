@@ -15,6 +15,8 @@ const mocks = vi.hoisted(() => ({
   declarerAchats: vi.fn(),
 }));
 
+const fete = vi.hoisted(() => ({ appliquerFete: vi.fn() }));
+vi.mock("@/lib/planificateur/fete", () => ({ appliquerFete: fete.appliquerFete }));
 vi.mock("@/lib/db", () => ({
   prisma: {
     agentProposal: {
@@ -287,6 +289,31 @@ describe("accepterProposition", () => {
     expect(mocks.remplacerRepas).not.toHaveBeenCalled();
   });
 
+  it("applique un menu de fête proposé par Umi : seule la demande compte, le code revérifie", async () => {
+    const demande = {
+      date: "2026-11-12",
+      creneau: "lunch",
+      personnes: 20,
+      budgetFcfa: 100000,
+      plats: [{ recetteId: "a1a1a1a1-b2b2-4c3c-8d4d-e5e5e5e5e5e5", categorie: "entrée" }],
+    };
+    // La carte garde aussi les coûts calculés : ils ne sont pas repris tels quels
+    mockProposition("mealChange", { fete: { ...demande, totalFcfa: 1, depassementFcfa: 0 } });
+    fete.appliquerFete.mockResolvedValue({ menuId: "menu-1", plats: 1 });
+
+    const result = await accepterProposition(SESSION, "prop-1");
+
+    expect(fete.appliquerFete).toHaveBeenCalledWith(SESSION, demande);
+    expect(result.resultat).toEqual({ menuId: "menu-1", plats: 1 });
+    expect(mocks.remplacerRepas).not.toHaveBeenCalled();
+  });
+
+  it("refuse un menu de fête mal formé, sans rien appliquer", async () => {
+    mockProposition("mealChange", { fete: { date: "pas une date", plats: [] } });
+    await expect(accepterProposition(SESSION, "prop-1")).rejects.toThrow("invalide");
+    expect(fete.appliquerFete).not.toHaveBeenCalled();
+  });
+
   it("applique purchase : déclare les achats", async () => {
     const ingId = "e4e4e4e4-f5f5-4a0a-8b1b-c2c2c2c2c2c2";
     const unitId = "f5f5f5f5-a0a0-4b1b-8c2c-d3d3d3d3d3d3";
@@ -327,7 +354,8 @@ describe("accepterProposition", () => {
       nouvelleRecette: "Attiéké poisson",
       decale: true,
     });
-    expect(mocks.reorganiserUrgence).toHaveBeenCalledWith(SESSION, "r-1");
+    // Une proposition sans créneau (avant cette version) reste un dîner
+    expect(mocks.reorganiserUrgence).toHaveBeenCalledWith(SESSION, "r-1", "dinner");
     expect(mocks.remplacerRepas).not.toHaveBeenCalled();
   });
 
@@ -429,10 +457,22 @@ describe("accepterProposition : la famille choisit son plat d'urgence", () => {
     });
   }
 
+  it("une proposition faite le midi remplace le déjeuner, même confirmée plus tard", async () => {
+    urgence();
+    const proposition = await mocks.agentProposalFindUnique();
+    mocks.agentProposalFindUnique.mockResolvedValue({
+      ...proposition,
+      payload: { ...proposition.payload, creneau: "lunch" },
+    });
+    const result = await accepterProposition(SESSION, "prop-1");
+    expect(mocks.reorganiserUrgence).toHaveBeenCalledWith(SESSION, "r-1", "lunch");
+    expect(String(result.resultat.message)).toMatch(/^Attiéké poisson ce midi./);
+  });
+
   it("applique l'option choisie, pas la première", async () => {
     urgence();
     const result = await accepterProposition(SESSION, "prop-1", { recetteId: "r-2" });
-    expect(mocks.reorganiserUrgence).toHaveBeenCalledWith(SESSION, "r-2");
+    expect(mocks.reorganiserUrgence).toHaveBeenCalledWith(SESSION, "r-2", "dinner");
     expect(result.resultat.nouvelleRecette).toBe("Alloco et œufs");
   });
 

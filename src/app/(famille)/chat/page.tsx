@@ -11,13 +11,17 @@ import { formaterTexteChat } from "@/lib/agent/texte-chat";
 import type { IdeeFrigo } from "@/lib/agent/idees-frigo";
 import type { RepasACuisiner } from "@/lib/agent/tools/types";
 import { BoutonCuisine } from "@/app/(famille)/menu/bouton-cuisine";
+import { GarderPlat } from "./garder-plat";
+import { CarteFete } from "./carte-fete";
+import type { MenuFete } from "@/lib/planificateur/fete";
 import type { AgentProposal, ChatMessage } from "@/lib/types";
 
 // Une idée d'Umi vérifiée par le code, montrée sans rien enregistrer
 type MessageChat =
   | ChatMessage
   | { id: string; from: "agent"; kind: "idee"; idee: IdeeFrigo }
-  | { id: string; from: "agent"; kind: "cuisine"; repas: RepasACuisiner };
+  | { id: string; from: "agent"; kind: "cuisine"; repas: RepasACuisiner }
+  | { id: string; from: "agent"; kind: "fete"; fete: MenuFete; propositionId: string };
 
 const SUGGESTIONS = ["Vider le frigo", "Moins cher", "Une idée pour dimanche"];
 
@@ -30,19 +34,84 @@ const SUGGESTIONSTYLE = [
 let idCounter = 100;
 const newId = () => `m${idCounter++}`;
 
+const ACCUEIL: MessageChat = {
+  id: "m0",
+  from: "agent",
+  kind: "text",
+  text: "Bonsoir ! Je suis Umi, ton assistante cuisine. Dis-moi ce qui se passe 🍲",
+};
+
+type PropositionCarte = {
+  id: string;
+  type: string;
+  title: string;
+  label: string;
+  summary: string;
+  options?: { recetteId: string; titre: string }[];
+  // Proposition de menu de fête : le menu chiffré par le code
+  fete?: MenuFete;
+};
+
+/** Une proposition en attente devient une carte du chat (la fête a sa propre carte). */
+function carteProposition(p: PropositionCarte): MessageChat {
+  if (p.fete) {
+    return { id: newId(), from: "agent", kind: "fete", fete: p.fete, propositionId: p.id };
+  }
+  return {
+    id: newId(),
+    from: "agent",
+    kind: "proposal",
+    proposal: { ...p, status: "pending" },
+  };
+}
+
+type Reprise = {
+  id: string;
+  messages: { id: string; role: "user" | "assistant"; content: string }[];
+  propositions: PropositionCarte[];
+};
+
 export default function AssistantPage() {
-  const [messages, setMessages] = useState<MessageChat[]>([
-    {
-      id: "m0",
-      from: "agent",
-      kind: "text",
-      text: "Bonsoir ! Je suis Umi, ton assistante cuisine. Dis-moi ce qui se passe 🍲",
-    },
-  ]);
+  const [messages, setMessages] = useState<MessageChat[]>([ACCUEIL]);
+  const [chargement, setChargement] = useState(true);
   const [draft, setDraft] = useState("");
   const [typing, setTyping] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  // La conversation est gardée en base : en revenant sur le chat, on la reprend là où elle était
+  useEffect(() => {
+    let annule = false;
+    fetch("/api/chat/conversations")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((corps: { conversation: Reprise | null } | null) => {
+        const reprise = corps?.conversation;
+        if (annule || !reprise) return;
+        setConversationId(reprise.id);
+        setMessages([
+          ACCUEIL,
+          ...reprise.messages.map((m): MessageChat => ({
+            id: m.id,
+            from: m.role === "user" ? "user" : "agent",
+            kind: "text",
+            text: m.content,
+          })),
+          ...reprise.propositions.map(carteProposition),
+        ]);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!annule) setChargement(false);
+      });
+    return () => {
+      annule = true;
+    };
+  }, []);
+
+  function nouvelleConversation() {
+    setConversationId(null);
+    setMessages([ACCUEIL]);
+  }
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -50,7 +119,7 @@ export default function AssistantPage() {
 
   async function send(text: string) {
     const clean = text.trim();
-    if (!clean || typing) return;
+    if (!clean || typing || chargement) return;
     setDraft("");
 
     setMessages((prev) => [...prev, { id: newId(), from: "user", kind: "text", text: clean }]);
@@ -131,39 +200,18 @@ export default function AssistantPage() {
           } else if (eventType === "done") {
             setConversationId(payload.conversationId as string);
           } else if (eventType === "proposals") {
-            const propositions = payload.propositions as Array<{
-              id: string;
-              type: string;
-              title: string;
-              label: string;
-              summary: string;
-              options?: { recetteId: string; titre: string }[];
-            }>;
-            if (propositions?.length > 0) {
-              for (const p of propositions) {
-                // Le serveur renvoie toutes les propositions en attente : une carte déjà affichée n'est pas dupliquée
-                setMessages((prev) =>
-                  prev.some((m) => m.kind === "proposal" && m.proposal.id === p.id)
-                    ? prev
-                    : [
-                        ...prev,
-                        {
-                          id: newId(),
-                          from: "agent",
-                          kind: "proposal",
-                          proposal: {
-                            id: p.id,
-                            type: p.type,
-                            title: p.title,
-                            label: p.label,
-                            summary: p.summary,
-                            options: p.options,
-                            status: "pending",
-                          },
-                        },
-                      ],
-                );
-              }
+            const propositions = payload.propositions as PropositionCarte[];
+            for (const p of propositions ?? []) {
+              // Le serveur renvoie toutes les propositions en attente : une carte déjà affichée n'est pas dupliquée
+              setMessages((prev) =>
+                prev.some(
+                  (m) =>
+                    (m.kind === "proposal" && m.proposal.id === p.id) ||
+                    (m.kind === "fete" && m.propositionId === p.id),
+                )
+                  ? prev
+                  : [...prev, carteProposition(p)],
+              );
             }
           } else if (eventType === "error") {
             throw new Error((payload.message as string) ?? "Erreur inconnue.");
@@ -281,8 +329,17 @@ export default function AssistantPage() {
 
       <div className="flex flex-col gap-2.5 pt-3.5" aria-live="polite">
         <HandNote className="self-center text-[17px] text-cacao" tilt={0}>
-          Conversation
+          {chargement ? "Je retrouve notre conversation…" : "Conversation"}
         </HandNote>
+        {conversationId && !typing && (
+          <button
+            type="button"
+            onClick={nouvelleConversation}
+            className="min-h-11 self-center px-3 text-sm font-extrabold text-carmin underline decoration-wavy underline-offset-4"
+          >
+            Nouvelle conversation
+          </button>
+        )}
 
         {messages.map((m) =>
           m.kind === "proposal" ? (
@@ -291,6 +348,8 @@ export default function AssistantPage() {
             <IdeeCard key={m.id} idee={m.idee} />
           ) : m.kind === "cuisine" ? (
             <CuisineCard key={m.id} repas={m.repas} />
+          ) : m.kind === "fete" ? (
+            <CarteFete key={m.id} fete={m.fete} propositionId={m.propositionId} />
           ) : (
             <div
               key={m.id}
@@ -332,7 +391,7 @@ export default function AssistantPage() {
               key={s}
               type="button"
               onClick={() => send(s)}
-              disabled={typing}
+              disabled={typing || chargement}
               className={cx(
                 "press h-[38px] px-3 text-[13px] font-extrabold",
                 SUGGESTIONSTYLE[i % SUGGESTIONSTYLE.length],
@@ -359,13 +418,13 @@ export default function AssistantPage() {
             onChange={(e) => setDraft(e.target.value)}
             placeholder="Dis-moi ce qui se passe…"
             autoComplete="off"
-            disabled={typing}
+            disabled={typing || chargement}
             className="h-[54px] min-w-0 flex-1 rounded-[16px_20px_18px_14px] border-2 border-foret bg-white px-4 text-[15px] font-semibold placeholder:text-cacao/60 disabled:opacity-60"
           />
           <button
             type="submit"
             aria-label="Envoyer"
-            disabled={typing}
+            disabled={typing || chargement}
             className="press blob flex h-[54px] w-[54px] shrink-0 items-center justify-center bg-sirop text-puce disabled:opacity-60"
           >
             <SendIcon />
@@ -448,8 +507,12 @@ function IdeeCard({ idee }: { idee: IdeeFrigo }) {
       </ol>
       <p className="mt-2.5 border-t-2 border-dashed border-sable pt-2 text-xs font-bold italic text-cacao">
         Idée d&apos;Umi, pas une recette vérifiée par l&apos;équipe. Les allergies du foyer ont été
-        contrôlées par l&apos;application. Elle ne s&apos;ajoute pas encore au menu.
+        contrôlées par l&apos;application.
+        {idee.aGarder?.length
+          ? " Garde-la pour la mettre dans un menu de fête."
+          : " Elle ne s'ajoute pas au menu."}
       </p>
+      <GarderPlat idee={idee} />
     </div>
   );
 }

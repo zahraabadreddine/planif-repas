@@ -7,7 +7,9 @@ import { recetteSchema } from "@/lib/validation/admin";
 export async function GET() {
   try {
     await exigerAdmin();
+    // Les plats propres à un foyer restent privés : l'administratrice ne voit que le catalogue
     const recettes = await prisma.recipe.findMany({
+      where: { householdId: null },
       include: {
         ingredients: {
           include: { ingredient: true, unit: true },

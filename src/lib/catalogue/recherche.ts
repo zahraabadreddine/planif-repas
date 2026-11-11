@@ -1,3 +1,4 @@
+import { TAGPLATDUFOYER } from "./plats-foyer";
 import type { Incompatibilite } from "@/lib/planificateur/filtres";
 import type { Filtres } from "@/lib/validation/catalogue";
 import { normaliser } from "@/lib/validation/membre";
@@ -28,7 +29,10 @@ export function correspondAuTexte(recette: RecetteResume, texte: string): boolea
 export function correspond(recette: RecetteResume, filtres: Filtres): boolean {
   if (filtres.q && !correspondAuTexte(recette, filtres.q)) return false;
   if (filtres.cuisine && recette.cuisine !== filtres.cuisine) return false;
-  if (filtres.temps && recette.minutes > filtres.temps) return false;
+  // Un plat gardé par la famille n'a pas de durée connue : il ne passe pas pour un plat rapide
+  if (filtres.temps && (recette.minutes > filtres.temps || recette.tags.includes(TAGPLATDUFOYER))) {
+    return false;
+  }
   if (filtres.cout && recette.cout.totalFcfa > filtres.cout) return false;
   return true;
 }

@@ -18,6 +18,7 @@ import { rememberPreference } from "./remember-preference";
 import { proposerIdeeFrigo } from "./proposer-idee-frigo";
 import { listerIngredientsPermis } from "./lister-ingredients-permis";
 import { proposerIdeePlat } from "./proposer-idee-plat";
+import { proposerMenuFete } from "./proposer-menu-fete";
 import { proposerRepasCuisine } from "./proposer-repas-cuisine";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -30,6 +31,7 @@ const liste: OutilAgent<any>[] = [
   proposerIdeeFrigo,
   listerIngredientsPermis,
   proposerIdeePlat,
+  proposerMenuFete,
   proposerRepasCuisine,
   findWhereToBuy,
   proposeProfileUpdate,
