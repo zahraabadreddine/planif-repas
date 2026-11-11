@@ -16,4 +16,15 @@ describe("message après un repas cuisiné", () => {
   it("le dit quand il n'y avait rien en stock", () => {
     expect(texteDeductions([])).toBe("Rien à retirer du stock pour ce repas.");
   });
+
+  it("dit ce qui manquait dans le stock", () => {
+    expect(
+      texteDeductions(
+        [{ ingredientName: "Riz", quantity: 0.5, unitLabel: "kg" }],
+        ["Oignon", "Tomate"],
+      ),
+    ).toBe(
+      "Retiré du stock : 0,5 kg riz. Pas (assez) en stock : oignon, tomate. Si tu les avais achetés, ajoute-les dans le stock.",
+    );
+  });
 });

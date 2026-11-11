@@ -13,6 +13,8 @@ export type ResultatCuisson = {
   plannedMealId: string;
   recipeName: string;
   deductions: { ingredientName: string; quantity: number; unitLabel: string }[];
+  // Ingrédients absents (ou en trop petite quantité) du stock : le stock ne descend pas sous zéro
+  manquants: string[];
 };
 
 export async function marquerCuisine(
@@ -54,12 +56,14 @@ export async function marquerCuisine(
     }
 
     const deductions: ResultatCuisson["deductions"] = [];
+    const manquants: string[] = [];
 
     if (repas.leftoverFromId) {
       return {
         plannedMealId: repas.id,
         recipeName: repas.recipe.title,
         deductions,
+        manquants,
       };
     }
 
@@ -108,6 +112,8 @@ export async function marquerCuisine(
         gramsRestant -= gramsARetirer;
       }
 
+      // Plus d'un pour cent manquant : la famille l'apprend, pour corriger son stock si besoin
+      if (gramsRestant > gramsNecessaires * 0.01) manquants.push(ri.ingredient.name);
       const gramsDeduits = gramsNecessaires - gramsRestant;
       if (gramsDeduits > 0) {
         deductions.push({
@@ -122,6 +128,7 @@ export async function marquerCuisine(
       plannedMealId: repas.id,
       recipeName: repas.recipe.title,
       deductions,
+      manquants,
     };
   });
 }

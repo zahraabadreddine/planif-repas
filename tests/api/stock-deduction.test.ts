@@ -133,6 +133,19 @@ describe("POST /api/planned-meals/:id/cooked", () => {
 
     expect(reponse.status).toBe(200);
     expect(corps.deductions[0].quantity).toBe(1);
+    // La famille apprend ce qui manquait, pour corriger son stock si besoin
+    expect(corps.manquants).toEqual(["Aubergine"]);
+  });
+
+  it("rien ne manque quand le stock suffit", async () => {
+    plannedMeal.findUnique.mockResolvedValue(repasComplet);
+    stockItem.findMany.mockResolvedValue([
+      { id: STOCKID, quantity: 5, status: "ok", unit: { gramsEquivalent: 300 } },
+    ]);
+    const corps = await (
+      await cuisineRoute(new Request("http://localhost"), paramsAvec(MEALID))
+    ).json();
+    expect(corps.manquants).toEqual([]);
   });
 
   it("combine plusieurs articles du même ingrédient (FEFO)", async () => {

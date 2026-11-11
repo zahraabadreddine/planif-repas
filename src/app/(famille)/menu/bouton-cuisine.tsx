@@ -11,11 +11,18 @@ function quantite(nombre: number): string {
 }
 
 /** Ce que la famille lit après avoir cuisiné : ce que le code a retiré du stock. */
-export function texteDeductions(deductions: Deduction[]): string {
-  if (deductions.length === 0) return "Rien à retirer du stock pour ce repas.";
-  return `Retiré du stock : ${deductions
-    .map((d) => `${quantite(d.quantity)} ${d.unitLabel} ${d.ingredientName.toLowerCase()}`)
-    .join(", ")}.`;
+export function texteDeductions(deductions: Deduction[], manquants: string[] = []): string {
+  const retire =
+    deductions.length === 0
+      ? "Rien à retirer du stock pour ce repas."
+      : `Retiré du stock : ${deductions
+          .map((d) => `${quantite(d.quantity)} ${d.unitLabel} ${d.ingredientName.toLowerCase()}`)
+          .join(", ")}.`;
+  // Le stock ne descend pas sous zéro : ce qui manquait n'a pas pu être retiré
+  if (manquants.length === 0) return retire;
+  return `${retire} Pas (assez) en stock : ${manquants
+    .map((m) => m.toLowerCase())
+    .join(", ")}. Si tu les avais achetés, ajoute-les dans le stock.`;
 }
 
 type Props = {
@@ -45,7 +52,7 @@ export function BoutonCuisine({ repasId, dejaCuisine, clair = false }: Props) {
         setEtat("attente");
         return;
       }
-      setMessage(texteDeductions(corps?.deductions ?? []));
+      setMessage(texteDeductions(corps?.deductions ?? [], corps?.manquants ?? []));
       setEtat("fait");
     } catch {
       setErreur("Pas de connexion. Réessaie dans un instant.");
