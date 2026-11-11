@@ -13,6 +13,7 @@ import {
   type RecetteDepart,
 } from "./donnees-depart.ts";
 import { compteAdmin, compteAminata, comptesTest } from "./donnees-foyers.ts";
+import { ingredientsIa, recettesIa } from "./recettes-ia.ts";
 import { afficherResultat, enregistrerCompte, enregistrerQuartiersEtMagasins } from "./foyers.ts";
 
 const ville = "Abidjan";
@@ -131,18 +132,22 @@ async function main() {
   }
 
   const catalogue: Catalogue = new Map();
-  for (const ingredient of ingredientsDepart) {
+  // Ingrédients de départ, puis ceux qui manquaient aux recettes ajoutées par l'équipe
+  const ingredients = [...ingredientsDepart, ...ingredientsIa];
+  for (const ingredient of ingredients) {
     catalogue.set(ingredient.name, await enregistrerIngredient(ingredient, generiques));
   }
 
-  for (const recette of recettesDepart) {
+  // Une recette ajoutée dont le titre existe déjà ne remplace jamais celle de départ
+  const recettes = [...recettesDepart, ...recettesIa(recettesDepart.map((r) => r.title))];
+  for (const recette of recettes) {
     await enregistrerRecette(recette, catalogue);
   }
 
-  const validees = recettesDepart.filter((recette) => recette.validated).length;
+  const validees = recettes.filter((recette) => recette.validated).length;
   console.log(
     `Catalogue prêt : ${unitesGeneriques.length} unités génériques, ` +
-      `${ingredientsDepart.length} ingrédients, ${recettesDepart.length} recettes ` +
+      `${ingredients.length} ingrédients, ${recettes.length} recettes ` +
       `(${validees} validées).`,
   );
   const nbReleves = Object.values(relevesDepart).flat().length;
