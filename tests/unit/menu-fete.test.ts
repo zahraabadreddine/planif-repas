@@ -36,7 +36,7 @@ vi.mock("@/lib/foyer/membres", () => ({ listerMembres: mocks.listerMembres }));
 vi.mock("@/lib/courses/generation", () => ({ genererListe: mocks.genererListe }));
 
 import { appliquerFete, chiffrerFete, composerFete, raisonRefus } from "@/lib/planificateur/fete";
-import { horsFete, remplacerRepas } from "@/lib/planificateur/modification";
+import { remplacerRepas, repasDeLaSemaine } from "@/lib/planificateur/modification";
 import { feteSchema, type DemandeFete } from "@/lib/validation/fete";
 import type { SessionVerifiee } from "@/lib/auth/garde";
 
@@ -294,9 +294,9 @@ describe("mettre la fête dans le menu (la famille confirme, le code revérifie)
 });
 
 describe("la semaine ordinaire met les plats de fête de côté", () => {
-  it("horsFete ne garde que les repas ordinaires", () => {
+  it("repasDeLaSemaine ne garde que les repas ordinaires", () => {
     expect(
-      horsFete([{ id: "a", course: null }, { id: "b", course: "entrée" }, { id: "c" }]),
+      repasDeLaSemaine([{ id: "a", course: null }, { id: "b", course: "entrée" }, { id: "c" }]),
     ).toEqual([{ id: "a", course: null }, { id: "c" }]);
   });
 

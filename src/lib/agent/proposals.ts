@@ -11,6 +11,7 @@ import {
   reorganiserUrgence,
 } from "@/lib/planificateur/modification";
 import { PORTIONSMAX } from "@/lib/validation/repas";
+import { MOMENTS } from "@/lib/planificateur/moment";
 import { declarerAchats } from "@/lib/stock/achats";
 import type { ArticleAchat } from "@/lib/validation/stock";
 import { CUISINES, foyerSchema, type Cuisine } from "@/lib/validation/foyer";
@@ -54,6 +55,8 @@ const purchasePayload = z.object({
 
 const emergencyPayload = z.object({
   options: z.array(z.object({ recetteId: z.string(), titre: z.string() })).optional(),
+  // Repas du moment au moment de la proposition (absent des anciennes propositions : le dîner)
+  creneau: z.enum(["breakfast", "lunch", "dinner"]).optional(),
 });
 
 function validerPayload<T>(schema: z.ZodType<T>, payload: unknown): T {
@@ -224,8 +227,9 @@ function preparerApplication(
       return () => appliquerPurchase(session, donnees);
     }
     case "emergency": {
-      const option = optionChoisie(validerPayload(emergencyPayload, payload), choix);
-      return () => appliquerEmergency(session, option);
+      const donnees = validerPayload(emergencyPayload, payload);
+      const option = optionChoisie(donnees, choix);
+      return () => appliquerEmergency(session, option, donnees.creneau ?? "dinner");
     }
     default:
       throw new ErreurApi("DONNEESINVALIDES", "Type de proposition inconnu.");
@@ -317,12 +321,13 @@ function optionChoisie(
 async function appliquerEmergency(
   session: SessionVerifiee,
   recetteChoisie: OptionUrgence,
+  creneau: "breakfast" | "lunch" | "dinner",
 ): Promise<Record<string, unknown>> {
-  // Même réorganisation que l'écran d'urgence : le dîner prévu glisse au lendemain (§11)
-  const resultat = await reorganiserUrgence(session, recetteChoisie.recetteId);
+  // Même réorganisation que l'écran d'urgence : le repas prévu glisse (§11)
+  const resultat = await reorganiserUrgence(session, recetteChoisie.recetteId, creneau);
 
   return {
-    message: `${recetteChoisie.titre} ce soir. ${resultat.message}`,
+    message: `${recetteChoisie.titre} ${MOMENTS[creneau].ce}. ${resultat.message}`,
     menuId: resultat.menu.id,
     listeId: resultat.liste?.id ?? null,
     ancienneRecette: resultat.ancienneRecette,

@@ -20,6 +20,9 @@ type Props = {
   membres: number;
   restrictionsTexte: string;
   options: OptionUrgenceClient[];
+  // Repas remplacé (petit déjeuner, déjeuner ou dîner) et sa façon de le dire : « ce midi »
+  creneau: "breakfast" | "lunch" | "dinner";
+  moment: string;
 };
 
 const TIMES = [10, 15, 20, 30];
@@ -51,8 +54,14 @@ function HandCircle() {
   );
 }
 
-function texteRecetteWhatsApp(name: string, minutes: number, portions: number): string {
-  return `Mode urgence 🚀\n\nCe soir : ${name}\n⏱ ${minutes} min · ${portions} pers.\n\nEnvoyé depuis Umi`;
+function texteRecetteWhatsApp(
+  moment: string,
+  name: string,
+  minutes: number,
+  portions: number,
+): string {
+  const quand = moment.charAt(0).toUpperCase() + moment.slice(1);
+  return `Mode urgence 🚀\n\n${quand} : ${name}\n⏱ ${minutes} min · ${portions} pers.\n\nEnvoyé depuis Umi`;
 }
 
 function whatsappLien(text: string): string {
@@ -63,6 +72,8 @@ export default function UrgenceInteractif({
   membres,
   restrictionsTexte,
   options: toutesOptions,
+  creneau,
+  moment,
 }: Props) {
   const [minutes, setMinutes] = useState(15);
   const [people, setPeople] = useState(membres);
@@ -84,7 +95,7 @@ export default function UrgenceInteractif({
       const res = await fetch("/api/emergency", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ recipeId: choice.recipeId }),
+        body: JSON.stringify({ recipeId: choice.recipeId, creneau }),
       });
       const data = await res.json().catch(() => null);
       if (res.ok) {
@@ -264,7 +275,9 @@ export default function UrgenceInteractif({
             {resultat ? (
               <>
                 <a
-                  href={whatsappLien(texteRecetteWhatsApp(choice.name, choice.minutes, people))}
+                  href={whatsappLien(
+                    texteRecetteWhatsApp(moment, choice.name, choice.minutes, people),
+                  )}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="press flex h-[58px] items-center justify-center rounded-[18px_22px_20px_16px] bg-[#25D366] font-display text-lg font-semibold text-white shadow-[0_5px_0_#128C7E]"

@@ -97,6 +97,52 @@ export type Decalage = {
  * soir était cuisiné en double : son plat est alors mangé au dernier midi et rien n'est perdu.
  * Les restes suivent leur dîner ; les déjeuners ordinaires gardent leur ordre et comblent les places libres.
  */
+/**
+ * Mode urgence à midi : le plat rapide prend le déjeuner du jour, et chaque déjeuner ordinaire
+ * glisse au midi libre suivant. Les midis de restes ne bougent pas (ils suivent leur dîner) ;
+ * le dernier déjeuner qui n'a plus de place sort du menu (ses ingrédients restent en stock).
+ * Des restes ce midi ne sont jamais remplacés : ils sont déjà cuisinés, ce serait les jeter.
+ */
+export function decalerDejeuners(
+  repas: RepasPlace[],
+  jourDepart: number,
+  recetteRapideId: string,
+  personnes: number,
+): Decalage {
+  const copie = repas.map((r) => ({ ...r }));
+  const ceMidi = copie.find((r) => r.slot === "lunch" && r.jour === jourDepart);
+  if (ceMidi?.leftoverFromId) {
+    refuser(
+      "Ce midi, ce sont les restes d'hier : ils sont déjà prêts, il suffit de les réchauffer.",
+    );
+  }
+  const midisDeRestes = new Set(
+    copie.filter((r) => r.slot === "lunch" && r.leftoverFromId).map((r) => r.jour),
+  );
+  const places: number[] = [];
+  for (let jour = jourDepart + 1; jour <= DERNIERJOUR; jour++) {
+    if (!midisDeRestes.has(jour)) places.push(jour);
+  }
+  const ordinaires = copie
+    .filter((r) => r.slot === "lunch" && !r.leftoverFromId && r.jour >= jourDepart)
+    .sort((a, b) => a.jour - b.jour);
+  const retires: string[] = [];
+  ordinaires.forEach((r, i) => {
+    if (i < places.length) r.jour = places[i];
+    else retires.push(r.id);
+  });
+  const gardes = copie.filter((r) => !retires.includes(r.id));
+  gardes.push({
+    id: NOUVEAUREPAS,
+    recipeId: recetteRapideId,
+    jour: jourDepart,
+    slot: "lunch",
+    servings: personnes,
+    leftoverFromId: null,
+  });
+  return { repas: gardes, retires };
+}
+
 export function decalerDiners(
   repas: RepasPlace[],
   jourDepart: number,

@@ -327,7 +327,8 @@ describe("accepterProposition", () => {
       nouvelleRecette: "Attiéké poisson",
       decale: true,
     });
-    expect(mocks.reorganiserUrgence).toHaveBeenCalledWith(SESSION, "r-1");
+    // Une proposition sans créneau (avant cette version) reste un dîner
+    expect(mocks.reorganiserUrgence).toHaveBeenCalledWith(SESSION, "r-1", "dinner");
     expect(mocks.remplacerRepas).not.toHaveBeenCalled();
   });
 
@@ -429,10 +430,22 @@ describe("accepterProposition : la famille choisit son plat d'urgence", () => {
     });
   }
 
+  it("une proposition faite le midi remplace le déjeuner, même confirmée plus tard", async () => {
+    urgence();
+    const proposition = await mocks.agentProposalFindUnique();
+    mocks.agentProposalFindUnique.mockResolvedValue({
+      ...proposition,
+      payload: { ...proposition.payload, creneau: "lunch" },
+    });
+    const result = await accepterProposition(SESSION, "prop-1");
+    expect(mocks.reorganiserUrgence).toHaveBeenCalledWith(SESSION, "r-1", "lunch");
+    expect(String(result.resultat.message)).toMatch(/^Attiéké poisson ce midi./);
+  });
+
   it("applique l'option choisie, pas la première", async () => {
     urgence();
     const result = await accepterProposition(SESSION, "prop-1", { recetteId: "r-2" });
-    expect(mocks.reorganiserUrgence).toHaveBeenCalledWith(SESSION, "r-2");
+    expect(mocks.reorganiserUrgence).toHaveBeenCalledWith(SESSION, "r-2", "dinner");
     expect(result.resultat.nouvelleRecette).toBe("Alloco et œufs");
   });
 

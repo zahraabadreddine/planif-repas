@@ -45,7 +45,10 @@ Sans aucun relevé récent, on utilise l'estimation la plus récente de l'équip
 
 ### Mode urgence (« pas le temps »)
 
-1. Recettes faisables **uniquement avec le stock**, dans le temps donné, pour le nombre de personnes, allergènes exclus, et qui se mangent le soir.
+1. Le repas remplacé est **celui du moment**, à l'heure d'Abidjan : avant 12 h le petit déjeuner, de 12 h à 17 h le déjeuner, ensuite le dîner. Recettes faisables **uniquement avec le stock**, dans le temps donné, pour le nombre de personnes, allergènes exclus, et qui se mangent à ce moment.
+   - **Déjeuner** : le déjeuner prévu glisse au midi libre suivant, et les suivants avec lui ; les midis de restes ne bougent pas, le dernier déjeuner sans place sort du menu. Des restes ce midi ne sont jamais remplacés (ce serait les jeter). Sans déjeuner à remplacer, c'est le dîner.
+   - **Petit déjeuner** : les menus n'en ont pas ; le plat rapide est ajouté au menu de ce matin pour que « C'est cuisiné » retire ses ingrédients du stock.
+   - Un repas de fête n'est jamais remplacé.
 2. 2 ou 3 options classées par rapidité. Si aucune : solution de secours honnête.
 3. Après le choix : le plat rapide est servi ce soir et **chaque dîner suivant glisse d'un jour** (le repas prévu ce soir passe au lendemain). Le dernier dîner de la semaine sort du menu (ses ingrédients restent en stock), sauf si l'avant-dernier soir était cuisiné en double : son plat est alors mangé au dernier midi, à la place de son reste, et le dernier dîner est gardé. Les restes suivent leur dîner.
 4. La semaine décalée est revérifiée (allergies, 60 min maximum un soir de semaine, restes, budget). Si elle ne passe pas, seul le dîner de ce soir est remplacé, avec un message qui le dit.

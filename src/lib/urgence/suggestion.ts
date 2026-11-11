@@ -1,3 +1,4 @@
+import type { MealSlot } from "@prisma/client";
 import type { SessionVerifiee } from "@/lib/auth/garde";
 import { suggererRecettes, type SuggestionRecette } from "@/lib/stock/vider-frigo";
 
@@ -12,6 +13,8 @@ export async function suggestionsUrgence(
   session: SessionVerifiee,
   maxMinutes: number,
   nbPersonnes?: number,
+  // Le repas du moment : on ne propose pas une sauce graine au petit déjeuner
+  creneau: MealSlot = "dinner",
 ): Promise<OptionUrgence[]> {
   void nbPersonnes;
 
@@ -22,8 +25,8 @@ export async function suggestionsUrgence(
       ...r,
       totalMinutes: r.prepMinutes + r.cookMinutes,
     }))
-    // Le plat d'urgence remplace le dîner de ce soir : pas de petit-déjeuner proposé
-    .filter((r) => r.totalMinutes <= maxMinutes && r.mealTypes.includes("dinner"))
+    // Le plat d'urgence remplace le repas du moment (petit déjeuner, déjeuner ou dîner)
+    .filter((r) => r.totalMinutes <= maxMinutes && r.mealTypes.includes(creneau))
     .sort((a, b) => {
       if (a.utiliseUseSoon !== b.utiliseUseSoon) return a.utiliseUseSoon ? -1 : 1;
       return a.totalMinutes - b.totalMinutes;

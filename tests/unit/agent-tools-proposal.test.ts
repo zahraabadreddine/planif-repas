@@ -42,6 +42,8 @@ const SESSION: SessionVerifiee = {
   acces: "proprietaire" as const,
 };
 const CTX = { conversationId: "conv-1" };
+// Le créneau dépend de l'heure réelle : n'importe lequel des trois repas
+const MOMENTDUREPAS = expect.stringMatching(/^(breakfast|lunch|dinner)$/);
 const PROPOSITION = {
   id: "prop-1",
   type: "profileUpdate" as const,
@@ -295,7 +297,7 @@ describe("planEmergency", () => {
     const options = result.options as Array<{ titre: string }>;
     expect(options).toHaveLength(1);
     expect(options[0].titre).toBe("Omelette");
-    expect(mocks.suggestionsUrgence).toHaveBeenCalledWith(SESSION, 20, undefined);
+    expect(mocks.suggestionsUrgence).toHaveBeenCalledWith(SESSION, 20, undefined, MOMENTDUREPAS);
   });
 
   it("renvoie un message sans proposition si aucune recette", async () => {
@@ -313,6 +315,6 @@ describe("planEmergency", () => {
 
     await planEmergency.executer(SESSION, { maxMinutes: 30, nbPersonnes: 6 }, CTX);
 
-    expect(mocks.suggestionsUrgence).toHaveBeenCalledWith(SESSION, 30, 6);
+    expect(mocks.suggestionsUrgence).toHaveBeenCalledWith(SESSION, 30, 6, MOMENTDUREPAS);
   });
 });
