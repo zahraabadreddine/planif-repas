@@ -28,13 +28,20 @@ export function CarteFete({ fete, propositionId }: { fete: MenuFete; proposition
   }).format(new Date(`${fete.date}T00:00:00Z`));
   const categories = [...new Set(fete.plats.map((p) => p.categorie))];
 
-  async function mettreAuMenu() {
+  async function mettreAuMenu(depassementAccepte = false) {
     setEtat("envoi");
     setErreur(null);
     try {
       // Confirmer la proposition d'Umi : le code revérifie tout avant d'enregistrer (règle 1)
       const reponse = await fetch(`/api/chat/proposals/${propositionId}/accept`, {
         method: "POST",
+        // Hors budget : la famille confirme en connaissance de cause, le code le revérifie
+        ...(depassementAccepte
+          ? {
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ depassementAccepte: true }),
+            }
+          : {}),
       });
       if (!reponse.ok) {
         const corps = await reponse.json().catch(() => null);
@@ -98,18 +105,18 @@ export function CarteFete({ fete, propositionId }: { fete: MenuFete; proposition
           </Link>
         </p>
       ) : (
-        fete.depassementFcfa === 0 && (
-          <button
-            type="button"
-            onClick={mettreAuMenu}
-            disabled={etat === "envoi"}
-            className="press mt-2.5 min-h-11 w-full rounded-[12px_16px_14px_12px] bg-foret px-3 text-sm font-extrabold text-or disabled:opacity-60"
-          >
-            {etat === "envoi"
-              ? "Enregistrement…"
+        <button
+          type="button"
+          onClick={() => mettreAuMenu(fete.depassementFcfa > 0)}
+          disabled={etat === "envoi"}
+          className="press mt-2.5 min-h-11 w-full rounded-[12px_16px_14px_12px] bg-foret px-3 text-sm font-extrabold text-or disabled:opacity-60"
+        >
+          {etat === "envoi"
+            ? "Enregistrement…"
+            : fete.depassementFcfa > 0
+              ? `Ajouter quand même (dépasse de ${fcfa(fete.depassementFcfa)})`
               : `Mettre dans le menu de ${jour} ${CRENEAU[fete.creneau]}`}
-          </button>
-        )
+        </button>
       )}
       {erreur && <p className="mt-1.5 text-xs font-bold text-carmin">{erreur}</p>}
     </div>

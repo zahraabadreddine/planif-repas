@@ -227,6 +227,11 @@ describe("mettre la fête dans le menu (la famille confirme, le code revérifie)
     expect(mocks.plannedMealCreateMany).not.toHaveBeenCalled();
   });
 
+  it("ajoute quand même un menu hors budget si la famille l'a décidé", async () => {
+    await appliquerFete(SESSION, demande({ budgetFcfa: 15000 }), true);
+    expect(mocks.plannedMealCreateMany).toHaveBeenCalled();
+  });
+
   it("refuse si aucun menu ne couvre ce jour", async () => {
     mocks.mealPlanFindMany.mockResolvedValue([]);
     await expect(appliquerFete(SESSION, demande())).rejects.toThrow("Aucun menu");

@@ -43,7 +43,16 @@ const mealChangePayload = z
   .refine((p) => (p.nouvelleRecetteId === undefined) !== (p.portions === undefined));
 
 // Menu de fête proposé par l'agent : la carte garde les coûts calculés, seule la demande compte
-const fetePayload = z.object({ fete: z.object(feteSchema.shape) });
+const fetePayload = z.object({
+  fete: z.object({
+    date: z.string(),
+    creneau: z.string(),
+    personnes: z.number(),
+    budgetFcfa: z.number(),
+    // Chaque plat de la carte porte aussi son titre et son coût : seuls ces deux champs comptent
+    plats: z.array(z.object({ recetteId: z.string(), categorie: z.string() })),
+  }),
+});
 
 const purchasePayload = z.object({
   items: z
@@ -177,7 +186,11 @@ export async function rejeterProposition(
  * Chaque type a sa logique d'application propre.
  */
 /** Choix de la famille au moment de confirmer (le plat d'urgence parmi les options proposées). */
-export type ChoixConfirmation = { recetteId?: string };
+export type ChoixConfirmation = {
+  recetteId?: string;
+  // Menu de fête au-delà du budget : la famille a choisi de l'ajouter quand même
+  depassementAccepte?: boolean;
+};
 
 export async function accepterProposition(
   session: SessionVerifiee,
@@ -226,7 +239,15 @@ function preparerApplication(
     case "mealChange": {
       if (typeof payload === "object" && payload !== null && "fete" in payload) {
         const { fete } = validerPayload(fetePayload, payload);
-        return () => appliquerFete(session, fete);
+        // La demande est revalidée seule : les coûts de la carte sont recalculés par le code
+        const demande = validerPayload(feteSchema, {
+          date: fete.date,
+          creneau: fete.creneau,
+          personnes: fete.personnes,
+          budgetFcfa: fete.budgetFcfa,
+          plats: fete.plats.map(({ recetteId, categorie }) => ({ recetteId, categorie })),
+        });
+        return () => appliquerFete(session, demande, choix.depassementAccepte === true);
       }
       const donnees = validerPayload(mealChangePayload, payload);
       return () => appliquerMealChange(session, donnees);

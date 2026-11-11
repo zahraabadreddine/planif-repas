@@ -289,23 +289,52 @@ describe("accepterProposition", () => {
     expect(mocks.remplacerRepas).not.toHaveBeenCalled();
   });
 
-  it("applique un menu de fête proposé par Umi : seule la demande compte, le code revérifie", async () => {
-    const demande = {
+  // La carte enregistrée par l'outil : chaque plat porte aussi son titre et son coût (MenuFete)
+  const carteFete = (depassementFcfa = 0) => ({
+    fete: {
       date: "2026-11-12",
       creneau: "lunch",
       personnes: 20,
       budgetFcfa: 100000,
-      plats: [{ recetteId: "a1a1a1a1-b2b2-4c3c-8d4d-e5e5e5e5e5e5", categorie: "entrée" }],
-    };
-    // La carte garde aussi les coûts calculés : ils ne sont pas repris tels quels
-    mockProposition("mealChange", { fete: { ...demande, totalFcfa: 1, depassementFcfa: 0 } });
+      plats: [
+        {
+          recetteId: "a1a1a1a1-b2b2-4c3c-8d4d-e5e5e5e5e5e5",
+          titre: "Houmous",
+          categorie: "entrée",
+          coutFcfa: 33336,
+        },
+      ],
+      totalFcfa: 33336 + depassementFcfa,
+      depassementFcfa,
+      sansPrix: [],
+    },
+  });
+  const demandeFete = {
+    date: "2026-11-12",
+    creneau: "lunch",
+    personnes: 20,
+    budgetFcfa: 100000,
+    plats: [{ recetteId: "a1a1a1a1-b2b2-4c3c-8d4d-e5e5e5e5e5e5", categorie: "entrée" }],
+  };
+
+  it("applique la carte de fête telle qu'Umi l'enregistre : seule la demande compte, le code revérifie", async () => {
+    mockProposition("mealChange", carteFete());
     fete.appliquerFete.mockResolvedValue({ menuId: "menu-1", plats: 1 });
 
     const result = await accepterProposition(SESSION, "prop-1");
 
-    expect(fete.appliquerFete).toHaveBeenCalledWith(SESSION, demande);
+    expect(fete.appliquerFete).toHaveBeenCalledWith(SESSION, demandeFete, false);
     expect(result.resultat).toEqual({ menuId: "menu-1", plats: 1 });
     expect(mocks.remplacerRepas).not.toHaveBeenCalled();
+  });
+
+  it("transmet l'accord de la famille pour un menu de fête hors budget", async () => {
+    mockProposition("mealChange", carteFete(11850));
+    fete.appliquerFete.mockResolvedValue({ menuId: "menu-1", plats: 1 });
+
+    await accepterProposition(SESSION, "prop-1", { depassementAccepte: true });
+
+    expect(fete.appliquerFete).toHaveBeenCalledWith(SESSION, demandeFete, true);
   });
 
   it("refuse un menu de fête mal formé, sans rien appliquer", async () => {

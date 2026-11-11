@@ -19,7 +19,7 @@ async function executer(session: SessionVerifiee, input: DemandeFete, contexte: 
     sansPrix: fete.sansPrix,
     message:
       fete.depassementFcfa > 0
-        ? "Le menu dépasse le budget : dis-le en une phrase et propose de retirer ou remplacer un plat."
+        ? "Le menu dépasse le budget : dis-le en une phrase, propose de retirer ou remplacer un plat, et dis que la famille peut aussi l'ajouter quand même depuis la carte."
         : "La famille voit le menu de fête sur une carte et le confirme pour l'ajouter à son menu. Ne recopie pas la carte : dis en une phrase ce que tu proposes.",
   };
 }
