@@ -34,19 +34,79 @@ const SUGGESTIONSTYLE = [
 let idCounter = 100;
 const newId = () => `m${idCounter++}`;
 
+const ACCUEIL: MessageChat = {
+  id: "m0",
+  from: "agent",
+  kind: "text",
+  text: "Bonsoir ! Je suis Umi, ton assistante cuisine. Dis-moi ce qui se passe 🍲",
+};
+
+type PropositionCarte = {
+  id: string;
+  type: string;
+  title: string;
+  label: string;
+  summary: string;
+  options?: { recetteId: string; titre: string }[];
+};
+
+/** Une proposition en attente devient une carte du chat. */
+function carteProposition(p: PropositionCarte): MessageChat {
+  return {
+    id: newId(),
+    from: "agent",
+    kind: "proposal",
+    proposal: { ...p, status: "pending" },
+  };
+}
+
+type Reprise = {
+  id: string;
+  messages: { id: string; role: "user" | "assistant"; content: string }[];
+  propositions: PropositionCarte[];
+};
+
 export default function AssistantPage() {
-  const [messages, setMessages] = useState<MessageChat[]>([
-    {
-      id: "m0",
-      from: "agent",
-      kind: "text",
-      text: "Bonsoir ! Je suis Umi, ton assistante cuisine. Dis-moi ce qui se passe 🍲",
-    },
-  ]);
+  const [messages, setMessages] = useState<MessageChat[]>([ACCUEIL]);
+  const [chargement, setChargement] = useState(true);
   const [draft, setDraft] = useState("");
   const [typing, setTyping] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  // La conversation est gardée en base : en revenant sur le chat, on la reprend là où elle était
+  useEffect(() => {
+    let annule = false;
+    fetch("/api/chat/conversations")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((corps: { conversation: Reprise | null } | null) => {
+        const reprise = corps?.conversation;
+        if (annule || !reprise) return;
+        setConversationId(reprise.id);
+        setMessages([
+          ACCUEIL,
+          ...reprise.messages.map((m): MessageChat => ({
+            id: m.id,
+            from: m.role === "user" ? "user" : "agent",
+            kind: "text",
+            text: m.content,
+          })),
+          ...reprise.propositions.map(carteProposition),
+        ]);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!annule) setChargement(false);
+      });
+    return () => {
+      annule = true;
+    };
+  }, []);
+
+  function nouvelleConversation() {
+    setConversationId(null);
+    setMessages([ACCUEIL]);
+  }
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -291,8 +351,17 @@ export default function AssistantPage() {
 
       <div className="flex flex-col gap-2.5 pt-3.5" aria-live="polite">
         <HandNote className="self-center text-[17px] text-cacao" tilt={0}>
-          Conversation
+          {chargement ? "Je retrouve notre conversation…" : "Conversation"}
         </HandNote>
+        {conversationId && !typing && (
+          <button
+            type="button"
+            onClick={nouvelleConversation}
+            className="min-h-11 self-center px-3 text-sm font-extrabold text-carmin underline decoration-wavy underline-offset-4"
+          >
+            Nouvelle conversation
+          </button>
+        )}
 
         {messages.map((m) =>
           m.kind === "proposal" ? (
