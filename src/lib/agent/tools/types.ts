@@ -1,10 +1,13 @@
 import type { z } from "zod";
 import type { SessionVerifiee } from "@/lib/auth/garde";
 import type { IdeeFrigo } from "@/lib/agent/idees-frigo";
+import type { MenuFete } from "@/lib/planificateur/fete";
 
 /** Carte montrée dans le chat sans rien enregistrer (une idée vérifiée par le code). */
 export type CarteChat =
-  { type: "idee"; idee: IdeeFrigo } | { type: "cuisine"; repas: RepasACuisiner };
+  | { type: "idee"; idee: IdeeFrigo }
+  | { type: "cuisine"; repas: RepasACuisiner }
+  | { type: "fete"; fete: MenuFete };
 
 /** Un repas du menu que la famille dit avoir cuisiné, montré avec le bouton « C'est cuisiné ». */
 export type RepasACuisiner = { id: string; titre: string; date: string; creneau: string };

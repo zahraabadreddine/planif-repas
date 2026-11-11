@@ -103,7 +103,8 @@ export async function enregistrerPlatDuFoyer(
       servings: plat.personnes,
       difficulty: 2,
       tags: ["plat-du-foyer", ...(plat.categorie ? [plat.categorie] : [])],
-      steps: plat.etapes,
+      // Même format que les recettes de l'équipe, pour s'afficher sur la fiche
+      steps: plat.etapes.map((text) => ({ text, minutes: 0 })),
       source: "ai",
       // Jamais dans le catalogue de l'équipe : seulement chez ce foyer
       validated: false,

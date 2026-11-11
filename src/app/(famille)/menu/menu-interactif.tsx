@@ -69,6 +69,16 @@ function jourDuMenu(date: string): { short: string; label: string } {
   };
 }
 
+/** Midi avant le soir ; un repas de fête dans l'ordre entrée, plat, accompagnement, dessert. */
+const ORDRECRENEAU = ["breakfast", "lunch", "dinner"];
+const ORDREPLATS = ["entrée", "plat", "accompagnement", "dessert"];
+function ordreDuJour(a: RepasEnregistre, b: RepasEnregistre): number {
+  return (
+    ORDRECRENEAU.indexOf(a.slot) - ORDRECRENEAU.indexOf(b.slot) ||
+    ORDREPLATS.indexOf(a.course ?? "") - ORDREPLATS.indexOf(b.course ?? "")
+  );
+}
+
 function grouperParJour(meals: RepasEnregistre[]): JourDuMenu[] {
   const parDate = new Map<string, RepasEnregistre[]>();
   for (const repas of meals) {
@@ -79,7 +89,7 @@ function grouperParJour(meals: RepasEnregistre[]): JourDuMenu[] {
   const jours: JourDuMenu[] = [];
   for (const [date, repas] of parDate) {
     const { short, label } = jourDuMenu(date);
-    jours.push({ date, short, label, meals: repas });
+    jours.push({ date, short, label, meals: [...repas].sort(ordreDuJour) });
   }
   jours.sort((a, b) => a.date.localeCompare(b.date));
   return jours;
@@ -274,9 +284,16 @@ export function MenuInteractif({ menu, weeklyBudgetFcfa, peutModifier }: Props) 
             <MealCard
               recipe={versRecetteUI(repas)}
               slot={repas.slot as SlotUI}
-              tag={repas.leftoverFromId ? "restes" : undefined}
+              tag={
+                repas.course
+                  ? `fête · ${repas.course}`
+                  : repas.leftoverFromId
+                    ? "restes"
+                    : undefined
+              }
               delay={i * 90}
-              onChanger={peutModifier ? () => ouvrirChoix(repas) : undefined}
+              // Un plat de fête se change avec Umi, dans le menu de fête
+              onChanger={peutModifier && !repas.course ? () => ouvrirChoix(repas) : undefined}
             />
             {/* Un menu validé : cuisiner retire les ingrédients du stock (un reste ne retire rien) */}
             {!estBrouillon && peutModifier && !repas.leftoverFromId && (

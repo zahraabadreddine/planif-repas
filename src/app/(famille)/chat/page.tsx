@@ -12,13 +12,16 @@ import type { IdeeFrigo } from "@/lib/agent/idees-frigo";
 import type { RepasACuisiner } from "@/lib/agent/tools/types";
 import { BoutonCuisine } from "@/app/(famille)/menu/bouton-cuisine";
 import { GarderPlat } from "./garder-plat";
+import { CarteFete } from "./carte-fete";
+import type { MenuFete } from "@/lib/planificateur/fete";
 import type { AgentProposal, ChatMessage } from "@/lib/types";
 
 // Une idée d'Umi vérifiée par le code, montrée sans rien enregistrer
 type MessageChat =
   | ChatMessage
   | { id: string; from: "agent"; kind: "idee"; idee: IdeeFrigo }
-  | { id: string; from: "agent"; kind: "cuisine"; repas: RepasACuisiner };
+  | { id: string; from: "agent"; kind: "cuisine"; repas: RepasACuisiner }
+  | { id: string; from: "agent"; kind: "fete"; fete: MenuFete };
 
 const SUGGESTIONS = ["Vider le frigo", "Moins cher", "Une idée pour dimanche"];
 
@@ -127,6 +130,12 @@ export default function AssistantPage() {
               ...prev,
               { id: newId(), from: "agent", kind: "cuisine", repas },
             ]);
+            agentMsgId = newId();
+            agentTextStarted = false;
+          } else if (eventType === "fete") {
+            cartesRecues = true;
+            const fete = payload.fete as MenuFete;
+            setMessages((prev) => [...prev, { id: newId(), from: "agent", kind: "fete", fete }]);
             agentMsgId = newId();
             agentTextStarted = false;
           } else if (eventType === "done") {
@@ -292,6 +301,8 @@ export default function AssistantPage() {
             <IdeeCard key={m.id} idee={m.idee} />
           ) : m.kind === "cuisine" ? (
             <CuisineCard key={m.id} repas={m.repas} />
+          ) : m.kind === "fete" ? (
+            <CarteFete key={m.id} fete={m.fete} />
           ) : (
             <div
               key={m.id}

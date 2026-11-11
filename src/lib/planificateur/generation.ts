@@ -28,6 +28,8 @@ export type RepasEnregistre = {
   servings: number;
   status: MealStatus;
   leftoverFromId: string | null;
+  // Plat d'un repas de fête (entrée, plat, accompagnement, dessert), sinon null
+  course: string | null;
   recipe: { id: string; title: string; minutes: number; coutFcfa: number };
 };
 
@@ -64,6 +66,7 @@ export type LigneMenu = {
     servings: number;
     status: MealStatus;
     leftoverFromId: string | null;
+    course?: string | null;
     recipe: { id: string; title: string; prepMinutes: number; cookMinutes: number };
   }[];
 };
@@ -84,6 +87,7 @@ export function versMenu(menu: LigneMenu): MenuEnregistre {
       servings: repas.servings,
       status: repas.status,
       leftoverFromId: repas.leftoverFromId,
+      course: repas.course ?? null,
       recipe: {
         id: repas.recipe.id,
         title: repas.recipe.title,

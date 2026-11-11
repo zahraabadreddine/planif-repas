@@ -149,6 +149,16 @@ function codeApi(codes: CodeProbleme[]): "REPASINCOMPATIBLE" | "BUDGETDEPASSE" |
 }
 
 /** Remplace la recette d'un repas du menu ; la liste de courses est refaite si le menu est actif. */
+/**
+ * Les plats d'un repas de fête ont leur propre vérification et leur propre budget : la semaine
+ * ordinaire (temps, budget, recettes répétées, décalages) les met de côté et n'y touche jamais.
+ */
+export function horsFete<T extends { course?: string | null }>(repas: T[]): T[] {
+  return repas.filter((r) => !r.course);
+}
+
+const PLATDEFETE = "Un plat du repas de fête se change avec Umi, dans le menu de fête.";
+
 export async function remplacerRepas(
   session: SessionVerifiee,
   repasId: string,
@@ -165,6 +175,7 @@ export async function remplacerRepas(
   if (cible.status && cible.status !== "planned") {
     throw new ErreurApi("REPASINCOMPATIBLE", "Un repas déjà cuisiné ne peut plus être remplacé.");
   }
+  if (cible.course) throw new ErreurApi("REPASINCOMPATIBLE", PLATDEFETE);
 
   const [catalogue, membres, contexte] = await Promise.all([
     chargerRecettes(),
@@ -184,7 +195,7 @@ export async function remplacerRepas(
 
   const maintenant = new Date();
   const candidates = catalogue.map((r) => versCandidate(r, maintenant));
-  const repas = ordonner(plan.meals);
+  const repas = ordonner(horsFete(plan.meals));
   const personnes = Math.max(1, membres.length);
   const candidate = candidates.find((c) => c.id === recetteId);
   if (!candidate) throw new ErreurApi("ERREURSERVEUR");
@@ -379,7 +390,14 @@ async function chargerRepas(session: SessionVerifiee, repasId: string) {
     include: { mealPlan: { include: { meals: true } } },
   });
   if (!cible) throw new ErreurApi("INTROUVABLE");
-  return { cible, plan: cible.mealPlan as PlanAModifier };
+  if (cible.course) throw new ErreurApi("REPASINCOMPATIBLE", PLATDEFETE);
+  const { meals, ...menu } = cible.mealPlan;
+  return {
+    cible,
+    plan: { ...menu, meals: horsFete(meals) } as PlanAModifier,
+    // Créneaux de fête, que les repas ordinaires ne peuvent pas occuper
+    fete: meals.filter((m) => m.course),
+  };
 }
 
 /**
@@ -392,10 +410,17 @@ export async function deplacerRepas(
   nouvelleDate?: string,
   nouveauSlot?: Creneau,
 ): Promise<RepasRemplace> {
-  const { cible, plan } = await chargerRepas(session, repasId);
+  const { cible, plan, fete } = await chargerRepas(session, repasId);
   const verif = await chargerPourModifier(session, plan);
   const avant = versPlaces(plan);
   const jour = jourDuMenu(plan, nouvelleDate ? dateSansHeure(nouvelleDate) : cible.date);
+  const dateVisee = dateDuMenu(plan, jour).getTime();
+  if (fete.some((m) => m.date.getTime() === dateVisee && m.slot === (nouveauSlot ?? cible.slot))) {
+    throw new ErreurApi(
+      "REPASINCOMPATIBLE",
+      "Ce créneau est celui du repas de fête : choisis-en un autre.",
+    );
+  }
   const apres = echangerRepas(avant, repasId, jour, nouveauSlot ?? cible.slot);
   const menu = verifierSemaine(apres, verif);
   await enregistrerSemaine(plan, avant, apres, [], menu.totalFcfa);
@@ -444,13 +469,23 @@ export async function reorganiserUrgence(
   }
   // Date du jour à Abidjan : les dates de repas sont des dates sans heure (minuit UTC)
   const aujourdhui = dateSansHeure(dateDuJour()).getTime();
+  if (actif.meals.some((m) => m.course && m.slot === "dinner" && m.date.getTime() === aujourdhui)) {
+    throw new ErreurApi(
+      "DONNEESINVALIDES",
+      "Ce soir, c'est le repas de fête : il n'est pas remplacé.",
+    );
+  }
   const ceSoir = actif.meals.find(
     (m) => m.slot === "dinner" && m.status === "planned" && m.date.getTime() === aujourdhui,
   );
   if (!ceSoir) throw new ErreurApi("DONNEESINVALIDES", "Aucun dîner prévu ce soir à remplacer.");
   const ancienneRecette = ceSoir.recipe.title;
 
-  const plan: PlanAModifier = actif;
+  const plan: PlanAModifier = { ...actif, meals: horsFete(actif.meals) };
+  // Une fête un soir suivant : les dîners ne glissent pas, seul ce soir est remplacé
+  const feteUnSoirSuivant = actif.meals.some(
+    (m) => m.course && m.slot === "dinner" && m.date.getTime() > aujourdhui,
+  );
   const verif = await chargerPourModifier(session, plan);
   const rapide = verif.catalogue.find((r) => r.id === recetteRapideId);
   if (!rapide) throw new ErreurApi("INTROUVABLE");
@@ -469,6 +504,7 @@ export async function reorganiserUrgence(
 
   const avant = versPlaces(plan);
   try {
+    if (feteUnSoirSuivant) throw new ErreurApi("REPASINCOMPATIBLE");
     const { repas: apres, retires } = decalerDiners(
       avant,
       jourDuMenu(plan, ceSoir.date),
