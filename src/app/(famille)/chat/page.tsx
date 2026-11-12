@@ -549,7 +549,12 @@ function CuisineCard({ repas }: { repas: RepasACuisiner }) {
       <p className="mb-2.5 mt-0.5 font-display text-lg font-semibold leading-tight">
         {repas.titre}
       </p>
-      <BoutonCuisine repasId={repas.id} dejaCuisine={false} />
+      <BoutonCuisine
+        repasId={repas.id}
+        dejaCuisine={false}
+        date={repas.date}
+        creneau={repas.creneau}
+      />
     </div>
   );
 }

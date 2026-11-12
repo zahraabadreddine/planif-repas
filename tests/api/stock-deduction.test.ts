@@ -78,10 +78,16 @@ beforeEach(() => {
 // ─── POST /api/planned-meals/:id/cooked ────────────────────────────
 
 describe("POST /api/planned-meals/:id/cooked", () => {
+  // Un jour sans heure, à minuit UTC comme les dates de repas en base
+  const jourDecale = (jours: number) =>
+    new Date(new Date().toISOString().slice(0, 10) + "T00:00:00Z").getTime() + jours * 86400000;
   const repasComplet = {
     id: MEALID,
     servings: 4,
     status: "planned",
+    // Le dîner d'hier : son moment est passé, il peut être marqué cuisiné
+    date: new Date(jourDecale(-1)),
+    slot: "dinner",
     mealPlan: { householdId: HOUSEHOLDID },
     recipe: {
       title: "Sauce aubergine",
@@ -247,6 +253,18 @@ describe("POST /api/planned-meals/:id/cooked", () => {
 
     const reponse = await cuisineRoute(new Request("http://localhost"), paramsAvec(MEALID));
     expect(reponse.status).toBe(400);
+  });
+
+  it("400 pour un repas de demain : le stock ne bouge pas", async () => {
+    plannedMeal.findUnique.mockResolvedValue({ ...repasComplet, date: new Date(jourDecale(1)) });
+
+    const reponse = await cuisineRoute(new Request("http://localhost"), paramsAvec(MEALID));
+    const corps = await reponse.json();
+
+    expect(reponse.status).toBe(400);
+    expect(corps.error.message).toContain("pas encore arrivé");
+    expect(plannedMeal.updateMany).not.toHaveBeenCalled();
+    expect(stockMovement.create).not.toHaveBeenCalled();
   });
 });
 

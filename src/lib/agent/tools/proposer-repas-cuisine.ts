@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { SessionVerifiee } from "@/lib/auth/garde";
 import { prisma } from "@/lib/db";
+import { quandCuisiner, repasArrive } from "@/lib/planificateur/moment";
 import type { ContexteOutil, OutilAgent } from "./types";
 
 const schema = z
@@ -27,15 +28,16 @@ async function executer(session: SessionVerifiee, input: Input, contexte: Contex
   if (repas.status === "cooked") {
     return { erreur: "Ce repas est déjà marqué comme cuisiné." };
   }
+  const date = repas.date.toISOString().slice(0, 10);
+  if (!repasArrive(date, repas.slot)) {
+    return {
+      erreur: `Ce repas est prévu plus tard : il pourra être marqué cuisiné ${quandCuisiner(date, repas.slot)}. Vérifie avec la famille de quel repas elle parle.`,
+    };
+  }
 
   contexte.afficher?.({
     type: "cuisine",
-    repas: {
-      id: repas.id,
-      titre: repas.recipe.title,
-      date: repas.date.toISOString().slice(0, 10),
-      creneau: repas.slot,
-    },
+    repas: { id: repas.id, titre: repas.recipe.title, date, creneau: repas.slot },
   });
   return {
     message:
