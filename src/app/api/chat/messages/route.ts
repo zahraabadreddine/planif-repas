@@ -5,12 +5,17 @@ import { ErreurApi } from "@/lib/erreurs";
 import { orchestrerStream, type EvenementStream } from "@/lib/agent/orchestrateur";
 import { prisma } from "@/lib/db";
 import { formaterProposition } from "@/lib/agent/cartes-propositions";
+import { PHOTOILLISIBLE, photoLisible, photoSchema } from "@/lib/agent/photo";
 
-const corpsSchema = z.object({
-  message: z.string().min(1).max(2000),
-  conversationId: z.string().uuid().nullable().optional(),
-  mode: z.enum(["chat", "emergency", "onboarding"]).optional(),
-});
+const corpsSchema = z
+  .object({
+    message: z.string().max(2000),
+    conversationId: z.string().uuid().nullable().optional(),
+    mode: z.enum(["chat", "emergency", "onboarding"]).optional(),
+    // Une photo peut partir seule, sans texte
+    photo: photoSchema.optional(),
+  })
+  .refine((c) => c.message.trim().length > 0 || c.photo !== undefined);
 
 export async function POST(request: NextRequest) {
   const encoder = new TextEncoder();
@@ -27,6 +32,9 @@ export async function POST(request: NextRequest) {
         session = await exigerEcriture();
         if (!session.householdId) throw new ErreurApi("FOYERMANQUANT");
         corps = corpsSchema.parse(await request.json());
+        if (corps.photo && !photoLisible(corps.photo)) {
+          throw new ErreurApi("DONNEESINVALIDES", PHOTOILLISIBLE);
+        }
       } catch (err) {
         const message =
           err instanceof ErreurApi ? err.message : "Les informations envoyées ne sont pas valides.";
@@ -46,6 +54,7 @@ export async function POST(request: NextRequest) {
           controller.enqueue(formaterSSE(evt.type, evt));
         },
         corps.mode ?? "chat",
+        corps.photo,
       );
 
       if (doneConversationId) {

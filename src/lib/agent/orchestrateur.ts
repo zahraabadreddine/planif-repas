@@ -18,6 +18,7 @@ import {
   type MessageGroq,
 } from "./fournisseurs/groq";
 import { PROMPTSYSTEME } from "./prompt";
+import { ajouterPhoto, PHOTOINDISPONIBLE, texteAvecPhoto, type PhotoChat } from "./photo";
 import {
   construireContexte,
   creerFluxSurnoms,
@@ -155,25 +156,36 @@ export async function orchestrerStream(
   messageUtilisateur: string,
   envoyer: (evt: EvenementStream) => void,
   mode: "chat" | "emergency" | "onboarding" = "chat",
+  photo?: PhotoChat,
 ): Promise<void> {
   try {
     if (!session.householdId) throw new ErreurApi("FOYERMANQUANT");
+
+    // Seul Claude lit les photos : avec Groq, on le dit avant de compter le message
+    if (photo && (estSimule() || fournisseurActif() === "groq")) {
+      throw new ErreurApi("DONNEESINVALIDES", PHOTOINDISPONIBLE);
+    }
 
     await verifierQuotaIA(session.householdId);
 
     envoyer({ type: "status", status: "thinking" });
 
     const { contexte, table } = await construireContexte(session);
-    const messageAnonyme = remplacerSurnoms(messageUtilisateur, table);
+    const messageAnonyme = remplacerSurnoms(
+      photo ? texteAvecPhoto(messageUtilisateur) : messageUtilisateur,
+      table,
+    );
 
     const conv = conversationId
       ? await chargerConversation(session, conversationId)
       : await creerConversation(session, mode);
 
+    // L'historique garde la mention de la photo, jamais l'image
     await enregistrerMessage(conv.id, "user", messageAnonyme);
 
     const historique = await chargerHistorique(conv.id);
-    const messagesApi = construireMessagesApi(historique, table);
+    const messagesHistorique = construireMessagesApi(historique, table);
+    const messagesApi = photo ? ajouterPhoto(messagesHistorique, photo) : messagesHistorique;
 
     const systeme = [
       PROMPTSYSTEME,
