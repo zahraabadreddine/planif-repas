@@ -14,6 +14,8 @@ import { BoutonCuisine } from "@/app/(famille)/menu/bouton-cuisine";
 import { GarderPlat } from "./garder-plat";
 import { CarteFete } from "./carte-fete";
 import type { MenuFete } from "@/lib/planificateur/fete";
+import { texteAvecPhoto } from "@/lib/agent/photo";
+import { reduirePhoto, type PhotoReduite } from "./reduire-photo";
 import type { AgentProposal, ChatMessage } from "@/lib/types";
 
 // Une idée d'Umi vérifiée par le code, montrée sans rien enregistrer
@@ -83,7 +85,19 @@ export default function AssistantPage() {
   const [draft, setDraft] = useState("");
   const [typing, setTyping] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
+  const [photo, setPhoto] = useState<PhotoReduite | null>(null);
+  const [erreurPhoto, setErreurPhoto] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  async function choisirPhoto(fichier: File | undefined) {
+    setErreurPhoto(null);
+    if (!fichier) return;
+    try {
+      setPhoto(await reduirePhoto(fichier));
+    } catch {
+      setErreurPhoto("Cette photo n'a pas pu être lue. Essaie avec une autre.");
+    }
+  }
 
   // La conversation est gardée en base : en revenant sur le chat, on la reprend là où elle était
   useEffect(() => {
@@ -129,10 +143,22 @@ export default function AssistantPage() {
 
   async function send(text: string) {
     const clean = text.trim();
-    if (!clean || typing || chargement) return;
+    // La photo part avec ce message, puis n'est gardée nulle part
+    const photoJointe = photo;
+    if ((!clean && !photoJointe) || typing || chargement) return;
     setDraft("");
+    setPhoto(null);
+    setErreurPhoto(null);
 
-    setMessages((prev) => [...prev, { id: newId(), from: "user", kind: "text", text: clean }]);
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: newId(),
+        from: "user",
+        kind: "text",
+        text: photoJointe ? texteAvecPhoto(clean) : clean,
+      },
+    ]);
     setTyping(true);
 
     let agentMsgId = newId();
@@ -146,6 +172,9 @@ export default function AssistantPage() {
         body: JSON.stringify({
           message: clean,
           conversationId,
+          photo: photoJointe
+            ? { mediaType: photoJointe.mediaType, data: photoJointe.data }
+            : undefined,
         }),
       });
 
@@ -390,7 +419,8 @@ export default function AssistantPage() {
             ))}
           </div>
         )}
-        <div ref={bottomRef} className="h-[96px]" />
+        {/* Plus haut quand l'aperçu de la photo s'affiche au-dessus de la saisie */}
+        <div ref={bottomRef} className={photo ? "h-[160px]" : "h-[96px]"} />
       </div>
 
       {/* Au-dessus du bouton urgence flottant du gabarit (102 px du bas), qui cachait la saisie */}
@@ -412,6 +442,33 @@ export default function AssistantPage() {
             </button>
           ))}
         </div>
+        {photo && (
+          <div className="mb-2 flex items-center gap-2.5 px-1">
+            {/* Aperçu local (data URL) : next/image n'apporte rien ici */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={photo.apercu}
+              alt="Photo à envoyer"
+              className="h-14 w-14 -rotate-2 rounded-[10px] border-2 border-foret object-cover"
+            />
+            <p className="min-w-0 flex-1 font-hand text-[17px] font-bold leading-tight text-cacao">
+              photographie seulement les aliments
+            </p>
+            <button
+              type="button"
+              onClick={() => setPhoto(null)}
+              aria-label="Enlever la photo"
+              className="press flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white text-lg font-extrabold text-carmin"
+            >
+              ×
+            </button>
+          </div>
+        )}
+        {erreurPhoto && (
+          <p className="mb-2 px-1 text-xs font-bold text-carmin" role="alert">
+            {erreurPhoto}
+          </p>
+        )}
         <form
           className="flex items-center gap-2"
           onSubmit={(e) => {
@@ -419,6 +476,27 @@ export default function AssistantPage() {
             send(draft);
           }}
         >
+          {/* Sur téléphone : appareil photo ou galerie */}
+          <label
+            className={cx(
+              "press blob flex h-[54px] w-[54px] shrink-0 cursor-pointer items-center justify-center bg-rose text-puce",
+              (typing || chargement) && "pointer-events-none opacity-60",
+            )}
+          >
+            <span className="sr-only">Joindre une photo</span>
+            <IconePhoto />
+            <input
+              type="file"
+              accept="image/*"
+              className="sr-only"
+              disabled={typing || chargement}
+              onChange={(e) => {
+                void choisirPhoto(e.target.files?.[0]);
+                // Le même fichier peut être choisi à nouveau
+                e.target.value = "";
+              }}
+            />
+          </label>
           <label htmlFor="chat-input" className="sr-only">
             Écris ton message
           </label>
@@ -426,7 +504,7 @@ export default function AssistantPage() {
             id="chat-input"
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
-            placeholder="Dis-moi ce qui se passe…"
+            placeholder={photo ? "Une question sur la photo ?" : "Dis-moi ce qui se passe…"}
             autoComplete="off"
             disabled={typing || chargement}
             className="h-[54px] min-w-0 flex-1 rounded-[16px_20px_18px_14px] border-2 border-foret bg-white px-4 text-[15px] font-semibold placeholder:text-cacao/60 disabled:opacity-60"
@@ -442,6 +520,21 @@ export default function AssistantPage() {
         </form>
       </div>
     </>
+  );
+}
+
+/** Appareil photo dessiné à la main, dans le style des autres icônes. */
+function IconePhoto() {
+  return (
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M4 8.2c0-1 .8-1.7 1.7-1.7h2l1.4-2h5.8l1.4 2h2c1 0 1.7.8 1.7 1.7v9.6c0 1-.8 1.7-1.7 1.7H5.7c-1 0-1.7-.8-1.7-1.7z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinejoin="round"
+      />
+      <circle cx="12" cy="13" r="3.6" stroke="currentColor" strokeWidth="2" />
+    </svg>
   );
 }
 

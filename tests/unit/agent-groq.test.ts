@@ -92,6 +92,7 @@ import {
   type EvenementStream,
 } from "@/lib/agent/orchestrateur";
 import type { SessionVerifiee } from "@/lib/auth/garde";
+import { PHOTOINDISPONIBLE } from "@/lib/agent/photo";
 
 const SESSION: SessionVerifiee = {
   userId: "u1",
@@ -434,6 +435,25 @@ describe("conversation complète avec Groq simulé", () => {
       type: "error",
       message: "L'assistant est momentanément indisponible.",
     });
+  });
+
+  it("Groq ne lit pas les photos : refusée honnêtement, sans rien enregistrer ni compter", async () => {
+    const fetchFn = vi.fn();
+    vi.stubGlobal("fetch", fetchFn);
+    const evenements: EvenementStream[] = [];
+    const photo = { mediaType: "image/jpeg" as const, data: "/9j/".padEnd(200, "A") };
+    await orchestrerStream(
+      SESSION,
+      null,
+      "On fait quoi ?",
+      (e) => evenements.push(e),
+      "chat",
+      photo,
+    );
+    expect(evenements).toEqual([{ type: "error", message: PHOTOINDISPONIBLE }]);
+    expect(fetchFn).not.toHaveBeenCalled();
+    expect(mocks.messageCount).not.toHaveBeenCalled();
+    expect(mocks.messageCreate).not.toHaveBeenCalled();
   });
 });
 
