@@ -165,6 +165,8 @@ export default async function HomePage() {
                 <BoutonCuisine
                   repasId={dinerCeSoir.id}
                   dejaCuisine={dinerCeSoir.status === "cooked"}
+                  date={dinerCeSoir.date}
+                  creneau="dinner"
                 />
               </div>
             )}
@@ -247,7 +249,7 @@ export default async function HomePage() {
             </span>
           </Link>
           <Link
-            href="/stock"
+            href="/stock/suggestions"
             className="press flex h-20 items-center gap-2.5 rounded-[20px_18px_26px_20px] bg-rose px-3.5 text-puce"
           >
             <FridgeIcon size={28} />

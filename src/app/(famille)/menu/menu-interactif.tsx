@@ -299,7 +299,12 @@ export function MenuInteractif({ menu, weeklyBudgetFcfa, peutModifier }: Props) 
             {/* Un menu validé : cuisiner retire les ingrédients du stock (un reste ne retire rien) */}
             {!estBrouillon && peutModifier && !repas.leftoverFromId && (
               <div className="pl-1">
-                <BoutonCuisine repasId={repas.id} dejaCuisine={repas.status === "cooked"} />
+                <BoutonCuisine
+                  repasId={repas.id}
+                  dejaCuisine={repas.status === "cooked"}
+                  date={repas.date}
+                  creneau={repas.slot}
+                />
               </div>
             )}
           </div>

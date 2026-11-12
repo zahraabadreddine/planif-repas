@@ -30,3 +30,39 @@ export const MOMENTS: Record<MealSlot, { ce: string; demain: string }> = {
   lunch: { ce: "ce midi", demain: "demain midi" },
   dinner: { ce: "ce soir", demain: "demain soir" },
 };
+
+const ORDRECRENEAUX: MealSlot[] = ["breakfast", "lunch", "dinner"];
+const PARTIEDUJOUR: Record<MealSlot, string> = {
+  breakfast: "matin",
+  lunch: "midi",
+  dinner: "soir",
+};
+const JOURS = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
+
+/** Date à Abidjan au format AAAA-MM-JJ, quel que soit le pays du serveur ou du téléphone. */
+function dateAbidjan(maintenant: Date): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Abidjan" }).format(maintenant);
+}
+
+/**
+ * Un repas ne se marque « cuisiné » qu'une fois son moment arrivé : un jour passé, ou
+ * aujourd'hui à partir de son heure (le dîner dès 17 h). Jamais un repas à venir, qui
+ * retirerait du stock des ingrédients encore dans la cuisine.
+ */
+export function repasArrive(date: string, creneau: MealSlot, maintenant = new Date()): boolean {
+  const aujourdhui = dateAbidjan(maintenant);
+  if (date !== aujourdhui) return date < aujourdhui;
+  return ORDRECRENEAUX.indexOf(creneau) <= ORDRECRENEAUX.indexOf(creneauDuMoment(maintenant));
+}
+
+/** Quand ce repas à venir pourra être marqué cuisiné : « à partir de 17 h », « vendredi soir ». */
+export function quandCuisiner(date: string, creneau: MealSlot, maintenant = new Date()): string {
+  const aujourdhui = dateAbidjan(maintenant);
+  if (date === aujourdhui) {
+    return creneau === "lunch" ? `à partir de ${HEUREDEJEUNER} h` : `à partir de ${HEUREDINER} h`;
+  }
+  const demain = dateAbidjan(new Date(maintenant.getTime() + 24 * 3600 * 1000));
+  if (date === demain) return MOMENTS[creneau].demain;
+  const jour = JOURS[new Date(`${date}T00:00:00Z`).getUTCDay()];
+  return `${jour} ${PARTIEDUJOUR[creneau]}`;
+}

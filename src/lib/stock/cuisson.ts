@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import type { Prisma } from "@prisma/client";
 import type { SessionVerifiee } from "@/lib/auth/garde";
 import { ErreurApi } from "@/lib/erreurs";
+import { quandCuisiner, repasArrive } from "@/lib/planificateur/moment";
 
 // Marquer un repas cuisiné et déduire le stock (EF-14).
 // Un mouvement `cooked` par ingrédient ; si le stock est insuffisant,
@@ -45,6 +46,15 @@ export async function marquerCuisine(
   if (!repas) throw new ErreurApi("INTROUVABLE");
   // Un repas d'un autre foyer est introuvable : on ne révèle pas qu'il existe
   if (repas.mealPlan.householdId !== householdId) throw new ErreurApi("INTROUVABLE");
+
+  // Un repas à venir n'est pas encore cuisiné : ses ingrédients restent dans le stock
+  const date = repas.date.toISOString().slice(0, 10);
+  if (!repasArrive(date, repas.slot)) {
+    throw new ErreurApi(
+      "DONNEESINVALIDES",
+      `Ce repas n'est pas encore arrivé : tu pourras le marquer cuisiné ${quandCuisiner(date, repas.slot)}.`,
+    );
+  }
 
   return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     const updated = await tx.plannedMeal.updateMany({

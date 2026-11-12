@@ -1,3 +1,4 @@
+import type { MealSlot } from "@prisma/client";
 import type { z } from "zod";
 import type { SessionVerifiee } from "@/lib/auth/garde";
 import type { IdeeFrigo } from "@/lib/agent/idees-frigo";
@@ -7,7 +8,7 @@ export type CarteChat =
   { type: "idee"; idee: IdeeFrigo } | { type: "cuisine"; repas: RepasACuisiner };
 
 /** Un repas du menu que la famille dit avoir cuisiné, montré avec le bouton « C'est cuisiné ». */
-export type RepasACuisiner = { id: string; titre: string; date: string; creneau: string };
+export type RepasACuisiner = { id: string; titre: string; date: string; creneau: MealSlot };
 
 export type ContexteOutil = {
   conversationId: string;

@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import type { MealSlot } from "@prisma/client";
 import { cx } from "@/lib/format";
+import { quandCuisiner, repasArrive } from "@/lib/planificateur/moment";
 
 type Deduction = { ingredientName: string; quantity: number; unitLabel: string };
 
@@ -28,6 +30,9 @@ export function texteDeductions(deductions: Deduction[], manquants: string[] = [
 type Props = {
   repasId: string;
   dejaCuisine: boolean;
+  // Le jour (AAAA-MM-JJ) et le créneau du repas : pas de bouton avant son moment
+  date: string;
+  creneau: MealSlot;
   // Sur fond sombre (carte « ce soir » de l'accueil)
   clair?: boolean;
 };
@@ -36,10 +41,22 @@ type Props = {
  * « C'est cuisiné » : le repas passe en cuisiné et le code retire ses ingrédients du stock
  * (mouvements `cooked`, règle 5). La famille corrige depuis la page Stock si besoin.
  */
-export function BoutonCuisine({ repasId, dejaCuisine, clair = false }: Props) {
+export function BoutonCuisine({ repasId, dejaCuisine, date, creneau, clair = false }: Props) {
   const [etat, setEtat] = useState<"attente" | "envoi" | "fait">(dejaCuisine ? "fait" : "attente");
   const [message, setMessage] = useState<string | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
+
+  // Le serveur refuse aussi : ce n'est qu'un affichage plus clair
+  if (etat === "attente" && !repasArrive(date, creneau)) {
+    return (
+      <p
+        suppressHydrationWarning
+        className={cx("font-hand text-lg font-bold", clair ? "text-creme" : "text-cacao")}
+      >
+        à cuisiner {quandCuisiner(date, creneau)}
+      </p>
+    );
+  }
 
   async function cuisiner() {
     setEtat("envoi");
