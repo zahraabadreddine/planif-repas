@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 
 /**
- * Trouve le chauffeur disponible le plus proche (même commune que le point de livraison)
+ * Trouve un chauffeur disponible (priorité : même commune que le point de livraison)
  * et l'assigne automatiquement à la commande.
  * Retourne le chauffeur assigné ou null si aucun n'est disponible.
  */
@@ -13,7 +13,8 @@ export async function assignerChauffeurAutomatique(commandeId: string) {
 
   if (!commande) return null;
   if (commande.driverId) return null;
-  if (commande.status !== "pending" && commande.status !== "confirmed") return null;
+  if (commande.status !== "pending" && commande.status !== "confirmed")
+    return null;
 
   const communeCible = commande.deliveryPoint.commune.toLowerCase();
 
@@ -36,16 +37,18 @@ export async function assignerChauffeurAutomatique(commandeId: string) {
 
   if (!chauffeur) return null;
 
-  await prisma.$transaction([
-    prisma.deliveryOrder.update({
-      where: { id: commandeId },
-      data: { driverId: chauffeur.id, status: "confirmed" },
-    }),
-    prisma.driver.update({
-      where: { id: chauffeur.id },
-      data: { status: "busy" },
-    }),
-  ]);
+  // updateMany avec filtre sur le statut pour éviter la race condition
+  const { count } = await prisma.driver.updateMany({
+    where: { id: chauffeur.id, status: "available" },
+    data: { status: "busy" },
+  });
+
+  if (count === 0) return null;
+
+  await prisma.deliveryOrder.update({
+    where: { id: commandeId },
+    data: { driverId: chauffeur.id, status: "confirmed" },
+  });
 
   return chauffeur;
 }
