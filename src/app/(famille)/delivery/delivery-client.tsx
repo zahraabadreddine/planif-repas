@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useMemo, useCallback, useTransition } from "react";
+import { useState, useMemo, useCallback, useTransition, useEffect } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { PageHeader } from "@/components/titre-page";
 import { HandNote } from "@/components/main-levee";
-import { TruckIcon, PackageIcon, PinIcon, CheckIcon } from "@/components/icones";
+import { TruckIcon, PackageIcon, PinIcon, CheckIcon, BoltIcon } from "@/components/icones";
 import { fcfa, cx } from "@/lib/format";
 
 const CarteLeaflet = dynamic(() => import("@/components/carte-leaflet"), { ssr: false });
@@ -42,11 +42,39 @@ type ChoixLivraison = "delivery" | "pickup";
 
 const CENTRE_ABIDJAN: [number, number] = [5.345, -4.025];
 
+function distanceKm(lat1: number, lng1: number, lat2: number, lng2: number) {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 export function DeliveryClient({ points }: Props) {
   const [mode, setMode] = useState<Mode>("carte");
   const [pointSelectionne, setPointSelectionne] = useState<string | null>(null);
   const [choixLivraison, setChoixLivraison] = useState<ChoixLivraison>("delivery");
   const [panierParPoint, setPanierParPoint] = useState<Record<string, Set<string>>>({});
+  const [positionUtilisateur, setPositionUtilisateur] = useState<{ lat: number; lng: number } | null>(null);
+
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setPositionUtilisateur({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => {},
+    );
+  }, []);
+
+  const pointsTries = useMemo(() => {
+    if (!positionUtilisateur) return points;
+    return [...points].sort(
+      (a, b) =>
+        distanceKm(positionUtilisateur.lat, positionUtilisateur.lng, a.lat, a.lng) -
+        distanceKm(positionUtilisateur.lat, positionUtilisateur.lng, b.lat, b.lng),
+    );
+  }, [points, positionUtilisateur]);
 
   const marqueurs = useMemo(
     () =>
@@ -138,9 +166,11 @@ export function DeliveryClient({ points }: Props) {
         </p>
         <Link
           href="/delivery/commandes"
-          className="mt-2 inline-flex items-center gap-1 text-sm font-bold text-sirop underline"
+          className="mt-3 inline-flex items-center gap-2 rounded-[12px_16px_14px_10px] bg-sirop/10 px-4 py-2.5 text-sm font-extrabold text-sirop transition-colors active:bg-sirop/20"
         >
-          <PackageIcon size={14} /> Mes commandes
+          <PackageIcon size={16} />
+          Suivre mes commandes
+          <span className="ml-auto text-xs text-sirop/60">→</span>
         </Link>
       </div>
 
@@ -192,39 +222,62 @@ export function DeliveryClient({ points }: Props) {
       {/* Liste des points */}
       {mode === "liste" && (
         <div className="mt-4 flex flex-col gap-3 px-5">
-          {points.length === 0 ? (
+          {positionUtilisateur && (
+            <div className="flex items-center gap-1.5 text-xs text-palme">
+              <BoltIcon size={12} />
+              <span className="font-bold">Trié par proximité</span>
+            </div>
+          )}
+          {pointsTries.length === 0 ? (
             <div className="paper-shadow mt-5 bg-[#FFFDF7] px-[18px] py-5 text-center">
               <p className="font-hand text-[23px] font-bold leading-tight text-puce">
                 Aucun point de stock disponible pour le moment
               </p>
             </div>
           ) : (
-            points.map((p) => (
-              <button
-                key={p.id}
-                onClick={() => setPointSelectionne(p.id)}
-                className={cx(
-                  "paper-shadow w-full px-4 py-3.5 text-left transition-colors",
-                  pointSelectionne === p.id ? "bg-palme/10 ring-2 ring-palme" : "bg-[#FFFDF7]",
-                )}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="truncate font-display text-[15px] font-bold text-foret">{p.name}</p>
-                    <p className="mt-0.5 text-xs text-canard">{p.address}</p>
-                  </div>
-                  {p.nbCorrespondances > 0 && (
-                    <HandNote tilt={-3} className="shrink-0 text-sm text-palme">
-                      {p.nbCorrespondances} match{p.nbCorrespondances > 1 ? "s" : ""}
-                    </HandNote>
+            pointsTries.map((p, idx) => {
+              const dist = positionUtilisateur
+                ? distanceKm(positionUtilisateur.lat, positionUtilisateur.lng, p.lat, p.lng)
+                : null;
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => setPointSelectionne(p.id)}
+                  className={cx(
+                    "paper-shadow w-full px-4 py-3.5 text-left transition-colors",
+                    pointSelectionne === p.id ? "bg-palme/10 ring-2 ring-palme" : "bg-[#FFFDF7]",
                   )}
-                </div>
-                <div className="mt-2 flex gap-3 text-xs text-cacao">
-                  <span>{p.produits.length} produit{p.produits.length > 1 ? "s" : ""}</span>
-                  <span>Livraison : {fcfa(p.deliveryFeeFcfa)}</span>
-                </div>
-              </button>
-            ))
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        {idx === 0 && positionUtilisateur && (
+                          <HandNote tilt={3} className="shrink-0 text-xs text-sirop">
+                            le + proche !
+                          </HandNote>
+                        )}
+                        <p className="truncate font-display text-[15px] font-bold text-foret">{p.name}</p>
+                      </div>
+                      <p className="mt-0.5 text-xs text-canard">{p.address}</p>
+                    </div>
+                    {p.nbCorrespondances > 0 && (
+                      <HandNote tilt={-3} className="shrink-0 text-sm text-palme">
+                        {p.nbCorrespondances} match{p.nbCorrespondances > 1 ? "s" : ""}
+                      </HandNote>
+                    )}
+                  </div>
+                  <div className="mt-2 flex gap-3 text-xs text-cacao">
+                    <span>{p.produits.length} produit{p.produits.length > 1 ? "s" : ""}</span>
+                    <span>Livraison : {fcfa(p.deliveryFeeFcfa)}</span>
+                    {dist !== null && (
+                      <span className="font-bold text-canard">
+                        ~{dist < 1 ? `${Math.round(dist * 1000)} m` : `${dist.toFixed(1)} km`}
+                      </span>
+                    )}
+                  </div>
+                </button>
+              );
+            })
           )}
         </div>
       )}

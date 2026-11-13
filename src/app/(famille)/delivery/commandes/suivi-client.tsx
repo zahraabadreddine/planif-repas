@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { PageHeader } from "@/components/titre-page";
 import { HandNote } from "@/components/main-levee";
-import { TruckIcon, PackageIcon, CheckIcon, ClockIcon, ChevronRight } from "@/components/icones";
+import { TruckIcon, PackageIcon, CheckIcon, ClockIcon, ChevronRight, CloseIcon } from "@/components/icones";
 import { fcfa, cx } from "@/lib/format";
 
 type Item = {
@@ -128,8 +129,33 @@ function TimelineLivraison({ status, type }: { status: string; type: "delivery" 
   );
 }
 
+async function changerStatut(id: string, status: string) {
+  const res = await fetch(`/api/delivery/orders/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status }),
+  });
+  if (!res.ok) throw new Error("Échec de la mise à jour");
+  return res.json();
+}
+
 export function SuiviClient({ commandes }: Props) {
   const [ouvert, setOuvert] = useState<string | null>(null);
+  const [enChargement, setEnChargement] = useState<string | null>(null);
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+
+  async function onAction(id: string, status: string) {
+    setEnChargement(id);
+    try {
+      await changerStatut(id, status);
+      startTransition(() => router.refresh());
+    } catch {
+      /* silently handled — the UI stays in its current state */
+    } finally {
+      setEnChargement(null);
+    }
+  }
 
   const enCours = commandes.filter((c) => c.status !== "delivered" && c.status !== "cancelled");
   const terminees = commandes.filter((c) => c.status === "delivered" || c.status === "cancelled");
@@ -169,6 +195,8 @@ export function SuiviClient({ commandes }: Props) {
                 commande={c}
                 ouvert={ouvert === c.id}
                 onToggle={() => setOuvert(ouvert === c.id ? null : c.id)}
+                onAction={onAction}
+                enChargement={enChargement === c.id}
               />
             ))}
           </div>
@@ -185,6 +213,8 @@ export function SuiviClient({ commandes }: Props) {
                 commande={c}
                 ouvert={ouvert === c.id}
                 onToggle={() => setOuvert(ouvert === c.id ? null : c.id)}
+                onAction={onAction}
+                enChargement={enChargement === c.id}
               />
             ))}
           </div>
@@ -194,14 +224,27 @@ export function SuiviClient({ commandes }: Props) {
   );
 }
 
+const ACTIONS: Record<string, { label: string; next: string }[]> = {
+  pending: [{ label: "Annuler", next: "cancelled" }],
+  confirmed: [{ label: "Annuler", next: "cancelled" }],
+  delivering: [
+    { label: "Bien reçu !", next: "delivered" },
+    { label: "Annuler", next: "cancelled" },
+  ],
+};
+
 function CommandeCard({
   commande: c,
   ouvert,
   onToggle,
+  onAction,
+  enChargement,
 }: {
   commande: Commande;
   ouvert: boolean;
   onToggle: () => void;
+  onAction: (id: string, status: string) => void;
+  enChargement: boolean;
 }) {
   const labels = c.type === "pickup" ? LABELS_PICKUP : LABELS;
 
@@ -265,6 +308,30 @@ function CommandeCard({
             <span className="font-display text-sm font-bold text-foret">Total</span>
             <span className="font-display text-sm font-bold text-puce">{fcfa(c.totalFcfa)}</span>
           </div>
+        </div>
+      )}
+
+      {ACTIONS[c.status] && (
+        <div className="mt-3 flex gap-2 border-t border-sable pt-3">
+          {ACTIONS[c.status].map((action) => {
+            const isCancel = action.next === "cancelled";
+            return (
+              <button
+                key={action.next}
+                disabled={enChargement}
+                onClick={() => onAction(c.id, action.next)}
+                className={cx(
+                  "flex flex-1 items-center justify-center gap-1.5 rounded-[10px_14px_12px_8px] px-3 py-2 text-sm font-bold transition-colors disabled:opacity-50",
+                  isCancel
+                    ? "bg-carmin/10 text-carmin"
+                    : "bg-palme text-creme",
+                )}
+              >
+                {isCancel ? <CloseIcon size={14} /> : <CheckIcon size={14} />}
+                {enChargement ? "…" : action.label}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
