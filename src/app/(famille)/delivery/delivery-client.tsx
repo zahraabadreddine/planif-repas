@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useCallback, useTransition } from "react";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { PageHeader } from "@/components/titre-page";
 import { HandNote } from "@/components/main-levee";
 import { TruckIcon, PackageIcon, PinIcon, CheckIcon } from "@/components/icones";
@@ -135,6 +136,12 @@ export function DeliveryClient({ points }: Props) {
         <p className="mt-1 text-sm text-canard">
           Produits frais disponibles près de chez toi, livrés ou à récupérer.
         </p>
+        <Link
+          href="/delivery/commandes"
+          className="mt-2 inline-flex items-center gap-1 text-sm font-bold text-sirop underline"
+        >
+          <PackageIcon size={14} /> Mes commandes
+        </Link>
       </div>
 
       {/* Toggle carte / liste */}
@@ -366,6 +373,12 @@ export function DeliveryClient({ points }: Props) {
                 <p className="mt-1 text-xs text-canard">
                   Tu recevras une confirmation bientôt.
                 </p>
+                <Link
+                  href="/delivery/commandes"
+                  className="mt-2 inline-flex items-center gap-1 text-sm font-bold text-palme underline"
+                >
+                  Suivre ma commande →
+                </Link>
               </div>
             )}
           </div>
