@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, CalendarIcon, CartIcon, FridgeIcon, UserIcon } from "@/components/icones";
+import { ArrowRight, CalendarIcon, CartIcon, ChartIcon, FridgeIcon, TruckIcon, UserIcon } from "@/components/icones";
 import { HandNote, Tape } from "@/components/main-levee";
 import { Aubergine } from "@/components/illustrations/aliments";
 import { UmiHead } from "@/components/umi";
@@ -284,6 +284,28 @@ export default async function HomePage() {
             </span>
           </Link>
         </div>
+      </div>
+
+      {/* Delivery & Dashboard */}
+      <div className="mt-2.5 flex gap-2.5">
+        <Link
+          href="/delivery"
+          className="press flex flex-1 items-center gap-2.5 rounded-[20px_24px_18px_22px] bg-mangue px-3.5 py-3.5 text-puce"
+        >
+          <TruckIcon size={26} />
+          <span className="font-display text-[15px] font-semibold leading-tight">
+            Delivery
+          </span>
+        </Link>
+        <Link
+          href="/dashboard"
+          className="press flex flex-1 items-center gap-2.5 rounded-[24px_20px_22px_18px] bg-biscuit px-3.5 py-3.5 text-puce"
+        >
+          <ChartIcon size={26} />
+          <span className="font-display text-[15px] font-semibold leading-tight">
+            Dépenses
+          </span>
+        </Link>
       </div>
 
       {/* Catalogue des recettes */}

@@ -135,6 +135,31 @@ export const MinusIcon = (p: IconProps) => (
   </Base>
 );
 
+export const TruckIcon = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M1 3h15v13H1zM16 8h4l3 4v4h-7V8z" />
+    <circle cx="5.5" cy="18.5" r="2.5" />
+    <circle cx="18.5" cy="18.5" r="2.5" />
+  </Base>
+);
+export const MapIcon = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M1 6v16l7-4 8 4 7-4V2l-7 4-8-4-7 4z" />
+    <path d="M8 2v16M16 6v16" />
+  </Base>
+);
+export const ChartIcon = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M4 20h16M6 16v-4M10 16V8M14 16v-6M18 16V6" />
+  </Base>
+);
+export const PackageIcon = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M12 3l9 5v8l-9 5-9-5V8z" />
+    <path d="M12 13l9-5M12 13v9M12 13L3 8" />
+  </Base>
+);
+
 /** L'éclair du mode urgence (rempli) */
 export function BoltIcon({ size = 22, ...p }: IconProps) {
   return (

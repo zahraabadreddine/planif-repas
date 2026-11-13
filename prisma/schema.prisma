@@ -185,6 +185,7 @@ model Household {
   invitations        HouseholdInvitation[]
   // Plats propres au foyer (idées d'Umi gardées par la famille), invisibles des autres foyers
   recipes            Recipe[]
+  deliveryOrders     DeliveryOrder[]
 
   @@index([neighborhoodId])
 }
@@ -299,6 +300,8 @@ model Ingredient {
   prices            Price[]
   shoppingItems     ShoppingListItem[]
   stockItems        StockItem[]
+  deliveryStocks    DeliveryStock[]
+  deliveryItems     DeliveryOrderItem[]
 }
 
 // Sans ingrédient : unité générique (kg, pièce).
@@ -316,6 +319,8 @@ model MarketUnit {
   prices                Price[]
   shoppingItems         ShoppingListItem[]
   stockItems            StockItem[]
+  deliveryStocks        DeliveryStock[]
+  deliveryItems         DeliveryOrderItem[]
 
   @@index([ingredientId])
 }
@@ -624,4 +629,109 @@ model LearnedPreference {
   household Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
 
   @@index([householdId])
+}
+
+// ---------------------------------------------------------------------------
+// Delivery (points de stock Umami et livraison)
+// ---------------------------------------------------------------------------
+
+enum DeliveryPointStatus {
+  active
+  inactive
+}
+
+enum DeliveryOrderStatus {
+  pending
+  confirmed
+  delivering
+  delivered
+  cancelled
+}
+
+enum DeliveryOrderType {
+  delivery
+  pickup
+}
+
+// Point de stock Umami à Abidjan (géré par l'admin)
+model DeliveryPoint {
+  id           String              @id @default(uuid()) @db.Uuid
+  name         String
+  address      String
+  commune      String
+  latitude     Float
+  longitude    Float
+  phone           String?
+  deliveryFeeFcfa Int                 @default(0)
+  status          DeliveryPointStatus @default(active)
+  openingHours Json?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  stock  DeliveryStock[]
+  orders DeliveryOrder[]
+
+  @@index([status])
+  @@index([commune])
+}
+
+// Stock disponible dans un point Umami
+model DeliveryStock {
+  id              String   @id @default(uuid()) @db.Uuid
+  deliveryPointId String   @db.Uuid
+  ingredientId    String   @db.Uuid
+  unitId          String   @db.Uuid
+  quantity        Float
+  priceFcfa       Int
+  expiresAt       DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  deliveryPoint DeliveryPoint @relation(fields: [deliveryPointId], references: [id], onDelete: Cascade)
+  ingredient    Ingredient    @relation(fields: [ingredientId], references: [id], onDelete: Restrict)
+  unit          MarketUnit    @relation(fields: [unitId], references: [id], onDelete: Restrict)
+
+  @@unique([deliveryPointId, ingredientId, unitId])
+  @@index([deliveryPointId])
+  @@index([ingredientId])
+}
+
+// Commande passée par une famille
+model DeliveryOrder {
+  id              String              @id @default(uuid()) @db.Uuid
+  householdId     String              @db.Uuid
+  deliveryPointId String              @db.Uuid
+  type            DeliveryOrderType
+  status          DeliveryOrderStatus @default(pending)
+  deliveryFeeFcfa Int                 @default(0)
+  totalFcfa       Int
+  address         String?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  household     Household          @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  deliveryPoint DeliveryPoint      @relation(fields: [deliveryPointId], references: [id], onDelete: Restrict)
+  items         DeliveryOrderItem[]
+
+  @@index([householdId])
+  @@index([deliveryPointId])
+  @@index([status])
+}
+
+// Ligne d'une commande
+model DeliveryOrderItem {
+  id           String   @id @default(uuid()) @db.Uuid
+  orderId      String   @db.Uuid
+  ingredientId String   @db.Uuid
+  unitId       String   @db.Uuid
+  quantity     Float
+  priceFcfa    Int
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  order      DeliveryOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  ingredient Ingredient    @relation(fields: [ingredientId], references: [id], onDelete: Restrict)
+  unit       MarketUnit    @relation(fields: [unitId], references: [id], onDelete: Restrict)
+
+  @@index([orderId])
 }
