@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { PageHeader } from "@/components/titre-page";
+import { cx } from "@/lib/format";
 
 type Utilisateur = {
   id: string;
@@ -10,6 +10,12 @@ type Utilisateur = {
   fullName: string;
   role: string;
   createdAt: string;
+};
+
+const ROLE_BADGE: Record<string, string> = {
+  admin: "bg-puce/20 text-puce",
+  user: "bg-palme/20 text-palme",
+  driver: "bg-lagon/20 text-lagon",
 };
 
 export default function AdminUtilisateursPage() {
@@ -52,18 +58,13 @@ export default function AdminUtilisateursPage() {
 
   return (
     <>
-      <PageHeader
-        overline="Administration"
-        title="Utilisateurs"
-        right={
-          <Link href="/admin" className="text-sm font-bold text-palme underline">
-            Retour
-          </Link>
-        }
-      />
+      <PageHeader overline="Administration" title="Utilisateurs" />
 
-      {chargement && <p className="mt-6 font-bold text-cacao">Chargement…</p>}
-      {erreur && <p className="mt-6 font-bold text-carmin">{erreur}</p>}
+      <p className="mt-1 text-sm text-cacao">
+        {chargement ? "Chargement…" : `${items.length} utilisateur${items.length > 1 ? "s" : ""}`}
+      </p>
+
+      {erreur && <p className="mt-4 rounded-xl bg-carmin/10 px-4 py-2 font-bold text-carmin">{erreur}</p>}
 
       {!chargement && items.length === 0 && !erreur && (
         <p className="mt-6 font-bold text-cacao">Aucun utilisateur inscrit.</p>
@@ -73,13 +74,23 @@ export default function AdminUtilisateursPage() {
         {items.map((u) => (
           <div
             key={u.id}
-            className="rounded-[14px_18px_16px_12px] border-[2.5px] border-foret bg-sable/60 px-4 py-3"
+            className={cx(
+              "rounded-[14px_18px_16px_12px] border-[2.5px] border-foret bg-sable/60 px-4 py-3",
+              resetId === u.id && "ring-2 ring-mangue/60",
+            )}
           >
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <p className="truncate font-display font-semibold text-foret">{u.fullName}</p>
-                <p className="text-sm text-cacao">
-                  {u.email} · {u.role} · inscrit le{" "}
+                <div className="flex items-center gap-2">
+                  <p className="truncate font-display font-semibold text-foret">{u.fullName}</p>
+                  <span
+                    className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${ROLE_BADGE[u.role] ?? "bg-sable text-cacao"}`}
+                  >
+                    {u.role}
+                  </span>
+                </div>
+                <p className="mt-0.5 text-sm text-cacao">
+                  {u.email} · inscrit le{" "}
                   {new Date(u.createdAt).toLocaleDateString("fr-FR")}
                 </p>
               </div>
@@ -89,28 +100,40 @@ export default function AdminUtilisateursPage() {
                   setMdp("");
                   setResetMsg("");
                 }}
-                className="shrink-0 rounded-lg border-2 border-cacao px-3 py-1.5 text-sm font-bold text-cacao"
+                className="shrink-0 rounded-lg border-2 border-cacao px-3 py-1 text-sm font-bold text-cacao"
               >
                 Réinit. mdp
               </button>
             </div>
 
             {resetId === u.id && (
-              <div className="mt-3 flex items-end gap-2">
-                <input
-                  type="password"
-                  placeholder="Nouveau mot de passe"
-                  value={mdp}
-                  onChange={(e) => setMdp(e.target.value)}
-                  className="h-10 flex-1 rounded-lg border-2 border-foret bg-creme px-3 text-sm font-bold text-foret"
-                />
-                <button
-                  onClick={() => resetPassword(u.id)}
-                  className="h-10 rounded-lg bg-palme px-4 text-sm font-bold text-creme"
-                >
-                  Confirmer
-                </button>
-                {resetMsg && <span className="text-sm font-bold text-cacao">{resetMsg}</span>}
+              <div className="mt-3 border-t border-sable pt-3">
+                <div className="flex items-end gap-2">
+                  <div className="flex-1">
+                    <label className="text-[11px] font-bold text-canard">Nouveau mot de passe</label>
+                    <input
+                      type="password"
+                      placeholder="Min. 8 caractères"
+                      value={mdp}
+                      onChange={(e) => setMdp(e.target.value)}
+                      className="mt-0.5 h-9 w-full rounded-lg border-2 border-foret bg-creme px-3 text-sm font-bold text-foret"
+                    />
+                  </div>
+                  <button
+                    onClick={() => resetPassword(u.id)}
+                    className="h-9 rounded-lg bg-palme px-4 text-sm font-bold text-creme"
+                  >
+                    Confirmer
+                  </button>
+                </div>
+                {resetMsg && (
+                  <p className={cx(
+                    "mt-2 rounded-lg px-3 py-1.5 text-xs font-bold",
+                    resetMsg.includes("réinitialisé") ? "bg-palme/10 text-palme" : "bg-carmin/10 text-carmin",
+                  )}>
+                    {resetMsg}
+                  </p>
+                )}
               </div>
             )}
           </div>

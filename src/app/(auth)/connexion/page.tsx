@@ -30,7 +30,10 @@ export default function ConnexionPage() {
       setErreur(MESSAGES[resultat.code ?? ""] ?? "Email ou mot de passe incorrect.");
       return;
     }
-    router.push("/accueil");
+    const res = await fetch("/api/auth/session");
+    const session = await res.json();
+    const role = session?.user?.role;
+    router.push(role === "admin" ? "/admin" : role === "driver" ? "/chauffeur" : "/accueil");
     router.refresh();
   }
 

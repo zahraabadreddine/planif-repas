@@ -71,6 +71,13 @@ export async function exigerEcriture(): Promise<SessionVerifiee> {
   return session;
 }
 
+/** Garde de rôle chauffeur, côté serveur. Lève NONCONNECTE (401) ou INTERDIT (403). */
+export async function exigerChauffeur(): Promise<SessionVerifiee> {
+  const session = await exigerSession();
+  if (session.role !== "driver") throw new ErreurApi("INTERDIT");
+  return session;
+}
+
 /** Garde des invitations et des droits : seule la personne qui a créé le foyer passe (403). */
 export async function exigerProprietaire(): Promise<SessionVerifiee & { householdId: string }> {
   const session = await exigerSession();

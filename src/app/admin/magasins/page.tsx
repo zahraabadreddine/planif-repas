@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { PageHeader } from "@/components/titre-page";
 
 type Magasin = {
@@ -10,6 +9,12 @@ type Magasin = {
   type: string;
   address: string;
   neighborhood: { name: string } | null;
+};
+
+const TYPE_BADGE: Record<string, string> = {
+  supermarket: "bg-lagon/20 text-lagon",
+  market: "bg-mangue/20 text-sirop",
+  shop: "bg-palme/20 text-palme",
 };
 
 export default function AdminMagasinsPage() {
@@ -33,18 +38,13 @@ export default function AdminMagasinsPage() {
 
   return (
     <>
-      <PageHeader
-        overline="Administration"
-        title="Magasins"
-        right={
-          <Link href="/admin" className="text-sm font-bold text-palme underline">
-            Retour
-          </Link>
-        }
-      />
+      <PageHeader overline="Administration" title="Magasins" />
 
-      {chargement && <p className="mt-6 font-bold text-cacao">Chargement…</p>}
-      {erreur && <p className="mt-6 font-bold text-carmin">{erreur}</p>}
+      <p className="mt-1 text-sm text-cacao">
+        {chargement ? "Chargement…" : `${items.length} magasin${items.length > 1 ? "s" : ""} enregistré${items.length > 1 ? "s" : ""}`}
+      </p>
+
+      {erreur && <p className="mt-4 rounded-xl bg-carmin/10 px-4 py-2 font-bold text-carmin">{erreur}</p>}
 
       {!chargement && items.length === 0 && !erreur && (
         <p className="mt-6 font-bold text-cacao">Aucun magasin enregistré.</p>
@@ -57,17 +57,24 @@ export default function AdminMagasinsPage() {
             className="flex items-center justify-between gap-3 rounded-[14px_18px_16px_12px] border-[2.5px] border-foret bg-sable/60 px-4 py-3"
           >
             <div className="min-w-0">
-              <p className="truncate font-display font-semibold text-foret">{m.name}</p>
-              <p className="text-sm text-cacao">
-                {m.type} · {m.address}
+              <div className="flex items-center gap-2">
+                <p className="truncate font-display font-semibold text-foret">{m.name}</p>
+                <span
+                  className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${TYPE_BADGE[m.type] ?? "bg-sable text-cacao"}`}
+                >
+                  {m.type}
+                </span>
+              </div>
+              <p className="mt-0.5 text-sm text-cacao">
+                {m.address}
                 {m.neighborhood && ` · ${m.neighborhood.name}`}
               </p>
             </div>
             <button
               onClick={() => supprimer(m.id)}
-              className="shrink-0 rounded-lg bg-carmin px-3 py-1.5 text-sm font-bold text-creme"
+              className="shrink-0 rounded-lg bg-carmin/10 px-3 py-1 text-sm font-bold text-carmin"
             >
-              Suppr.
+              Supprimer
             </button>
           </div>
         ))}

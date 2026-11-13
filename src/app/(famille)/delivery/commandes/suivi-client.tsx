@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { PageHeader } from "@/components/titre-page";
@@ -143,7 +143,7 @@ export function SuiviClient({ commandes }: Props) {
   const [ouvert, setOuvert] = useState<string | null>(null);
   const [enChargement, setEnChargement] = useState<string | null>(null);
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
 
   async function onAction(id: string, status: string) {
     setEnChargement(id);
@@ -159,6 +159,14 @@ export function SuiviClient({ commandes }: Props) {
 
   const enCours = commandes.filter((c) => c.status !== "delivered" && c.status !== "cancelled");
   const terminees = commandes.filter((c) => c.status === "delivered" || c.status === "cancelled");
+
+  useEffect(() => {
+    if (enCours.length === 0) return;
+    const id = setInterval(() => {
+      startTransition(() => router.refresh());
+    }, 10_000);
+    return () => clearInterval(id);
+  }, [enCours.length, router, startTransition]);
 
   return (
     <div className="-mx-5 -mb-[190px] -mt-6 flex min-h-dvh flex-col bg-creme pb-[190px]">
@@ -226,11 +234,7 @@ export function SuiviClient({ commandes }: Props) {
 
 const ACTIONS: Record<string, { label: string; next: string }[]> = {
   pending: [{ label: "Annuler", next: "cancelled" }],
-  confirmed: [{ label: "Annuler", next: "cancelled" }],
-  delivering: [
-    { label: "Bien reçu !", next: "delivered" },
-    { label: "Annuler", next: "cancelled" },
-  ],
+  delivering: [{ label: "Bien reçu !", next: "delivered" }],
 };
 
 function CommandeCard({

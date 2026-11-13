@@ -17,6 +17,13 @@ datasource db {
 enum Role {
   user
   admin
+  driver
+}
+
+enum DriverStatus {
+  available
+  busy
+  offline
 }
 
 // Droit d'une personne invitée dans un foyer ; le propriétaire est Household.ownerId
@@ -155,6 +162,7 @@ model User {
   conversations        Conversation[]
   invitationsCreees    HouseholdInvitation[] @relation("InvitationAuteur")
   invitationsUtilisees HouseholdInvitation[] @relation("InvitationUtilisee")
+  driver               Driver?
 
   @@index([householdId])
 }
@@ -696,11 +704,30 @@ model DeliveryStock {
   @@index([ingredientId])
 }
 
+// Chauffeur-livreur rattaché à un compte utilisateur
+model Driver {
+  id        String       @id @default(uuid()) @db.Uuid
+  userId    String       @unique @db.Uuid
+  phone     String
+  commune   String
+  vehicle   String       @default("moto")
+  status    DriverStatus @default(offline)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  user   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders DeliveryOrder[]
+
+  @@index([commune])
+  @@index([status])
+}
+
 // Commande passée par une famille
 model DeliveryOrder {
   id              String              @id @default(uuid()) @db.Uuid
   householdId     String              @db.Uuid
   deliveryPointId String              @db.Uuid
+  driverId        String?             @db.Uuid
   type            DeliveryOrderType
   status          DeliveryOrderStatus @default(pending)
   deliveryFeeFcfa Int                 @default(0)
@@ -711,10 +738,12 @@ model DeliveryOrder {
 
   household     Household          @relation(fields: [householdId], references: [id], onDelete: Cascade)
   deliveryPoint DeliveryPoint      @relation(fields: [deliveryPointId], references: [id], onDelete: Restrict)
+  driver        Driver?            @relation(fields: [driverId], references: [id], onDelete: SetNull)
   items         DeliveryOrderItem[]
 
   @@index([householdId])
   @@index([deliveryPointId])
+  @@index([driverId])
   @@index([status])
 }
 
