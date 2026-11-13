@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/titre-page";
 import { HandNote } from "@/components/main-levee";
 import { TruckIcon, PackageIcon, PinIcon, CheckIcon, BoltIcon } from "@/components/icones";
 import { fcfa, cx } from "@/lib/format";
+import { haversine } from "@/lib/magasins/distance";
 
 const CarteLeaflet = dynamic(() => import("@/components/carte-leaflet"), { ssr: false });
 
@@ -42,16 +43,6 @@ type ChoixLivraison = "delivery" | "pickup";
 
 const CENTRE_ABIDJAN: [number, number] = [5.345, -4.025];
 
-function distanceKm(lat1: number, lng1: number, lat2: number, lng2: number) {
-  const R = 6371;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLng = ((lng2 - lng1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
 export function DeliveryClient({ points }: Props) {
   const [mode, setMode] = useState<Mode>("carte");
   const [pointSelectionne, setPointSelectionne] = useState<string | null>(null);
@@ -71,8 +62,8 @@ export function DeliveryClient({ points }: Props) {
     if (!positionUtilisateur) return points;
     return [...points].sort(
       (a, b) =>
-        distanceKm(positionUtilisateur.lat, positionUtilisateur.lng, a.lat, a.lng) -
-        distanceKm(positionUtilisateur.lat, positionUtilisateur.lng, b.lat, b.lng),
+        haversine(positionUtilisateur.lat, positionUtilisateur.lng, a.lat, a.lng) -
+        haversine(positionUtilisateur.lat, positionUtilisateur.lng, b.lat, b.lng),
     );
   }, [points, positionUtilisateur]);
 
@@ -237,7 +228,7 @@ export function DeliveryClient({ points }: Props) {
           ) : (
             pointsTries.map((p, idx) => {
               const dist = positionUtilisateur
-                ? distanceKm(positionUtilisateur.lat, positionUtilisateur.lng, p.lat, p.lng)
+                ? haversine(positionUtilisateur.lat, positionUtilisateur.lng, p.lat, p.lng)
                 : null;
               return (
                 <button
