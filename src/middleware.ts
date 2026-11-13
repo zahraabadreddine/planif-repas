@@ -10,6 +10,8 @@ const PAGES_FAMILLE = [
   "/profil",
   "/foyer",
   "/ou-acheter",
+  "/delivery",
+  "/dashboard",
 ];
 
 export default auth((req) => {
@@ -41,5 +43,7 @@ export const config = {
     "/profil/:path*",
     "/foyer/:path*",
     "/ou-acheter/:path*",
+    "/delivery/:path*",
+    "/dashboard/:path*",
   ],
 };
