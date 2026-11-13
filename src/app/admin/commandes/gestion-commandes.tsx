@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { fcfa, cx } from "@/lib/format";
 import { TruckIcon, CheckIcon, ClockIcon, PackageIcon, UserIcon, BoltIcon } from "@/components/icones";
@@ -32,6 +32,7 @@ const STATUS_LABEL: Record<string, string> = {
   confirmed: "Confirmée",
   delivering: "En livraison",
   delivered: "Livrée",
+  received: "Reçue",
   cancelled: "Annulée",
 };
 
@@ -53,14 +54,11 @@ export function GestionCommandes({
 }) {
   const [tab, setTab] = useState<string>("pending");
   const [ouvert, setOuvert] = useState<string | null>(null);
-  const [enChargement, setEnChargement] = useState(false);
-  const [messageAuto, setMessageAuto] = useState<string | null>(null);
   const router = useRouter();
-  const [, startTransition] = useTransition();
 
   const filtered =
     tab === "done"
-      ? commandes.filter((c) => c.status === "delivered" || c.status === "cancelled")
+      ? commandes.filter((c) => c.status === "delivered" || c.status === "received" || c.status === "cancelled")
       : commandes.filter((c) => c.status === tab);
 
   const pendingSansDriver = commandes.filter(
@@ -69,71 +67,34 @@ export function GestionCommandes({
 
   const disponibles = chauffeurs.filter((d) => d.status === "available").length;
 
-  async function autoAssigner() {
-    setEnChargement(true);
-    setMessageAuto(null);
-    try {
-      const res = await fetch("/api/admin/delivery-orders/auto-assign", {
-        method: "POST",
-      });
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      if (data.assignees === 0 && data.total === 0) {
-        setMessageAuto("Aucune commande en attente.");
-      } else if (data.assignees === 0) {
-        setMessageAuto("Aucun chauffeur disponible pour le moment.");
-      } else {
-        setMessageAuto(
-          `${data.assignees} commande${data.assignees > 1 ? "s" : ""} assignée${data.assignees > 1 ? "s" : ""} automatiquement.`,
-        );
-      }
-      startTransition(() => router.refresh());
-    } catch {
-      setMessageAuto("Erreur lors de l'assignation.");
-    } finally {
-      setEnChargement(false);
-    }
-  }
-
   return (
     <div className="mt-4">
-      {/* Bannière d'assignation automatique */}
+      {/* Info assignation automatique */}
       <div className="mb-4 rounded-[14px_18px_16px_12px] border-[2.5px] border-foret bg-mangue/15 px-4 py-3">
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <BoltIcon size={15} />
           <div>
             <p className="text-xs font-bold text-foret">Assignation automatique</p>
             <p className="mt-0.5 text-[11px] text-cacao">
-              {pendingSansDriver} en attente · {disponibles} chauffeur{disponibles > 1 ? "s" : ""} disponible{disponibles > 1 ? "s" : ""}
+              Les commandes sont assignées automatiquement aux chauffeurs disponibles.
             </p>
           </div>
-          <button
-            disabled={enChargement || pendingSansDriver === 0}
-            onClick={autoAssigner}
-            className="press flex items-center gap-1.5 rounded-[10px_14px_12px_8px] bg-foret px-4 py-2 text-xs font-bold text-creme shadow-[0_2px_0_#411102] transition-transform disabled:opacity-50"
-          >
-            <BoltIcon size={14} />
-            {enChargement ? "…" : "Assigner"}
-          </button>
         </div>
-        {messageAuto && (
-          <p
-            className={cx(
-              "mt-2 rounded-lg px-3 py-1.5 text-xs font-bold",
-              messageAuto.includes("Erreur") || messageAuto.includes("Aucun chauffeur")
-                ? "bg-carmin/10 text-carmin"
-                : "bg-palme/15 text-palme",
-            )}
-          >
-            {messageAuto}
-          </p>
-        )}
+        <div className="mt-2 flex gap-3 text-[11px] font-bold">
+          <span className={pendingSansDriver > 0 ? "text-sirop" : "text-palme"}>
+            {pendingSansDriver} en attente
+          </span>
+          <span className="text-canard">
+            {disponibles} chauffeur{disponibles > 1 ? "s" : ""} dispo
+          </span>
+        </div>
       </div>
 
       {/* Onglets */}
       <div className="flex gap-1.5 overflow-x-auto pb-1">
         {TABS.map((t) => {
           const count = t.key === "done"
-            ? commandes.filter((c) => c.status === "delivered" || c.status === "cancelled").length
+            ? commandes.filter((c) => c.status === "delivered" || c.status === "received" || c.status === "cancelled").length
             : commandes.filter((c) => c.status === t.key).length;
           const Icon = t.icon;
           return (
@@ -259,6 +220,7 @@ function StatusBadge({ status }: { status: string }) {
     confirmed: "bg-lagon/20 text-canard",
     delivering: "bg-rose/30 text-puce",
     delivered: "bg-palme/20 text-foret",
+    received: "bg-palme/20 text-foret",
     cancelled: "bg-carmin/10 text-carmin",
   };
   return (

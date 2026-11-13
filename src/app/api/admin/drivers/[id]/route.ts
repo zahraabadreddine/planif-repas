@@ -8,7 +8,6 @@ const schemaPatch = z.object({
   phone: z.string().min(6).optional(),
   commune: z.string().min(2).optional(),
   vehicle: z.string().optional(),
-  status: z.enum(["available", "busy", "offline"]).optional(),
 });
 
 export async function PATCH(

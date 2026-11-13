@@ -5,13 +5,14 @@ import { gererErreur, ErreurApi } from "@/lib/erreurs";
 import { prisma } from "@/lib/db";
 
 const schemaPatch = z.object({
-  status: z.enum(["confirmed", "delivering", "delivered", "cancelled"]),
+  status: z.enum(["confirmed", "delivering", "delivered", "received", "cancelled"]),
 });
 
 const TRANSITIONS_VALIDES: Record<string, string[]> = {
   pending: ["confirmed", "cancelled"],
   confirmed: ["delivering", "cancelled"],
   delivering: ["delivered", "cancelled"],
+  delivered: ["received"],
 };
 
 export async function PATCH(

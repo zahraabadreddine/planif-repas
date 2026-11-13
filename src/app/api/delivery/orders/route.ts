@@ -3,6 +3,7 @@ import { z } from "zod";
 import { exigerEcriture, exigerSession } from "@/lib/auth/garde";
 import { gererErreur, ErreurApi } from "@/lib/erreurs";
 import { prisma } from "@/lib/db";
+import { assignerChauffeurAutomatique } from "@/lib/assignation-chauffeur";
 
 const schemaCommande = z.object({
   deliveryPointId: z.string().min(1),
@@ -108,6 +109,13 @@ export async function POST(request: Request) {
 
       return commande;
     });
+
+    // Assignation automatique au chauffeur disponible le plus proche
+    try {
+      await assignerChauffeurAutomatique(order.id);
+    } catch {
+      // pas bloquant : la commande reste en attente
+    }
 
     return NextResponse.json({ id: order.id, totalFcfa, status: order.status }, { status: 201 });
   } catch (erreur) {

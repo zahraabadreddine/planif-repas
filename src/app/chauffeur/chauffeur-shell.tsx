@@ -2,17 +2,14 @@
 
 import Link from "next/link";
 import { signOut } from "next-auth/react";
-import { TruckIcon } from "@/components/icones";
+import { UmamiLogo } from "@/components/logo";
 
 export function ChauffeurShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-dvh bg-creme">
       <header className="sticky top-0 z-40 flex items-center justify-between border-b-[2.5px] border-foret bg-[#FFFDF7] px-4 py-3 shadow-sm">
         <div className="flex items-center gap-2">
-          <TruckIcon size={20} className="text-sirop" />
-          <Link href="/chauffeur" className="retro text-lg text-foret">
-            UMAMI
-          </Link>
+          <Link href="/chauffeur"><UmamiLogo width={80} /></Link>
           <span className="rounded-full bg-sirop/15 px-2 py-0.5 text-[10px] font-bold text-sirop">
             Chauffeur
           </span>

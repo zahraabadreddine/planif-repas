@@ -17,7 +17,7 @@ type Item = {
 
 type Commande = {
   id: string;
-  status: "pending" | "confirmed" | "delivering" | "delivered" | "cancelled";
+  status: "pending" | "confirmed" | "delivering" | "delivered" | "received" | "cancelled";
   type: "delivery" | "pickup";
   totalFcfa: number;
   deliveryFeeFcfa: number;
@@ -36,6 +36,7 @@ const LABELS: Record<string, string> = {
   confirmed: "Confirmée",
   delivering: "En livraison",
   delivered: "Livrée",
+  received: "Reçue",
   cancelled: "Annulée",
 };
 
@@ -44,6 +45,7 @@ const LABELS_PICKUP: Record<string, string> = {
   confirmed: "Prête",
   delivering: "À récupérer",
   delivered: "Récupérée",
+  received: "Récupérée",
   cancelled: "Annulée",
 };
 
@@ -157,8 +159,12 @@ export function SuiviClient({ commandes }: Props) {
     }
   }
 
-  const enCours = commandes.filter((c) => c.status !== "delivered" && c.status !== "cancelled");
-  const terminees = commandes.filter((c) => c.status === "delivered" || c.status === "cancelled");
+  const enCours = commandes.filter(
+    (c) => c.status !== "received" && c.status !== "cancelled",
+  );
+  const terminees = commandes.filter(
+    (c) => c.status === "received" || c.status === "cancelled",
+  );
 
   useEffect(() => {
     if (enCours.length === 0) return;
@@ -234,7 +240,7 @@ export function SuiviClient({ commandes }: Props) {
 
 const ACTIONS: Record<string, { label: string; next: string }[]> = {
   pending: [{ label: "Annuler", next: "cancelled" }],
-  delivering: [{ label: "Bien reçu !", next: "delivered" }],
+  delivered: [{ label: "Bien reçu !", next: "received" }],
 };
 
 function CommandeCard({
@@ -270,11 +276,13 @@ function CommandeCard({
             tilt={-2}
             className={cx(
               "text-xs",
-              c.status === "delivered"
+              c.status === "received"
                 ? "text-palme"
-                : c.status === "cancelled"
-                  ? "text-carmin"
-                  : "text-sirop",
+                : c.status === "delivered"
+                  ? "text-palme"
+                  : c.status === "cancelled"
+                    ? "text-carmin"
+                    : "text-sirop",
             )}
           >
             {labels[c.status]}
@@ -282,7 +290,18 @@ function CommandeCard({
         </div>
       </button>
 
-      <TimelineLivraison status={c.status} type={c.type} />
+      {c.status === "received" ? (
+        <div className="mt-3 flex items-center gap-2 rounded-[10px_14px_12px_8px] bg-palme/15 px-3 py-2">
+          <CheckIcon size={16} />
+          <span className="font-hand text-sm font-bold text-foret">Commande reçue</span>
+        </div>
+      ) : c.status === "cancelled" ? (
+        <div className="mt-3 rounded-[10px_14px_12px_8px] bg-carmin/10 px-3 py-2 text-center">
+          <span className="font-hand text-sm font-bold text-carmin">Commande annulée</span>
+        </div>
+      ) : (
+        <TimelineLivraison status={c.status} type={c.type} />
+      )}
 
       {ouvert && (
         <div className="mt-3 border-t border-sable pt-3">

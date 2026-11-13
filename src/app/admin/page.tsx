@@ -59,13 +59,13 @@ export default async function AdminPage() {
     prisma.deliveryOrder.count({ where: { createdAt: { gte: debutMois } } }),
     prisma.deliveryOrder.count({ where: { status: "pending" } }),
     prisma.deliveryOrder.count({ where: { status: "delivering" } }),
-    prisma.deliveryOrder.count({ where: { status: "delivered" } }),
+    prisma.deliveryOrder.count({ where: { status: { in: ["delivered", "received"] } } }),
     prisma.driver.count(),
     prisma.driver.count({ where: { status: "available" } }),
-    prisma.deliveryOrder.aggregate({ _sum: { totalFcfa: true }, where: { status: "delivered" } }),
+    prisma.deliveryOrder.aggregate({ _sum: { totalFcfa: true }, where: { status: { in: ["delivered", "received"] } } }),
     prisma.deliveryOrder.aggregate({
       _sum: { totalFcfa: true },
-      where: { status: "delivered", createdAt: { gte: debutJour } },
+      where: { status: { in: ["delivered", "received"] }, createdAt: { gte: debutJour } },
     }),
   ]);
 
@@ -87,6 +87,7 @@ export default async function AdminPage() {
     confirmed: "bg-lagon/20 text-canard",
     delivering: "bg-rose/30 text-puce",
     delivered: "bg-palme/20 text-foret",
+    received: "bg-palme/20 text-foret",
     cancelled: "bg-carmin/10 text-carmin",
   };
   const STATUS_LABEL: Record<string, string> = {
@@ -94,6 +95,7 @@ export default async function AdminPage() {
     confirmed: "Confirmée",
     delivering: "En livraison",
     delivered: "Livrée",
+    received: "Reçue",
     cancelled: "Annulée",
   };
 
@@ -210,6 +212,13 @@ export default async function AdminPage() {
   );
 }
 
+const ACCENT: Record<string, string> = {
+  foret: "text-foret",
+  palme: "text-palme",
+  sirop: "text-sirop",
+  canard: "text-canard",
+};
+
 function StatCard({
   icon,
   label,
@@ -223,6 +232,7 @@ function StatCard({
   accent: string;
   highlight?: boolean;
 }) {
+  const cls = ACCENT[accent] ?? "text-foret";
   return (
     <div
       className={`rounded-[14px_18px_16px_12px] border-[2.5px] px-4 py-3 ${
@@ -232,10 +242,10 @@ function StatCard({
       }`}
     >
       <div className="flex items-center gap-1.5">
-        <span className={`text-${accent}`}>{icon}</span>
+        <span className={cls}>{icon}</span>
         <p className="text-xs font-bold text-cacao">{label}</p>
       </div>
-      <p className={`mt-1 font-display text-xl font-bold text-${accent}`}>{value}</p>
+      <p className={`mt-1 font-display text-xl font-bold ${cls}`}>{value}</p>
     </div>
   );
 }

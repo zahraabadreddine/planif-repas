@@ -56,6 +56,7 @@ export function TableauChauffeur({
   const [enChargement, setEnChargement] = useState<string | null>(null);
   const [enToggle, setEnToggle] = useState(false);
   const [statut, setStatut] = useState(driverStatus);
+  const [flash, setFlash] = useState<string | null>(null);
   const router = useRouter();
   const [, startTransition] = useTransition();
 
@@ -71,7 +72,12 @@ export function TableauChauffeur({
         body: JSON.stringify({ status: prochain }),
       });
       if (!res.ok) throw new Error();
-      setStatut(prochain);
+      const data = await res.json();
+      setStatut(data.status);
+      if (prochain === "available" && data.status === "busy") {
+        setFlash("Une commande t'a été assignée automatiquement !");
+        setTimeout(() => setFlash(null), 4000);
+      }
       startTransition(() => router.refresh());
     } finally {
       setEnToggle(false);
@@ -79,7 +85,7 @@ export function TableauChauffeur({
   }
 
   const actives = commandes.filter((c) => c.status === "confirmed" || c.status === "delivering");
-  const terminees = commandes.filter((c) => c.status === "delivered");
+  const terminees = commandes.filter((c) => c.status === "delivered" || c.status === "received");
 
   async function changerStatut(id: string, next: string) {
     setEnChargement(id);
@@ -90,6 +96,8 @@ export function TableauChauffeur({
         body: JSON.stringify({ status: next }),
       });
       if (!res.ok) throw new Error();
+      if (next === "delivered") setStatut("available");
+      if (next === "delivering") setStatut("busy");
       startTransition(() => router.refresh());
     } finally {
       setEnChargement(null);
@@ -143,6 +151,12 @@ export function TableauChauffeur({
           )}
         </div>
       </div>
+
+      {flash && (
+        <div className="mt-2 rounded-[10px_14px_12px_8px] border-2 border-sirop bg-mangue/30 px-4 py-2.5 text-center font-display text-sm font-bold text-sirop">
+          {flash}
+        </div>
+      )}
 
       {/* Active deliveries */}
       {actives.length > 0 && (

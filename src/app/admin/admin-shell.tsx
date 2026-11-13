@@ -18,6 +18,7 @@ import {
   CloseIcon,
   ChartIcon,
 } from "@/components/icones";
+import { UmamiLogo } from "@/components/logo";
 
 const NAV = [
   { href: "/admin", label: "Tableau de bord", icon: HomeIcon, exact: true },
@@ -55,7 +56,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           </svg>
           <span className="font-display text-sm font-bold">Admin</span>
         </button>
-        <Link href="/admin" className="retro text-lg text-foret">UMAMI</Link>
+        <Link href="/admin"><UmamiLogo width={80} /></Link>
       </header>
 
       {/* Overlay mobile */}
@@ -74,8 +75,8 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         )}
       >
         <div className="flex items-center justify-between border-b-[2.5px] border-foret px-5 py-4">
-          <Link href="/admin" className="retro text-xl text-foret" onClick={() => setOpen(false)}>
-            UMAMI
+          <Link href="/admin" onClick={() => setOpen(false)}>
+            <UmamiLogo width={90} />
           </Link>
           <button onClick={() => setOpen(false)} className="text-cacao md:hidden" aria-label="Fermer">
             <CloseIcon size={20} />

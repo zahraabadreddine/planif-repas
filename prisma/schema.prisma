@@ -653,6 +653,7 @@ enum DeliveryOrderStatus {
   confirmed
   delivering
   delivered
+  received
   cancelled
 }
 

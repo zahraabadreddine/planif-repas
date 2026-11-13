@@ -2,8 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { cx } from "@/lib/format";
-import { PlusIcon, TruckIcon, UserIcon, CheckIcon, CloseIcon } from "@/components/icones";
+import { PlusIcon, UserIcon, CheckIcon, CloseIcon } from "@/components/icones";
 
 type Chauffeur = {
   id: string;
@@ -78,20 +77,6 @@ export function GestionChauffeurs({ chauffeurs }: { chauffeurs: Chauffeur[] }) {
     }
   }
 
-  async function changerStatut(id: string, status: string) {
-    setEnChargement(true);
-    try {
-      const res = await fetch(`/api/admin/drivers/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status }),
-      });
-      if (!res.ok) throw new Error();
-      startTransition(() => router.refresh());
-    } finally {
-      setEnChargement(false);
-    }
-  }
 
   return (
     <div className="mt-4">
@@ -186,21 +171,9 @@ export function GestionChauffeurs({ chauffeurs }: { chauffeurs: Chauffeur[] }) {
               <div className="mt-3 border-t border-sable pt-3">
                 <p className="text-xs text-cacao">{d.email}</p>
 
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {(["available", "busy", "offline"] as const).map((s) => (
-                    <button
-                      key={s}
-                      disabled={enChargement || d.status === s}
-                      onClick={() => changerStatut(d.id, s)}
-                      className={cx(
-                        "rounded-full px-3 py-1 text-[11px] font-bold transition-colors disabled:opacity-40",
-                        d.status === s ? STATUS_STYLE[s] : "bg-sable/60 text-cacao",
-                      )}
-                    >
-                      {STATUS_LABEL[s]}
-                    </button>
-                  ))}
-                </div>
+                <p className="mt-2 text-[11px] text-cacao">
+                  Le chauffeur gère lui-même son statut depuis son application.
+                </p>
 
                 <button
                   disabled={enChargement}
