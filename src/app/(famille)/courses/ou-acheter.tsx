@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import type { PlaceType } from "@prisma/client";
-import { PinIcon } from "@/components/icones";
+import { PinIcon, CloseIcon, ChevronRight } from "@/components/icones";
 import { MessageErreur } from "@/components/champ-formulaire";
 import { cx, fcfa } from "@/lib/format";
 import { nombre, pluriel } from "@/lib/catalogue/quantites";
+
+const CarteLeaflet = lazy(() => import("@/components/carte-leaflet"));
 
 const COULEURS: Record<PlaceType, { bg: string; text: string; border: string }> = {
   market: { bg: "bg-carmin/10", text: "text-carmin", border: "border-carmin/30" },
@@ -27,6 +29,8 @@ type Magasin = {
   name: string;
   type: PlaceType;
   address: string;
+  latitude: number;
+  longitude: number;
   distanceKm: number;
   ouvert: boolean | null;
   lienItineraire: string;
@@ -60,7 +64,7 @@ function BadgeOuvert({ ouvert }: { ouvert: boolean | null }) {
   );
 }
 
-function SectionLieu({ lieu }: { lieu: Lieu }) {
+function SectionLieu({ lieu, onVoirCarte }: { lieu: Lieu; onVoirCarte: (m: Magasin) => void }) {
   const couleur = COULEURS[lieu.placeType];
   return (
     <section className={cx("rounded-2xl border-2 p-4", couleur.bg, couleur.border)}>
@@ -90,12 +94,11 @@ function SectionLieu({ lieu }: { lieu: Lieu }) {
             Magasins proches
           </p>
           {lieu.magasins.map((m) => (
-            <a
+            <button
               key={m.id}
-              href={m.lienItineraire}
-              target="_blank"
-              rel="noreferrer"
-              className="press flex items-start gap-2 rounded-xl bg-white/60 px-3 py-2.5"
+              type="button"
+              onClick={() => onVoirCarte(m)}
+              className="press flex w-full items-start gap-2 rounded-xl bg-white/60 px-3 py-2.5 text-left"
             >
               <PinIcon size={18} className={cx("mt-0.5 shrink-0", couleur.text)} />
               <div className="min-w-0 flex-1">
@@ -105,10 +108,15 @@ function SectionLieu({ lieu }: { lieu: Lieu }) {
                 </p>
                 <p className="text-xs font-bold text-cacao">{m.address}</p>
               </div>
-              <span className="shrink-0 text-xs font-extrabold text-cacao">
-                {distanceTexte(m.distanceKm)}
-              </span>
-            </a>
+              <div className="flex shrink-0 flex-col items-end gap-0.5">
+                <span className="text-xs font-extrabold text-cacao">
+                  {distanceTexte(m.distanceKm)}
+                </span>
+                <span className="flex items-center gap-0.5 text-[11px] font-bold text-palme">
+                  Voir <ChevronRight size={10} />
+                </span>
+              </div>
+            </button>
           ))}
         </div>
       )}
@@ -116,10 +124,55 @@ function SectionLieu({ lieu }: { lieu: Lieu }) {
   );
 }
 
+function PanneauCarte({ magasin, onFermer }: { magasin: Magasin; onFermer: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex flex-col bg-creme">
+      <div className="flex items-center gap-3 px-4 pb-2 pt-4">
+        <button
+          type="button"
+          onClick={onFermer}
+          className="flex h-8 w-8 items-center justify-center rounded-full bg-sable"
+        >
+          <CloseIcon size={18} />
+        </button>
+        <div className="min-w-0 flex-1">
+          <p className="truncate font-display text-[15px] font-bold text-foret">{magasin.name}</p>
+          <p className="truncate text-xs text-canard">{magasin.address}</p>
+        </div>
+        <BadgeOuvert ouvert={magasin.ouvert} />
+      </div>
+      <div className="flex-1 px-3 pb-3">
+        <Suspense
+          fallback={
+            <div className="flex h-full items-center justify-center rounded-[18px_14px_20px_16px] bg-sable/60">
+              <span className="font-hand text-xl text-puce">Chargement de la carte…</span>
+            </div>
+          }
+        >
+          <CarteLeaflet
+            centre={[magasin.latitude, magasin.longitude]}
+            zoom={16}
+            marqueurs={[
+              {
+                id: magasin.id,
+                position: [magasin.latitude, magasin.longitude],
+                label: magasin.name,
+                detail: magasin.address,
+              },
+            ]}
+            className="h-full"
+          />
+        </Suspense>
+      </div>
+    </div>
+  );
+}
+
 export function OuAcheter({ listeId }: { listeId: string }) {
   const [resultat, setResultat] = useState<Resultat | null>(null);
   const [chargement, setChargement] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
+  const [magasinSurCarte, setMagasinSurCarte] = useState<Magasin | null>(null);
 
   async function charger() {
     setChargement(true);
@@ -197,8 +250,12 @@ export function OuAcheter({ listeId }: { listeId: string }) {
     <div className="mt-5 space-y-4">
       <h2 className="font-hand text-[26px] font-bold leading-none text-puce">Où acheter</h2>
       {resultat.lieux.map((lieu) => (
-        <SectionLieu key={lieu.placeType} lieu={lieu} />
+        <SectionLieu key={lieu.placeType} lieu={lieu} onVoirCarte={setMagasinSurCarte} />
       ))}
+
+      {magasinSurCarte && (
+        <PanneauCarte magasin={magasinSurCarte} onFermer={() => setMagasinSurCarte(null)} />
+      )}
     </div>
   );
 }
