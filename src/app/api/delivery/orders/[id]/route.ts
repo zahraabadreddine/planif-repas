@@ -3,17 +3,11 @@ import { z } from "zod";
 import { exigerEcriture } from "@/lib/auth/garde";
 import { gererErreur, ErreurApi } from "@/lib/erreurs";
 import { prisma } from "@/lib/db";
+import { transitionAutorisee, mettreAJourStatutAvecVerrou } from "@/lib/delivery/transitions";
 
 const schemaPatch = z.object({
-  status: z.enum(["confirmed", "delivering", "delivered", "received", "cancelled"]),
+  status: z.enum(["cancelled", "received"]),
 });
-
-const TRANSITIONS_VALIDES: Record<string, string[]> = {
-  pending: ["confirmed", "cancelled"],
-  confirmed: ["delivering", "cancelled"],
-  delivering: ["delivered", "cancelled"],
-  delivered: ["received"],
-};
 
 export async function PATCH(
   request: Request,
@@ -29,18 +23,12 @@ export async function PATCH(
     const order = await prisma.deliveryOrder.findUnique({
       where: { id, householdId: session.householdId },
       include: {
-        items: {
-          include: {
-            ingredient: true,
-            unit: true,
-          },
-        },
+        items: { include: { ingredient: true, unit: true } },
       },
     });
     if (!order) throw new ErreurApi("INTROUVABLE");
 
-    const permises = TRANSITIONS_VALIDES[order.status] ?? [];
-    if (!permises.includes(body.status)) {
+    if (!transitionAutorisee(order.status, body.status, "famille")) {
       throw new ErreurApi(
         "DONNEESINVALIDES",
         `Transition ${order.status} → ${body.status} non autorisée.`,
@@ -48,70 +36,7 @@ export async function PATCH(
     }
 
     await prisma.$transaction(async (tx) => {
-      await tx.deliveryOrder.update({
-        where: { id },
-        data: { status: body.status },
-      });
-
-      if (body.status === "delivered") {
-        for (const item of order.items) {
-          const grams = item.unit.gramsEquivalent * item.quantity;
-
-          const existant = await tx.stockItem.findFirst({
-            where: {
-              householdId: session.householdId!,
-              ingredientId: item.ingredientId,
-              unitId: item.unitId,
-              status: "ok",
-            },
-          });
-
-          if (existant) {
-            await tx.stockItem.update({
-              where: { id: existant.id },
-              data: { quantity: { increment: item.quantity } },
-            });
-            await tx.stockMovement.create({
-              data: {
-                stockItemId: existant.id,
-                type: "purchase",
-                quantity: item.quantity,
-                grams,
-                reference: `delivery:${order.id}`,
-              },
-            });
-          } else {
-            const nouveau = await tx.stockItem.create({
-              data: {
-                householdId: session.householdId!,
-                ingredientId: item.ingredientId,
-                unitId: item.unitId,
-                quantity: item.quantity,
-                location: "pantry",
-                status: "ok",
-              },
-            });
-            await tx.stockMovement.create({
-              data: {
-                stockItemId: nouveau.id,
-                type: "purchase",
-                quantity: item.quantity,
-                grams,
-                reference: `delivery:${order.id}`,
-              },
-            });
-          }
-
-          await tx.shoppingListItem.updateMany({
-            where: {
-              ingredientId: item.ingredientId,
-              checked: false,
-              list: { householdId: session.householdId! },
-            },
-            data: { checked: true },
-          });
-        }
-      }
+      await mettreAJourStatutAvecVerrou(tx, id, order.status, body.status);
 
       if (body.status === "cancelled") {
         for (const item of order.items) {
@@ -124,6 +49,13 @@ export async function PATCH(
               },
             },
             data: { quantity: { increment: item.quantity } },
+          });
+        }
+
+        if (order.driverId) {
+          await tx.driver.update({
+            where: { id: order.driverId },
+            data: { status: "available" },
           });
         }
       }
