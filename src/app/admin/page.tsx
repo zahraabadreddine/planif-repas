@@ -10,7 +10,6 @@ import {
   ChevronRight,
   ClockIcon,
   CheckIcon,
-  MapIcon,
 } from "@/components/icones";
 
 const cartes = [
@@ -35,7 +34,6 @@ export default async function AdminPage() {
     ingredients,
     menus,
     conversations,
-    commandesTotal,
     commandesJour,
     commandesSemaine,
     commandesMois,
@@ -53,7 +51,6 @@ export default async function AdminPage() {
     prisma.ingredient.count(),
     prisma.mealPlan.count(),
     prisma.conversation.count(),
-    prisma.deliveryOrder.count(),
     prisma.deliveryOrder.count({ where: { createdAt: { gte: debutJour } } }),
     prisma.deliveryOrder.count({ where: { createdAt: { gte: debutSemaine } } }),
     prisma.deliveryOrder.count({ where: { createdAt: { gte: debutMois } } }),

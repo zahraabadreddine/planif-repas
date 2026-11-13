@@ -85,23 +85,38 @@ function BarreHorizontale({
   );
 }
 
-export function DashboardClient({ donnees }: Props) {
-  const [periode, setPeriode] = useState<Periode>("mois");
-
-  const debutMois = new Date(donnees.debutMois);
+// Garde les éléments du mois en cours, ou du mois précédent seulement.
+function filtrerParPeriode<T extends { date: string }>(
+  items: T[],
+  debutMoisIso: string,
+  periode: Periode,
+): T[] {
+  const debutMois = new Date(debutMoisIso);
   const debutMoisPrec = new Date(debutMois.getFullYear(), debutMois.getMonth() - 1, 1);
   const cutoff = periode === "mois" ? debutMois : debutMoisPrec;
   const cutoffFin = periode === "precedent" ? debutMois : undefined;
+  return items.filter((i) => {
+    const d = new Date(i.date);
+    return d >= cutoff && (!cutoffFin || d < cutoffFin);
+  });
+}
 
-  const filtrer = <T extends { date: string }>(items: T[]) =>
-    items.filter((i) => {
-      const d = new Date(i.date);
-      return d >= cutoff && (!cutoffFin || d < cutoffFin);
-    });
+export function DashboardClient({ donnees }: Props) {
+  const [periode, setPeriode] = useState<Periode>("mois");
 
-  const achatsFiltres = useMemo(() => filtrer(donnees.achats), [donnees.achats, periode]);
-  const commandesFiltrees = useMemo(() => filtrer(donnees.commandes), [donnees.commandes, periode]);
-  const budgetsFiltres = useMemo(() => filtrer(donnees.budgets), [donnees.budgets, periode]);
+  const debut = donnees.debutMois;
+  const achatsFiltres = useMemo(
+    () => filtrerParPeriode(donnees.achats, debut, periode),
+    [donnees.achats, debut, periode],
+  );
+  const commandesFiltrees = useMemo(
+    () => filtrerParPeriode(donnees.commandes, debut, periode),
+    [donnees.commandes, debut, periode],
+  );
+  const budgetsFiltres = useMemo(
+    () => filtrerParPeriode(donnees.budgets, debut, periode),
+    [donnees.budgets, debut, periode],
+  );
 
   const nbAchats = achatsFiltres.length;
   const totalDelivery = commandesFiltrees.reduce((s, c) => s + c.total, 0);
@@ -124,6 +139,9 @@ export function DashboardClient({ donnees }: Props) {
   }, [commandesFiltrees]);
 
   const maxCategorie = parCategorie.length > 0 ? parCategorie[0][1] : 1;
+
+  const debutMois = new Date(debut);
+  const debutMoisPrec = new Date(debutMois.getFullYear(), debutMois.getMonth() - 1, 1);
 
   const nomMois = (d: Date) =>
     d.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
