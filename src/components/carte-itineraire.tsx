@@ -74,7 +74,7 @@ export default function CarteItineraire({
       setPret(true);
 
       try {
-        const url = `https://router.project-osrm.org/route/v1/foot/${depart[1]},${depart[0]};${arrivee[1]},${arrivee[0]}?overview=full&geometries=geojson`;
+        const url = `https://router.project-osrm.org/route/v1/driving/${depart[1]},${depart[0]};${arrivee[1]},${arrivee[0]}?overview=full&geometries=geojson`;
         const res = await fetch(url);
         if (!res.ok) return;
         const data = await res.json();
@@ -130,7 +130,7 @@ export default function CarteItineraire({
           </span>
           <span className="text-or">•</span>
           <span className="font-hand text-lg font-bold">
-            ~{trajet.dureeMin} min à pied
+            ~{trajet.dureeMin} min en voiture
           </span>
         </div>
       )}
