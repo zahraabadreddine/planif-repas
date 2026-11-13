@@ -169,6 +169,16 @@ export function DeliveryClient({ points }: Props) {
             onSelectMarqueur={setPointSelectionne}
             className="h-[280px] border-2 border-sable"
           />
+          {points.length === 0 && (
+            <div className="paper-shadow mt-4 bg-[#FFFDF7] px-[18px] py-5 text-center">
+              <p className="font-hand text-[23px] font-bold leading-tight text-puce">
+                Aucun point de stock pour le moment
+              </p>
+              <p className="mt-1 text-sm text-cacao">
+                Quand Umami aura des produits près de chez toi, ils apparaîtront ici !
+              </p>
+            </div>
+          )}
         </div>
       )}
 

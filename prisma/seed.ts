@@ -123,6 +123,127 @@ async function enregistrerRecette(recette: RecetteDepart, catalogue: Catalogue) 
   void reference;
 }
 
+async function enregistrerPointsDelivery(catalogue: Catalogue) {
+  const points = [
+    {
+      name: "Umami Cocody",
+      address: "Rue des Jardins, Cocody",
+      commune: "Cocody",
+      latitude: 5.3364,
+      longitude: -3.9889,
+      phone: "+225 07 00 00 01",
+      deliveryFeeFcfa: 1500,
+      produits: [
+        { ingredient: "Riz", unite: "kg", quantity: 50, priceFcfa: 650 },
+        { ingredient: "Tomate", unite: "kg", quantity: 30, priceFcfa: 800 },
+        { ingredient: "Oignon", unite: "kg", quantity: 25, priceFcfa: 500 },
+        { ingredient: "Poulet", unite: "kg", quantity: 15, priceFcfa: 3200 },
+        { ingredient: "Huile végétale", unite: "l", quantity: 20, priceFcfa: 1200 },
+        { ingredient: "Banane plantain", unite: "kg", quantity: 20, priceFcfa: 400 },
+      ],
+    },
+    {
+      name: "Umami Plateau",
+      address: "Avenue Chardy, Plateau",
+      commune: "Plateau",
+      latitude: 5.3199,
+      longitude: -4.0166,
+      phone: "+225 07 00 00 02",
+      deliveryFeeFcfa: 1000,
+      produits: [
+        { ingredient: "Attiéké", unite: "kg", quantity: 40, priceFcfa: 500 },
+        { ingredient: "Poisson fumé", unite: "kg", quantity: 10, priceFcfa: 4500 },
+        { ingredient: "Gombo", unite: "kg", quantity: 15, priceFcfa: 1000 },
+        { ingredient: "Piment frais", unite: "kg", quantity: 8, priceFcfa: 1500 },
+        { ingredient: "Aubergine", unite: "kg", quantity: 12, priceFcfa: 600 },
+      ],
+    },
+    {
+      name: "Umami Yopougon",
+      address: "Carrefour Siporex, Yopougon",
+      commune: "Yopougon",
+      latitude: 5.3393,
+      longitude: -4.0827,
+      phone: "+225 07 00 00 03",
+      deliveryFeeFcfa: 2000,
+      produits: [
+        { ingredient: "Riz", unite: "kg", quantity: 80, priceFcfa: 600 },
+        { ingredient: "Huile de palme", unite: "l", quantity: 25, priceFcfa: 900 },
+        { ingredient: "Pâte d'arachide", unite: "kg", quantity: 10, priceFcfa: 2000 },
+        { ingredient: "Gingembre", unite: "kg", quantity: 5, priceFcfa: 2500 },
+        { ingredient: "Concentré de tomate", unite: "kg", quantity: 15, priceFcfa: 1800 },
+        { ingredient: "Œufs", unite: "kg", quantity: 20, priceFcfa: 1600 },
+        { ingredient: "Carotte", unite: "kg", quantity: 18, priceFcfa: 500 },
+      ],
+    },
+    {
+      name: "Umami Marcory",
+      address: "Zone 4C, Marcory",
+      commune: "Marcory",
+      latitude: 5.3031,
+      longitude: -3.9897,
+      phone: "+225 07 00 00 04",
+      deliveryFeeFcfa: 1200,
+      produits: [
+        { ingredient: "Crevettes", unite: "kg", quantity: 8, priceFcfa: 6000 },
+        { ingredient: "Thon frais", unite: "kg", quantity: 10, priceFcfa: 4000 },
+        { ingredient: "Citron", unite: "kg", quantity: 12, priceFcfa: 800 },
+        { ingredient: "Ail", unite: "kg", quantity: 6, priceFcfa: 3000 },
+        { ingredient: "Persil", unite: "kg", quantity: 5, priceFcfa: 1500 },
+        { ingredient: "Pomme de terre", unite: "kg", quantity: 30, priceFcfa: 700 },
+      ],
+    },
+  ];
+
+  let nbPoints = 0;
+  let nbProduits = 0;
+
+  for (const pt of points) {
+    const donnees = {
+      name: pt.name,
+      address: pt.address,
+      commune: pt.commune,
+      latitude: pt.latitude,
+      longitude: pt.longitude,
+      phone: pt.phone,
+      deliveryFeeFcfa: pt.deliveryFeeFcfa,
+    };
+    const existant = await prisma.deliveryPoint.findFirst({ where: { name: pt.name } });
+    const point = existant
+      ? await prisma.deliveryPoint.update({ where: { id: existant.id }, data: donnees })
+      : await prisma.deliveryPoint.create({ data: donnees });
+    nbPoints++;
+
+    for (const prod of pt.produits) {
+      const entry = catalogue.get(prod.ingredient);
+      if (!entry) continue;
+      const unitId = entry.unites.get(prod.unite);
+      if (!unitId) continue;
+
+      await prisma.deliveryStock.upsert({
+        where: {
+          deliveryPointId_ingredientId_unitId: {
+            deliveryPointId: point.id,
+            ingredientId: entry.id,
+            unitId,
+          },
+        },
+        update: { quantity: prod.quantity, priceFcfa: prod.priceFcfa },
+        create: {
+          deliveryPointId: point.id,
+          ingredientId: entry.id,
+          unitId,
+          quantity: prod.quantity,
+          priceFcfa: prod.priceFcfa,
+        },
+      });
+      nbProduits++;
+    }
+  }
+
+  console.log(`Delivery : ${nbPoints} points de stock, ${nbProduits} produits.`);
+}
+
 async function main() {
   const retires = await retirerPrixDeLEquipe();
   const generiques: UnitesParLabel = new Map();
@@ -155,6 +276,8 @@ async function main() {
     `Prix : ${retires} anciens prix de l'équipe remplacés, ${nbReleves} relevés réels ` +
       `pour ${Object.keys(relevesDepart).length} ingrédients, le reste en estimations.`,
   );
+
+  await enregistrerPointsDelivery(catalogue);
 
   const quartiers = await enregistrerQuartiersEtMagasins(prisma);
   console.log("Comptes de départ :");
