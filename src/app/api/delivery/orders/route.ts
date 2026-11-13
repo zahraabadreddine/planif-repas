@@ -19,59 +19,44 @@ const schemaCommande = z.object({
     .min(1),
 });
 
+type ItemAggrege = { ingredientId: string; unitId: string; quantity: number };
+
+function agregerItems(
+  items: { ingredientId: string; unitId: string; quantity: number }[],
+): ItemAggrege[] {
+  const carte = new Map<string, ItemAggrege>();
+  for (const item of items) {
+    const cle = `${item.ingredientId}:${item.unitId}`;
+    const existant = carte.get(cle);
+    if (existant) {
+      existant.quantity += item.quantity;
+    } else {
+      carte.set(cle, { ...item });
+    }
+  }
+  return [...carte.values()];
+}
+
 export async function POST(request: Request) {
   try {
     const session = await exigerEcriture();
     if (!session.householdId) throw new ErreurApi("FOYERMANQUANT");
 
     const body = schemaCommande.parse(await request.json());
+    const itemsAgreges = agregerItems(body.items);
 
     const point = await prisma.deliveryPoint.findUnique({
       where: { id: body.deliveryPointId, status: "active" },
     });
     if (!point) throw new ErreurApi("INTROUVABLE");
 
-    let totalProduits = 0;
-    for (const item of body.items) {
-      const stock = await prisma.deliveryStock.findUnique({
-        where: {
-          deliveryPointId_ingredientId_unitId: {
-            deliveryPointId: body.deliveryPointId,
-            ingredientId: item.ingredientId,
-            unitId: item.unitId,
-          },
-        },
-      });
-      if (!stock || stock.quantity < item.quantity) {
-        throw new ErreurApi("DONNEESINVALIDES", "Stock insuffisant pour un des produits.");
-      }
-      totalProduits += stock.priceFcfa * item.quantity;
-    }
-
     const fraisLivraison = body.type === "delivery" ? point.deliveryFeeFcfa : 0;
-    const totalFcfa = totalProduits + fraisLivraison;
 
     const order = await prisma.$transaction(async (tx) => {
-      const commande = await tx.deliveryOrder.create({
-        data: {
-          household: { connect: { id: session.householdId! } },
-          deliveryPoint: { connect: { id: body.deliveryPointId } },
-          type: body.type,
-          deliveryFeeFcfa: fraisLivraison,
-          totalFcfa,
-          status: "pending",
-          items: {
-            create: body.items.map((item) => ({
-              ingredient: { connect: { id: item.ingredientId } },
-              unit: { connect: { id: item.unitId } },
-              quantity: item.quantity,
-              priceFcfa: 0,
-            })),
-          },
-        },
-      });
+      let totalProduits = 0;
+      const itemsAvecPrix: (ItemAggrege & { priceFcfa: number })[] = [];
 
-      for (const item of body.items) {
+      for (const item of itemsAgreges) {
         const stock = await tx.deliveryStock.findUnique({
           where: {
             deliveryPointId_ingredientId_unitId: {
@@ -82,18 +67,15 @@ export async function POST(request: Request) {
           },
         });
         if (!stock || stock.quantity < item.quantity) {
-          throw new ErreurApi("DONNEESINVALIDES", "Stock insuffisant.");
+          throw new ErreurApi(
+            "DONNEESINVALIDES",
+            "Stock insuffisant pour un des produits.",
+          );
         }
 
-        const orderItem = await tx.deliveryOrderItem.findFirst({
-          where: { orderId: commande.id, ingredientId: item.ingredientId },
-        });
-        if (orderItem) {
-          await tx.deliveryOrderItem.update({
-            where: { id: orderItem.id },
-            data: { priceFcfa: stock.priceFcfa },
-          });
-        }
+        const prixLigne = Math.round(stock.priceFcfa * item.quantity);
+        totalProduits += prixLigne;
+        itemsAvecPrix.push({ ...item, priceFcfa: prixLigne });
 
         await tx.deliveryStock.update({
           where: {
@@ -107,17 +89,45 @@ export async function POST(request: Request) {
         });
       }
 
+      const totalFcfa = totalProduits + fraisLivraison;
+
+      const commande = await tx.deliveryOrder.create({
+        data: {
+          household: { connect: { id: session.householdId! } },
+          deliveryPoint: { connect: { id: body.deliveryPointId } },
+          type: body.type,
+          deliveryFeeFcfa: fraisLivraison,
+          totalFcfa,
+          status: "pending",
+          items: {
+            create: itemsAvecPrix.map((item) => ({
+              ingredient: { connect: { id: item.ingredientId } },
+              unit: { connect: { id: item.unitId } },
+              quantity: item.quantity,
+              priceFcfa: item.priceFcfa,
+            })),
+          },
+        },
+      });
+
       return commande;
     });
 
-    // Assignation automatique au chauffeur disponible le plus proche
     try {
       await assignerChauffeurAutomatique(order.id);
-    } catch {
-      // pas bloquant : la commande reste en attente
+    } catch (erreur) {
+      console.error(
+        `Assignation automatique échouée pour la commande ${order.id} :`,
+        erreur,
+      );
     }
 
-    return NextResponse.json({ id: order.id, totalFcfa, status: order.status }, { status: 201 });
+    const commandeFinale = await prisma.deliveryOrder.findUniqueOrThrow({
+      where: { id: order.id },
+      select: { id: true, totalFcfa: true, status: true },
+    });
+
+    return NextResponse.json(commandeFinale, { status: 201 });
   } catch (erreur) {
     return gererErreur(erreur);
   }
