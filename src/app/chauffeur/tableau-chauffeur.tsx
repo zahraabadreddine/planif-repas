@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { fcfa, cx } from "@/lib/format";
-import { TruckIcon, PackageIcon, CheckIcon, ClockIcon, MapIcon, ChevronRight } from "@/components/icones";
+import { TruckIcon, PackageIcon, CheckIcon, MapIcon } from "@/components/icones";
 
 type Item = { name: string; quantity: number; unit: string; priceFcfa: number };
 type Point = { name: string; address: string; commune: string; phone: string | null };
@@ -56,11 +56,16 @@ export function TableauChauffeur({
   const [enChargement, setEnChargement] = useState<string | null>(null);
   const [enToggle, setEnToggle] = useState(false);
   const [statut, setStatut] = useState(driverStatus);
+  const [statutRecu, setStatutRecu] = useState(driverStatus);
   const [flash, setFlash] = useState<string | null>(null);
   const router = useRouter();
   const [, startTransition] = useTransition();
 
-  useEffect(() => { setStatut(driverStatus); }, [driverStatus]);
+  // Le serveur a renvoyé un nouveau statut (après router.refresh) : on le reprend pendant le rendu.
+  if (statutRecu !== driverStatus) {
+    setStatutRecu(driverStatus);
+    setStatut(driverStatus);
+  }
 
   async function toggleStatut() {
     const prochain = statut === "available" ? "offline" : "available";
@@ -181,7 +186,7 @@ export function TableauChauffeur({
         <div className="mt-6 rounded-[14px_18px_16px_12px] border-[2.5px] border-sable bg-[#FFFDF7] px-5 py-6 text-center">
           <p className="font-hand text-xl font-bold text-puce">Pas de livraison en cours</p>
           <p className="mt-1 text-sm text-cacao">
-            Les nouvelles commandes apparaîtront ici dès qu'elles seront assignées.
+            Les nouvelles commandes apparaîtront ici dès qu&apos;elles seront assignées.
           </p>
         </div>
       )}

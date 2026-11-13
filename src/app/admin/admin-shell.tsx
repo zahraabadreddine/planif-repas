@@ -8,7 +8,6 @@ import { cx } from "@/lib/format";
 import {
   HomeIcon,
   CalendarIcon,
-  CartIcon,
   FridgeIcon,
   UserIcon,
   WalletIcon,
@@ -16,7 +15,6 @@ import {
   TruckIcon,
   PackageIcon,
   CloseIcon,
-  ChartIcon,
 } from "@/components/icones";
 import { UmamiLogo } from "@/components/logo";
 

@@ -98,7 +98,10 @@ export function DeliveryClient({ points }: Props) {
   const [commandeOk, setCommandeOk] = useState<string | null>(null);
   const [erreurCommande, setErreurCommande] = useState<string | null>(null);
 
-  const panierActif = pointSelectionne ? panierParPoint[pointSelectionne] ?? new Set() : new Set<string>();
+  const panierActif = useMemo(
+    () => (pointSelectionne ? panierParPoint[pointSelectionne] : undefined) ?? new Set<string>(),
+    [pointSelectionne, panierParPoint],
+  );
 
   const commander = useCallback(async () => {
     if (!pointActif || panierActif.size === 0) return;

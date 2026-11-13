@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { fcfa, cx } from "@/lib/format";
 import { TruckIcon, CheckIcon, ClockIcon, PackageIcon, UserIcon, BoltIcon } from "@/components/icones";
 
@@ -54,7 +53,6 @@ export function GestionCommandes({
 }) {
   const [tab, setTab] = useState<string>("pending");
   const [ouvert, setOuvert] = useState<string | null>(null);
-  const router = useRouter();
 
   const filtered =
     tab === "done"
