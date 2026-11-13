@@ -8,6 +8,7 @@ import { cx, fcfa } from "@/lib/format";
 import { nombre, pluriel } from "@/lib/catalogue/quantites";
 
 const CarteLeaflet = lazy(() => import("@/components/carte-leaflet"));
+const CarteItineraire = lazy(() => import("@/components/carte-itineraire"));
 
 const COULEURS: Record<PlaceType, { bg: string; text: string; border: string }> = {
   market: { bg: "bg-carmin/10", text: "text-carmin", border: "border-carmin/30" },
@@ -124,7 +125,17 @@ function SectionLieu({ lieu, onVoirCarte }: { lieu: Lieu; onVoirCarte: (m: Magas
   );
 }
 
-function PanneauCarte({ magasin, onFermer }: { magasin: Magasin; onFermer: () => void }) {
+function PanneauCarte({
+  magasin,
+  positionUtilisateur,
+  onFermer,
+}: {
+  magasin: Magasin;
+  positionUtilisateur: [number, number] | null;
+  onFermer: () => void;
+}) {
+  const avecItineraire = positionUtilisateur !== null;
+
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-creme">
       <div className="flex items-center gap-3 px-4 pb-2 pt-4">
@@ -149,19 +160,29 @@ function PanneauCarte({ magasin, onFermer }: { magasin: Magasin; onFermer: () =>
             </div>
           }
         >
-          <CarteLeaflet
-            centre={[magasin.latitude, magasin.longitude]}
-            zoom={16}
-            marqueurs={[
-              {
-                id: magasin.id,
-                position: [magasin.latitude, magasin.longitude],
-                label: magasin.name,
-                detail: magasin.address,
-              },
-            ]}
-            className="h-full"
-          />
+          {avecItineraire ? (
+            <CarteItineraire
+              depart={positionUtilisateur}
+              arrivee={[magasin.latitude, magasin.longitude]}
+              labelArrivee={magasin.name}
+              detailArrivee={magasin.address}
+              className="h-full"
+            />
+          ) : (
+            <CarteLeaflet
+              centre={[magasin.latitude, magasin.longitude]}
+              zoom={16}
+              marqueurs={[
+                {
+                  id: magasin.id,
+                  position: [magasin.latitude, magasin.longitude],
+                  label: magasin.name,
+                  detail: magasin.address,
+                },
+              ]}
+              className="h-full"
+            />
+          )}
         </Suspense>
       </div>
     </div>
@@ -173,6 +194,7 @@ export function OuAcheter({ listeId }: { listeId: string }) {
   const [chargement, setChargement] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
   const [magasinSurCarte, setMagasinSurCarte] = useState<Magasin | null>(null);
+  const [posUtilisateur, setPosUtilisateur] = useState<[number, number] | null>(null);
 
   async function charger() {
     setChargement(true);
@@ -186,6 +208,7 @@ export function OuAcheter({ listeId }: { listeId: string }) {
       );
       lat = pos.coords.latitude;
       lng = pos.coords.longitude;
+      setPosUtilisateur([lat, lng]);
     } catch {
       // position non disponible, le backend utilisera le centre du quartier
     }
@@ -254,7 +277,11 @@ export function OuAcheter({ listeId }: { listeId: string }) {
       ))}
 
       {magasinSurCarte && (
-        <PanneauCarte magasin={magasinSurCarte} onFermer={() => setMagasinSurCarte(null)} />
+        <PanneauCarte
+          magasin={magasinSurCarte}
+          positionUtilisateur={posUtilisateur}
+          onFermer={() => setMagasinSurCarte(null)}
+        />
       )}
     </div>
   );
