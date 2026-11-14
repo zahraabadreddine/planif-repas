@@ -83,7 +83,7 @@ export function GestionChauffeurs({ chauffeurs }: { chauffeurs: Chauffeur[] }) {
       {/* Add button */}
       <button
         onClick={() => setShowForm(!showForm)}
-        className="press flex w-full items-center justify-center gap-2 rounded-[14px_18px_16px_12px] border-[2.5px] border-foret bg-palme/20 px-4 py-3 font-display text-sm font-bold text-foret shadow-[0_3px_0_#411102] transition-transform"
+        className="press flex w-full items-center justify-center gap-2 rounded-[14px_18px_16px_12px] border-[2.5px] border-foret bg-palme/20 px-4 py-3 font-display text-sm font-bold text-foret shadow-[0_3px_0_#411102] transition-transform md:py-4 md:text-base"
       >
         <PlusIcon size={16} />
         Ajouter un chauffeur
@@ -96,10 +96,10 @@ export function GestionChauffeurs({ chauffeurs }: { chauffeurs: Chauffeur[] }) {
             e.preventDefault();
             creer(new FormData(e.currentTarget));
           }}
-          className="mt-3 rounded-[14px_18px_16px_12px] border-[2.5px] border-foret bg-[#FFFDF7] px-4 py-4"
+          className="mt-3 rounded-[14px_18px_16px_12px] border-[2.5px] border-foret bg-[#FFFDF7] px-4 py-4 md:px-6 md:py-5"
         >
-          <h3 className="font-display text-sm font-bold text-puce">Nouveau chauffeur</h3>
-          <div className="mt-3 flex flex-col gap-2.5">
+          <h3 className="font-display text-sm font-bold text-puce md:text-base">Nouveau chauffeur</h3>
+          <div className="mt-3 grid grid-cols-1 gap-2.5 md:grid-cols-2 md:gap-3.5">
             <Input name="fullName" label="Nom complet" required />
             <Input name="email" label="Email" type="email" required />
             <Input name="password" label="Mot de passe" type="password" required />
@@ -134,12 +134,12 @@ export function GestionChauffeurs({ chauffeurs }: { chauffeurs: Chauffeur[] }) {
       )}
 
       {/* Driver list */}
-      <div className="mt-4 flex flex-col gap-2.5">
+      <div className="mt-4 grid grid-cols-1 gap-2.5 md:grid-cols-2 md:gap-4">
         {chauffeurs.length === 0 && (
           <p className="py-8 text-center text-sm text-cacao">Aucun chauffeur enregistré.</p>
         )}
         {chauffeurs.map((d) => (
-          <div key={d.id} className="paper-shadow bg-[#FFFDF7] px-4 py-3">
+          <div key={d.id} className="paper-shadow bg-[#FFFDF7] px-4 py-3 md:px-6 md:py-4">
             <button
               onClick={() => setSelected(selected === d.id ? null : d.id)}
               className="flex w-full items-start justify-between gap-2 text-left"
@@ -147,16 +147,16 @@ export function GestionChauffeurs({ chauffeurs }: { chauffeurs: Chauffeur[] }) {
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
                   <UserIcon size={15} />
-                  <span className="truncate font-display text-[15px] font-bold text-foret">
+                  <span className="truncate font-display text-[15px] font-bold text-foret md:text-lg">
                     {d.fullName}
                   </span>
                 </div>
-                <p className="mt-0.5 text-xs text-canard">
+                <p className="mt-0.5 text-xs text-canard md:text-sm">
                   {d.commune} · {d.vehicle} · {d.phone}
                 </p>
               </div>
               <div className="flex shrink-0 flex-col items-end gap-1">
-                <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${STATUS_STYLE[d.status] ?? ""}`}>
+                <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold md:text-xs ${STATUS_STYLE[d.status] ?? ""}`}>
                   {STATUS_LABEL[d.status] ?? d.status}
                 </span>
                 {d.activeOrders > 0 && (
@@ -207,13 +207,13 @@ function Input({
 }) {
   return (
     <label className="flex flex-col gap-1">
-      <span className="text-xs font-bold text-cacao">{label}</span>
+      <span className="text-xs font-bold text-cacao md:text-sm">{label}</span>
       <input
         name={name}
         type={type}
         required={required}
         placeholder={placeholder}
-        className="rounded-[8px_12px_10px_6px] border-2 border-sable bg-creme px-3 py-2 text-sm text-foret outline-none transition-colors focus:border-foret"
+        className="rounded-[8px_12px_10px_6px] border-2 border-sable bg-creme px-3 py-2 text-sm text-foret outline-none transition-colors focus:border-foret md:px-4 md:py-2.5 md:text-base"
       />
     </label>
   );

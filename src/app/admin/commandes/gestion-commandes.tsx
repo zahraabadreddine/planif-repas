@@ -68,12 +68,12 @@ export function GestionCommandes({
   return (
     <div className="mt-4">
       {/* Info assignation automatique */}
-      <div className="mb-4 rounded-[14px_18px_16px_12px] border-[2.5px] border-foret bg-mangue/15 px-4 py-3">
+      <div className="mb-4 rounded-[14px_18px_16px_12px] border-[2.5px] border-foret bg-mangue/15 px-4 py-3 md:mb-6 md:px-6 md:py-4">
         <div className="flex items-center gap-2">
           <BoltIcon size={15} />
           <div>
-            <p className="text-xs font-bold text-foret">Assignation automatique</p>
-            <p className="mt-0.5 text-[11px] text-cacao">
+            <p className="text-xs font-bold text-foret md:text-sm">Assignation automatique</p>
+            <p className="mt-0.5 text-[11px] text-cacao md:text-xs">
               Les commandes sont assignées automatiquement aux chauffeurs disponibles.
             </p>
           </div>
@@ -89,7 +89,7 @@ export function GestionCommandes({
       </div>
 
       {/* Onglets */}
-      <div className="flex gap-1.5 overflow-x-auto pb-1">
+      <div className="flex gap-1.5 overflow-x-auto pb-1 md:gap-2.5">
         {TABS.map((t) => {
           const count = t.key === "done"
             ? commandes.filter((c) => c.status === "delivered" || c.status === "received" || c.status === "cancelled").length
@@ -100,7 +100,7 @@ export function GestionCommandes({
               key={t.key}
               onClick={() => setTab(t.key)}
               className={cx(
-                "flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold transition-colors",
+                "flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold transition-colors md:px-4 md:py-2 md:text-sm",
                 tab === t.key
                   ? "bg-foret text-creme"
                   : "bg-sable/60 text-cacao",
@@ -124,18 +124,18 @@ export function GestionCommandes({
       </div>
 
       {/* Liste des commandes */}
-      <div className="mt-4 flex flex-col gap-3">
+      <div className="mt-4 grid grid-cols-1 gap-3 md:mt-6 md:grid-cols-2 md:gap-5">
         {filtered.length === 0 && (
           <p className="py-8 text-center text-sm text-cacao">Aucune commande ici.</p>
         )}
         {filtered.map((c) => (
-          <div key={c.id} className="paper-shadow bg-[#FFFDF7] px-4 py-3">
+          <div key={c.id} className="paper-shadow bg-[#FFFDF7] px-4 py-3 md:px-6 md:py-4">
             <button
               onClick={() => setOuvert(ouvert === c.id ? null : c.id)}
               className="flex w-full items-start justify-between gap-2 text-left"
             >
               <div className="min-w-0 flex-1">
-                <p className="truncate font-display text-[15px] font-bold text-foret">
+                <p className="truncate font-display text-[15px] font-bold text-foret md:text-lg">
                   #{c.id.slice(0, 8).toUpperCase()}
                 </p>
                 <p className="text-[11px] font-bold text-canard">{c.household}</p>
@@ -145,7 +145,7 @@ export function GestionCommandes({
                 <p className="text-[11px] text-cacao">{formatDate(c.createdAt)}</p>
               </div>
               <div className="flex shrink-0 flex-col items-end gap-1">
-                <span className="font-display text-sm font-bold text-puce">{fcfa(c.totalFcfa)}</span>
+                <span className="font-display text-sm font-bold text-puce md:text-base">{fcfa(c.totalFcfa)}</span>
                 <StatusBadge status={c.status} />
                 {c.driver ? (
                   <span className="flex items-center gap-1 text-[10px] font-bold text-palme">
