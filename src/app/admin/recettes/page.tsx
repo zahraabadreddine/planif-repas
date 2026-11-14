@@ -69,7 +69,7 @@ export default function AdminRecettesPage() {
               key={f}
               onClick={() => setFiltre(f)}
               className={cx(
-                "rounded-full px-3 py-1 text-xs font-bold transition-colors",
+                "rounded-full px-3 py-1 text-xs font-bold transition-colors lg:px-4 lg:py-2 lg:text-sm",
                 filtre === f
                   ? "bg-foret text-creme"
                   : "border border-sable text-cacao hover:bg-sable/50",
@@ -88,26 +88,26 @@ export default function AdminRecettesPage() {
         <p className="mt-6 font-bold text-cacao">Aucune recette dans le catalogue.</p>
       )}
 
-      <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-2">
+      <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4">
         {filtrees.map((rec) => (
           <div
             key={rec.id}
-            className="rounded-[14px_18px_16px_12px] border-[2.5px] border-foret bg-sable/60 px-4 py-3"
+            className="rounded-[14px_18px_16px_12px] border-[2.5px] border-foret bg-sable/60 px-4 py-3 lg:px-6 lg:py-4"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <p className="truncate font-display font-semibold text-foret">{rec.title}</p>
+                  <p className="truncate font-display font-semibold text-foret lg:text-lg">{rec.title}</p>
                   <span
                     className={cx(
-                      "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold",
+                      "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold lg:text-xs",
                       rec.validated ? "bg-palme/20 text-palme" : "bg-mangue/20 text-sirop",
                     )}
                   >
                     {rec.validated ? "Validée" : "En attente"}
                   </span>
                 </div>
-                <p className="mt-0.5 text-sm text-cacao">
+                <p className="mt-0.5 text-sm text-cacao lg:text-base">
                   {rec.cuisine} · {rec.prepMinutes + rec.cookMinutes} min · {DIFFICULTE[rec.difficulty] || `Niv. ${rec.difficulty}`}
                 </p>
               </div>
@@ -116,7 +116,7 @@ export default function AdminRecettesPage() {
               <button
                 onClick={() => basculerValidation(rec)}
                 className={cx(
-                  "rounded-lg px-3 py-1 text-sm font-bold",
+                  "rounded-lg px-3 py-1 text-sm font-bold lg:px-4 lg:py-2 lg:text-base",
                   rec.validated
                     ? "border-2 border-cacao text-cacao"
                     : "bg-palme text-creme",
@@ -126,7 +126,7 @@ export default function AdminRecettesPage() {
               </button>
               <button
                 onClick={() => supprimer(rec.id)}
-                className="rounded-lg bg-carmin/10 px-3 py-1 text-sm font-bold text-carmin"
+                className="rounded-lg bg-carmin/10 px-3 py-1 text-sm font-bold text-carmin lg:px-4 lg:py-2 lg:text-base"
               >
                 Supprimer
               </button>

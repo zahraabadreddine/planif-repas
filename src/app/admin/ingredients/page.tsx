@@ -51,7 +51,7 @@ export default function AdminIngredientsPage() {
         placeholder="Rechercher un ingrédient…"
         value={recherche}
         onChange={(e) => setRecherche(e.target.value)}
-        className="mt-3 h-10 w-full rounded-xl border-2 border-foret bg-creme px-4 text-sm font-bold text-foret placeholder:text-cacao/50"
+        className="mt-3 h-10 w-full rounded-xl border-2 border-foret bg-creme px-4 text-sm font-bold text-foret placeholder:text-cacao/50 lg:h-12 lg:px-5 lg:text-base"
       />
 
       {erreur && <p className="mt-4 rounded-xl bg-carmin/10 px-4 py-2 font-bold text-carmin">{erreur}</p>}
@@ -60,22 +60,22 @@ export default function AdminIngredientsPage() {
         <p className="mt-6 font-bold text-cacao">Aucun ingrédient dans le catalogue.</p>
       )}
 
-      <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-2">
+      <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4">
         {filtres.map((ing) => (
           <div
             key={ing.id}
-            className="flex items-center justify-between gap-3 rounded-[14px_18px_16px_12px] border-[2.5px] border-foret bg-sable/60 px-4 py-3"
+            className="flex items-center justify-between gap-3 rounded-[14px_18px_16px_12px] border-[2.5px] border-foret bg-sable/60 px-4 py-3 lg:px-6 lg:py-4"
           >
             <div className="min-w-0">
-              <p className="truncate font-display font-semibold text-foret">{ing.name}</p>
+              <p className="truncate font-display font-semibold text-foret lg:text-lg">{ing.name}</p>
               <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-sm text-cacao">
-                <span className="rounded-full bg-biscuit/40 px-2 py-0.5 text-xs font-bold text-sirop">
+                <span className="rounded-full bg-biscuit/40 px-2 py-0.5 text-xs font-bold text-sirop lg:text-sm">
                   {ing.category}
                 </span>
                 {ing.allergens.map((a) => (
                   <span
                     key={a}
-                    className="rounded-full bg-carmin/10 px-2 py-0.5 text-[10px] font-bold text-carmin"
+                    className="rounded-full bg-carmin/10 px-2 py-0.5 text-[10px] font-bold text-carmin lg:text-xs"
                   >
                     {a}
                   </span>
@@ -84,7 +84,7 @@ export default function AdminIngredientsPage() {
             </div>
             <button
               onClick={() => supprimer(ing.id)}
-              className="shrink-0 rounded-lg bg-carmin/10 px-3 py-1 text-sm font-bold text-carmin"
+              className="shrink-0 rounded-lg bg-carmin/10 px-3 py-1 text-sm font-bold text-carmin lg:px-4 lg:py-2 lg:text-base"
             >
               Supprimer
             </button>

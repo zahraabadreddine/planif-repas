@@ -97,21 +97,21 @@ export default function AdminPrixPage() {
         <p className="mt-6 font-bold text-cacao">Aucun prix enregistré.</p>
       )}
 
-      <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-2">
+      <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4">
         {items.map((p) => (
           <div
             key={p.id}
             className={cx(
-              "rounded-[14px_18px_16px_12px] border-[2.5px] border-foret bg-sable/60 px-4 py-3 transition-shadow",
+              "rounded-[14px_18px_16px_12px] border-[2.5px] border-foret bg-sable/60 px-4 py-3 transition-shadow lg:px-6 lg:py-4",
               editId === p.id && "ring-2 ring-mangue/60",
             )}
           >
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0 flex-1">
-                <p className="truncate font-display font-semibold text-foret">
+                <p className="truncate font-display font-semibold text-foret lg:text-lg">
                   {p.ingredient.name}
                 </p>
-                <p className="mt-0.5 text-sm text-cacao">
+                <p className="mt-0.5 text-sm text-cacao lg:text-base">
                   {p.placeType} · {p.city}
                   {p.store && ` · ${p.store.name}`}
                   {" · "}
@@ -119,44 +119,44 @@ export default function AdminPrixPage() {
                 </p>
               </div>
               <div className="flex shrink-0 flex-col items-end gap-1">
-                <span className="font-display text-base font-bold text-puce">
+                <span className="font-display text-base font-bold text-puce lg:text-lg">
                   {fcfa(p.priceFcfa)}
                 </span>
-                <span className="text-xs text-cacao">/{p.unit.label}</span>
+                <span className="text-xs text-cacao lg:text-sm">/{p.unit.label}</span>
               </div>
             </div>
 
             {editId === p.id ? (
               <div className="mt-3 flex flex-wrap items-end gap-2 border-t border-sable pt-3">
                 <div className="flex-1">
-                  <label className="text-[11px] font-bold text-canard">Prix (FCFA)</label>
+                  <label className="text-[11px] font-bold text-canard lg:text-xs">Prix (FCFA)</label>
                   <input
                     type="number"
                     min={1}
                     value={editPrix}
                     onChange={(e) => setEditPrix(e.target.value)}
-                    className="mt-0.5 h-9 w-full rounded-lg border-2 border-foret bg-creme px-3 text-sm font-bold text-foret"
+                    className="mt-0.5 h-9 w-full rounded-lg border-2 border-foret bg-creme px-3 text-sm font-bold text-foret lg:h-10 lg:px-4 lg:text-base"
                   />
                 </div>
                 <div className="flex-1">
-                  <label className="text-[11px] font-bold text-canard">Ville</label>
+                  <label className="text-[11px] font-bold text-canard lg:text-xs">Ville</label>
                   <input
                     type="text"
                     value={editCity}
                     onChange={(e) => setEditCity(e.target.value)}
-                    className="mt-0.5 h-9 w-full rounded-lg border-2 border-foret bg-creme px-3 text-sm font-bold text-foret"
+                    className="mt-0.5 h-9 w-full rounded-lg border-2 border-foret bg-creme px-3 text-sm font-bold text-foret lg:h-10 lg:px-4 lg:text-base"
                   />
                 </div>
                 <button
                   onClick={() => enregistrer(p)}
                   disabled={saving}
-                  className="h-9 rounded-lg bg-palme px-4 text-sm font-bold text-creme disabled:opacity-50"
+                  className="h-9 rounded-lg bg-palme px-4 text-sm font-bold text-creme disabled:opacity-50 lg:h-10 lg:text-base"
                 >
                   {saving ? "…" : "Enregistrer"}
                 </button>
                 <button
                   onClick={fermer}
-                  className="h-9 rounded-lg border-2 border-cacao px-3 text-sm font-bold text-cacao"
+                  className="h-9 rounded-lg border-2 border-cacao px-3 text-sm font-bold text-cacao lg:h-10 lg:px-4 lg:text-base"
                 >
                   Annuler
                 </button>
@@ -165,13 +165,13 @@ export default function AdminPrixPage() {
               <div className="mt-2 flex gap-2">
                 <button
                   onClick={() => ouvrir(p)}
-                  className="rounded-lg border-2 border-palme px-3 py-1 text-sm font-bold text-palme"
+                  className="rounded-lg border-2 border-palme px-3 py-1 text-sm font-bold text-palme lg:px-4 lg:py-2 lg:text-base"
                 >
                   Modifier
                 </button>
                 <button
                   onClick={() => supprimer(p.id)}
-                  className="rounded-lg bg-carmin/10 px-3 py-1 text-sm font-bold text-carmin"
+                  className="rounded-lg bg-carmin/10 px-3 py-1 text-sm font-bold text-carmin lg:px-4 lg:py-2 lg:text-base"
                 >
                   Supprimer
                 </button>

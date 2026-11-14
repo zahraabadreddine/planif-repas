@@ -50,29 +50,29 @@ export default function AdminMagasinsPage() {
         <p className="mt-6 font-bold text-cacao">Aucun magasin enregistré.</p>
       )}
 
-      <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-2">
+      <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4">
         {items.map((m) => (
           <div
             key={m.id}
-            className="flex items-center justify-between gap-3 rounded-[14px_18px_16px_12px] border-[2.5px] border-foret bg-sable/60 px-4 py-3"
+            className="flex items-center justify-between gap-3 rounded-[14px_18px_16px_12px] border-[2.5px] border-foret bg-sable/60 px-4 py-3 lg:px-6 lg:py-4"
           >
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <p className="truncate font-display font-semibold text-foret">{m.name}</p>
+                <p className="truncate font-display font-semibold text-foret lg:text-lg">{m.name}</p>
                 <span
-                  className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${TYPE_BADGE[m.type] ?? "bg-sable text-cacao"}`}
+                  className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold lg:text-xs ${TYPE_BADGE[m.type] ?? "bg-sable text-cacao"}`}
                 >
                   {m.type}
                 </span>
               </div>
-              <p className="mt-0.5 text-sm text-cacao">
+              <p className="mt-0.5 text-sm text-cacao lg:text-base">
                 {m.address}
                 {m.neighborhood && ` · ${m.neighborhood.name}`}
               </p>
             </div>
             <button
               onClick={() => supprimer(m.id)}
-              className="shrink-0 rounded-lg bg-carmin/10 px-3 py-1 text-sm font-bold text-carmin"
+              className="shrink-0 rounded-lg bg-carmin/10 px-3 py-1 text-sm font-bold text-carmin lg:px-4 lg:py-2 lg:text-base"
             >
               Supprimer
             </button>
