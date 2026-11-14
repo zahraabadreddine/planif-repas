@@ -103,7 +103,7 @@ export default async function AdminPage() {
       {/* --- Delivery stats (hero) --- */}
       <section className="mt-5">
         <h2 className="font-display text-base font-bold text-puce">Delivery</h2>
-        <div className="mt-3 grid grid-cols-2 gap-3">
+        <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-3">
           <StatCard icon={<PackageIcon size={18} />} label="Commandes aujourd'hui" value={String(commandesJour)} accent="foret" />
           <StatCard icon={<ChartIcon size={18} />} label="Revenu du jour" value={fcfa(revJour)} accent="palme" />
           <StatCard icon={<ClockIcon size={18} />} label="En attente" value={String(commandesPending)} accent="sirop" highlight={commandesPending > 0} />
@@ -111,7 +111,7 @@ export default async function AdminPage() {
           <StatCard icon={<CheckIcon size={18} />} label="Livrées (total)" value={String(commandesLivrees)} accent="palme" />
           <StatCard icon={<UserIcon size={18} />} label="Chauffeurs dispo" value={`${chauffeursActifs} / ${chauffeurs}`} accent="foret" />
         </div>
-        <div className="mt-3 grid grid-cols-3 gap-2">
+        <div className="mt-3 grid grid-cols-3 gap-2 lg:gap-3">
           <MiniStat label="Semaine" value={String(commandesSemaine)} />
           <MiniStat label="Mois" value={String(commandesMois)} />
           <MiniStat label="Revenu total" value={fcfa(revTotal)} />
@@ -147,7 +147,7 @@ export default async function AdminPage() {
             Tout voir <ChevronRight size={12} />
           </Link>
         </div>
-        <div className="mt-2 flex flex-col gap-2">
+        <div className="mt-2 grid grid-cols-1 gap-2 lg:grid-cols-2">
           {dernieresCommandes.length === 0 && (
             <p className="text-sm text-cacao">Aucune commande pour le moment.</p>
           )}
@@ -179,7 +179,7 @@ export default async function AdminPage() {
       {/* --- App stats --- */}
       <section className="mt-8">
         <h2 className="font-display text-base font-bold text-cacao">Application</h2>
-        <div className="mt-3 grid grid-cols-3 gap-2">
+        <div className="mt-3 grid grid-cols-3 gap-2 lg:grid-cols-6 lg:gap-3">
           <MiniStat label="Utilisateurs" value={String(utilisateurs)} />
           <MiniStat label="Foyers" value={String(foyers)} />
           <MiniStat label="Recettes" value={String(recettes)} />
@@ -192,7 +192,7 @@ export default async function AdminPage() {
       {/* --- Management cards --- */}
       <section className="mt-6 pb-4">
         <h2 className="font-display text-base font-bold text-cacao">Gestion</h2>
-        <div className="mt-3 grid grid-cols-3 gap-2">
+        <div className="mt-3 grid grid-cols-3 gap-2 lg:grid-cols-5 lg:gap-3">
           {cartes.map((c) => (
             <Link
               key={c.href}

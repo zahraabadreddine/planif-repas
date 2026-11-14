@@ -99,7 +99,7 @@ export function GestionChauffeurs({ chauffeurs }: { chauffeurs: Chauffeur[] }) {
           className="mt-3 rounded-[14px_18px_16px_12px] border-[2.5px] border-foret bg-[#FFFDF7] px-4 py-4"
         >
           <h3 className="font-display text-sm font-bold text-puce">Nouveau chauffeur</h3>
-          <div className="mt-3 flex flex-col gap-2.5">
+          <div className="mt-3 grid grid-cols-1 gap-2.5 lg:grid-cols-2">
             <Input name="fullName" label="Nom complet" required />
             <Input name="email" label="Email" type="email" required />
             <Input name="password" label="Mot de passe" type="password" required />
@@ -134,7 +134,7 @@ export function GestionChauffeurs({ chauffeurs }: { chauffeurs: Chauffeur[] }) {
       )}
 
       {/* Driver list */}
-      <div className="mt-4 flex flex-col gap-2.5">
+      <div className="mt-4 grid grid-cols-1 gap-2.5 lg:grid-cols-2">
         {chauffeurs.length === 0 && (
           <p className="py-8 text-center text-sm text-cacao">Aucun chauffeur enregistré.</p>
         )}

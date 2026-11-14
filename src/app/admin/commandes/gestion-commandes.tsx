@@ -124,7 +124,7 @@ export function GestionCommandes({
       </div>
 
       {/* Liste des commandes */}
-      <div className="mt-4 flex flex-col gap-3">
+      <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-2">
         {filtered.length === 0 && (
           <p className="py-8 text-center text-sm text-cacao">Aucune commande ici.</p>
         )}

@@ -88,7 +88,7 @@ export default function AdminRecettesPage() {
         <p className="mt-6 font-bold text-cacao">Aucune recette dans le catalogue.</p>
       )}
 
-      <div className="mt-4 space-y-3">
+      <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-2">
         {filtrees.map((rec) => (
           <div
             key={rec.id}

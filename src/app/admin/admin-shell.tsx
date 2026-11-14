@@ -116,8 +116,10 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       </nav>
 
       {/* Main content */}
-      <main className="px-5 pb-10 pt-6 md:ml-64">
-        {children}
+      <main className="px-4 pb-10 pt-6 md:ml-64 md:px-6 lg:px-10 xl:px-14">
+        <div className="mx-auto max-w-6xl">
+          {children}
+        </div>
       </main>
     </div>
   );
