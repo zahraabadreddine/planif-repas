@@ -179,7 +179,7 @@ export default async function AdminPage() {
       {/* --- App stats --- */}
       <section className="mt-8 lg:mt-12">
         <h2 className="font-display text-base font-bold text-cacao lg:text-lg">Application</h2>
-        <div className="mt-3 grid grid-cols-3 gap-2 lg:mt-5 lg:grid-cols-6 lg:gap-4">
+        <div className="mt-3 grid grid-cols-3 gap-2 lg:mt-5 lg:gap-4">
           <MiniStat label="Utilisateurs" value={String(utilisateurs)} />
           <MiniStat label="Foyers" value={String(foyers)} />
           <MiniStat label="Recettes" value={String(recettes)} />
@@ -192,14 +192,14 @@ export default async function AdminPage() {
       {/* --- Management cards --- */}
       <section className="mt-6 pb-4 lg:mt-10 lg:pb-8">
         <h2 className="font-display text-base font-bold text-cacao lg:text-lg">Gestion</h2>
-        <div className="mt-3 grid grid-cols-3 gap-2 lg:mt-5 lg:grid-cols-5 lg:gap-4">
+        <div className="mt-3 grid grid-cols-3 gap-2 lg:mt-5 lg:gap-4">
           {cartes.map((c) => (
             <Link
               key={c.href}
               href={c.href}
               className="press flex flex-col items-center gap-1.5 rounded-[14px_18px_16px_12px] border-[2.5px] border-foret bg-creme px-3 py-3.5 font-display text-xs font-semibold text-foret shadow-[0_3px_0_#411102] transition-transform lg:gap-2.5 lg:px-5 lg:py-5 lg:text-sm"
             >
-              <span className="text-2xl">{c.icone}</span>
+              <span className="text-2xl lg:text-3xl">{c.icone}</span>
               {c.label}
             </Link>
           ))}
