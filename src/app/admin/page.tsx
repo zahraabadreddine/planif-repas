@@ -101,9 +101,9 @@ export default async function AdminPage() {
       <PageHeader overline="Administration" title="Centre de commande" />
 
       {/* --- Delivery stats (hero) --- */}
-      <section className="mt-5 lg:mt-8">
-        <h2 className="font-display text-base font-bold text-puce lg:text-lg">Delivery</h2>
-        <div className="mt-3 grid grid-cols-2 gap-3 lg:mt-5 lg:grid-cols-3 lg:gap-5">
+      <section className="mt-5 md:mt-8">
+        <h2 className="font-display text-base font-bold text-puce md:text-lg">Delivery</h2>
+        <div className="mt-3 grid grid-cols-2 gap-3 md:mt-5 md:grid-cols-3 md:gap-5">
           <StatCard icon={<PackageIcon size={18} />} label="Commandes aujourd'hui" value={String(commandesJour)} accent="foret" />
           <StatCard icon={<ChartIcon size={18} />} label="Revenu du jour" value={fcfa(revJour)} accent="palme" />
           <StatCard icon={<ClockIcon size={18} />} label="En attente" value={String(commandesPending)} accent="sirop" highlight={commandesPending > 0} />
@@ -111,7 +111,7 @@ export default async function AdminPage() {
           <StatCard icon={<CheckIcon size={18} />} label="Livrées (total)" value={String(commandesLivrees)} accent="palme" />
           <StatCard icon={<UserIcon size={18} />} label="Chauffeurs dispo" value={`${chauffeursActifs} / ${chauffeurs}`} accent="foret" />
         </div>
-        <div className="mt-3 grid grid-cols-3 gap-2 lg:mt-5 lg:gap-4">
+        <div className="mt-3 grid grid-cols-3 gap-2 md:mt-5 md:gap-4">
           <MiniStat label="Semaine" value={String(commandesSemaine)} />
           <MiniStat label="Mois" value={String(commandesMois)} />
           <MiniStat label="Revenu total" value={fcfa(revTotal)} />
@@ -119,10 +119,10 @@ export default async function AdminPage() {
       </section>
 
       {/* --- Quick actions --- */}
-      <section className="mt-6 flex gap-2 lg:mt-10 lg:gap-4">
+      <section className="mt-6 flex gap-2 md:mt-10 md:gap-4">
         <Link
           href="/admin/commandes"
-          className="press flex flex-1 items-center justify-center gap-2 rounded-[14px_18px_16px_12px] border-[2.5px] border-sirop bg-mangue/40 px-3 py-3 font-display text-sm font-bold text-sirop shadow-[0_3px_0_#411102] transition-transform lg:py-4 lg:text-base"
+          className="press flex flex-1 items-center justify-center gap-2 rounded-[14px_18px_16px_12px] border-[2.5px] border-sirop bg-mangue/40 px-3 py-3 font-display text-sm font-bold text-sirop shadow-[0_3px_0_#411102] transition-transform md:py-4 md:text-base"
         >
           <PackageIcon size={16} /> Commandes
           {commandesPending > 0 && (
@@ -133,41 +133,41 @@ export default async function AdminPage() {
         </Link>
         <Link
           href="/admin/chauffeurs"
-          className="press flex flex-1 items-center justify-center gap-2 rounded-[14px_18px_16px_12px] border-[2.5px] border-foret bg-palme/20 px-3 py-3 font-display text-sm font-bold text-foret shadow-[0_3px_0_#411102] transition-transform lg:py-4 lg:text-base"
+          className="press flex flex-1 items-center justify-center gap-2 rounded-[14px_18px_16px_12px] border-[2.5px] border-foret bg-palme/20 px-3 py-3 font-display text-sm font-bold text-foret shadow-[0_3px_0_#411102] transition-transform md:py-4 md:text-base"
         >
           <TruckIcon size={16} /> Chauffeurs
         </Link>
       </section>
 
       {/* --- Recent orders --- */}
-      <section className="mt-6 lg:mt-10">
+      <section className="mt-6 md:mt-10">
         <div className="flex items-center justify-between">
-          <h2 className="font-display text-base font-bold text-cacao lg:text-lg">Dernières commandes</h2>
-          <Link href="/admin/commandes" className="flex items-center gap-0.5 text-xs font-bold text-palme lg:text-sm">
+          <h2 className="font-display text-base font-bold text-cacao md:text-lg">Dernières commandes</h2>
+          <Link href="/admin/commandes" className="flex items-center gap-0.5 text-xs font-bold text-palme md:text-sm">
             Tout voir <ChevronRight size={12} />
           </Link>
         </div>
-        <div className="mt-2 grid grid-cols-1 gap-2 lg:mt-4 lg:grid-cols-2 lg:gap-4">
+        <div className="mt-2 grid grid-cols-1 gap-2 md:mt-4 md:grid-cols-2 md:gap-4">
           {dernieresCommandes.length === 0 && (
             <p className="text-sm text-cacao">Aucune commande pour le moment.</p>
           )}
           {dernieresCommandes.map((c) => (
             <div
               key={c.id}
-              className="flex items-center gap-3 rounded-[10px_14px_12px_8px] border border-sable bg-[#FFFDF7] px-3 py-2.5 lg:px-5 lg:py-4"
+              className="flex items-center gap-3 rounded-[10px_14px_12px_8px] border border-sable bg-[#FFFDF7] px-3 py-2.5 md:px-5 md:py-4"
             >
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-bold text-foret lg:text-base">
+                <p className="truncate text-sm font-bold text-foret md:text-base">
                   #{c.id.slice(0, 8).toUpperCase()} → {c.deliveryPoint?.name}
                 </p>
-                <p className="text-[11px] text-canard lg:text-xs">
+                <p className="text-[11px] text-canard md:text-xs">
                   {c.deliveryPoint?.commune} · {formatDate(c.createdAt)}
                   {c.driver && <> · <span className="font-bold">{c.driver.user.fullName}</span></>}
                 </p>
               </div>
               <div className="flex shrink-0 flex-col items-end gap-1">
-                <span className="font-display text-xs font-bold text-puce lg:text-sm">{fcfa(c.totalFcfa)}</span>
-                <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold lg:text-xs ${STATUS_STYLE[c.status] ?? ""}`}>
+                <span className="font-display text-xs font-bold text-puce md:text-sm">{fcfa(c.totalFcfa)}</span>
+                <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold md:text-xs ${STATUS_STYLE[c.status] ?? ""}`}>
                   {STATUS_LABEL[c.status]}
                 </span>
               </div>
@@ -177,9 +177,9 @@ export default async function AdminPage() {
       </section>
 
       {/* --- App stats --- */}
-      <section className="mt-8 lg:mt-12">
-        <h2 className="font-display text-base font-bold text-cacao lg:text-lg">Application</h2>
-        <div className="mt-3 grid grid-cols-3 gap-2 lg:mt-5 lg:gap-4">
+      <section className="mt-8 md:mt-12">
+        <h2 className="font-display text-base font-bold text-cacao md:text-lg">Application</h2>
+        <div className="mt-3 grid grid-cols-3 gap-2 md:mt-5 md:gap-4">
           <MiniStat label="Utilisateurs" value={String(utilisateurs)} />
           <MiniStat label="Foyers" value={String(foyers)} />
           <MiniStat label="Recettes" value={String(recettes)} />
@@ -190,16 +190,16 @@ export default async function AdminPage() {
       </section>
 
       {/* --- Management cards --- */}
-      <section className="mt-6 pb-4 lg:mt-10 lg:pb-8">
-        <h2 className="font-display text-base font-bold text-cacao lg:text-lg">Gestion</h2>
-        <div className="mt-3 grid grid-cols-3 gap-2 lg:mt-5 lg:gap-4">
+      <section className="mt-6 pb-4 md:mt-10 md:pb-8">
+        <h2 className="font-display text-base font-bold text-cacao md:text-lg">Gestion</h2>
+        <div className="mt-3 grid grid-cols-3 gap-2 md:mt-5 md:gap-4">
           {cartes.map((c) => (
             <Link
               key={c.href}
               href={c.href}
-              className="press flex flex-col items-center gap-1.5 rounded-[14px_18px_16px_12px] border-[2.5px] border-foret bg-creme px-3 py-3.5 font-display text-xs font-semibold text-foret shadow-[0_3px_0_#411102] transition-transform lg:gap-2.5 lg:px-5 lg:py-5 lg:text-sm"
+              className="press flex flex-col items-center gap-1.5 rounded-[14px_18px_16px_12px] border-[2.5px] border-foret bg-creme px-3 py-3.5 font-display text-xs font-semibold text-foret shadow-[0_3px_0_#411102] transition-transform md:gap-2.5 md:px-5 md:py-5 md:text-sm"
             >
-              <span className="text-2xl lg:text-3xl">{c.icone}</span>
+              <span className="text-2xl md:text-3xl">{c.icone}</span>
               {c.label}
             </Link>
           ))}
@@ -232,26 +232,26 @@ function StatCard({
   const cls = ACCENT[accent] ?? "text-foret";
   return (
     <div
-      className={`rounded-[14px_18px_16px_12px] border-[2.5px] px-4 py-3 lg:px-6 lg:py-5 ${
+      className={`rounded-[14px_18px_16px_12px] border-[2.5px] px-4 py-3 md:px-6 md:py-5 ${
         highlight
           ? "border-sirop bg-mangue/30 animate-pulse"
           : "border-foret bg-sable/60"
       }`}
     >
-      <div className="flex items-center gap-1.5 lg:gap-2">
+      <div className="flex items-center gap-1.5 md:gap-2">
         <span className={cls}>{icon}</span>
-        <p className="text-xs font-bold text-cacao lg:text-sm">{label}</p>
+        <p className="text-xs font-bold text-cacao md:text-sm">{label}</p>
       </div>
-      <p className={`mt-1 font-display text-xl font-bold lg:mt-2 lg:text-3xl ${cls}`}>{value}</p>
+      <p className={`mt-1 font-display text-xl font-bold md:mt-2 md:text-3xl ${cls}`}>{value}</p>
     </div>
   );
 }
 
 function MiniStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[10px_14px_12px_8px] border border-sable bg-[#FFFDF7] px-3 py-2 text-center lg:px-5 lg:py-3.5">
-      <p className="text-[10px] font-bold text-cacao lg:text-xs">{label}</p>
-      <p className="font-display text-sm font-bold text-foret lg:mt-1 lg:text-lg">{value}</p>
+    <div className="rounded-[10px_14px_12px_8px] border border-sable bg-[#FFFDF7] px-3 py-2 text-center md:px-5 md:py-3.5">
+      <p className="text-[10px] font-bold text-cacao md:text-xs">{label}</p>
+      <p className="font-display text-sm font-bold text-foret md:mt-1 md:text-lg">{value}</p>
     </div>
   );
 }

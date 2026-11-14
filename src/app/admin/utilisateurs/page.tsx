@@ -70,26 +70,26 @@ export default function AdminUtilisateursPage() {
         <p className="mt-6 font-bold text-cacao">Aucun utilisateur inscrit.</p>
       )}
 
-      <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4">
+      <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
         {items.map((u) => (
           <div
             key={u.id}
             className={cx(
-              "rounded-[14px_18px_16px_12px] border-[2.5px] border-foret bg-sable/60 px-4 py-3 lg:px-6 lg:py-4",
+              "rounded-[14px_18px_16px_12px] border-[2.5px] border-foret bg-sable/60 px-4 py-3 md:px-6 md:py-4",
               resetId === u.id && "ring-2 ring-mangue/60",
             )}
           >
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <p className="truncate font-display font-semibold text-foret lg:text-lg">{u.fullName}</p>
+                  <p className="truncate font-display font-semibold text-foret md:text-lg">{u.fullName}</p>
                   <span
-                    className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase lg:text-xs ${ROLE_BADGE[u.role] ?? "bg-sable text-cacao"}`}
+                    className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase md:text-xs ${ROLE_BADGE[u.role] ?? "bg-sable text-cacao"}`}
                   >
                     {u.role}
                   </span>
                 </div>
-                <p className="mt-0.5 text-sm text-cacao lg:text-base">
+                <p className="mt-0.5 text-sm text-cacao md:text-base">
                   {u.email} · inscrit le{" "}
                   {new Date(u.createdAt).toLocaleDateString("fr-FR")}
                 </p>
@@ -100,7 +100,7 @@ export default function AdminUtilisateursPage() {
                   setMdp("");
                   setResetMsg("");
                 }}
-                className="shrink-0 rounded-lg border-2 border-cacao px-3 py-1 text-sm font-bold text-cacao lg:px-4 lg:py-2 lg:text-base"
+                className="shrink-0 rounded-lg border-2 border-cacao px-3 py-1 text-sm font-bold text-cacao md:px-4 md:py-2 md:text-base"
               >
                 Réinit. mdp
               </button>
@@ -110,18 +110,18 @@ export default function AdminUtilisateursPage() {
               <div className="mt-3 border-t border-sable pt-3">
                 <div className="flex items-end gap-2">
                   <div className="flex-1">
-                    <label className="text-[11px] font-bold text-canard lg:text-xs">Nouveau mot de passe</label>
+                    <label className="text-[11px] font-bold text-canard md:text-xs">Nouveau mot de passe</label>
                     <input
                       type="password"
                       placeholder="Min. 8 caractères"
                       value={mdp}
                       onChange={(e) => setMdp(e.target.value)}
-                      className="mt-0.5 h-9 w-full rounded-lg border-2 border-foret bg-creme px-3 text-sm font-bold text-foret lg:h-10 lg:px-4 lg:text-base"
+                      className="mt-0.5 h-9 w-full rounded-lg border-2 border-foret bg-creme px-3 text-sm font-bold text-foret md:h-10 md:px-4 md:text-base"
                     />
                   </div>
                   <button
                     onClick={() => resetPassword(u.id)}
-                    className="h-9 rounded-lg bg-palme px-4 text-sm font-bold text-creme lg:h-10 lg:text-base"
+                    className="h-9 rounded-lg bg-palme px-4 text-sm font-bold text-creme md:h-10 md:text-base"
                   >
                     Confirmer
                   </button>
