@@ -662,6 +662,12 @@ enum DeliveryOrderType {
   pickup
 }
 
+enum PaymentMethod {
+  cash
+  wave
+  orange_money
+}
+
 // Point de stock Umami à Abidjan (géré par l'admin)
 model DeliveryPoint {
   id           String              @id @default(uuid()) @db.Uuid
@@ -731,6 +737,7 @@ model DeliveryOrder {
   driverId        String?             @db.Uuid
   type            DeliveryOrderType
   status          DeliveryOrderStatus @default(pending)
+  paymentMethod   PaymentMethod       @default(cash)
   deliveryFeeFcfa Int                 @default(0)
   totalFcfa       Int
   address         String?

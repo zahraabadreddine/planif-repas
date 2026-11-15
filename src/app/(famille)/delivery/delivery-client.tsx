@@ -47,7 +47,7 @@ export function DeliveryClient({ points }: Props) {
   const [mode, setMode] = useState<Mode>("carte");
   const [pointSelectionne, setPointSelectionne] = useState<string | null>(null);
   const [choixLivraison, setChoixLivraison] = useState<ChoixLivraison>("delivery");
-  const [panierParPoint, setPanierParPoint] = useState<Record<string, Set<string>>>({});
+  const [panierParPoint, setPanierParPoint] = useState<Record<string, Record<string, number>>>({});
   const [positionUtilisateur, setPositionUtilisateur] = useState<{ lat: number; lng: number } | null>(null);
 
   useEffect(() => {
@@ -85,12 +85,17 @@ export function DeliveryClient({ points }: Props) {
     [points, pointSelectionne],
   );
 
-  const togglePanier = useCallback((pointId: string, ingredientId: string) => {
+  const ajusterQuantite = useCallback((pointId: string, ingredientId: string, delta: number) => {
     setPanierParPoint((prev) => {
-      const set = new Set(prev[pointId] ?? []);
-      if (set.has(ingredientId)) set.delete(ingredientId);
-      else set.add(ingredientId);
-      return { ...prev, [pointId]: set };
+      const panier = { ...(prev[pointId] ?? {}) };
+      const actuel = panier[ingredientId] ?? 0;
+      const nouveau = actuel + delta;
+      if (nouveau <= 0) {
+        delete panier[ingredientId];
+      } else {
+        panier[ingredientId] = nouveau;
+      }
+      return { ...prev, [pointId]: panier };
     });
   }, []);
 
@@ -99,20 +104,19 @@ export function DeliveryClient({ points }: Props) {
   const [erreurCommande, setErreurCommande] = useState<string | null>(null);
 
   const panierActif = useMemo(
-    () => (pointSelectionne ? panierParPoint[pointSelectionne] : undefined) ?? new Set<string>(),
+    () => (pointSelectionne ? panierParPoint[pointSelectionne] : undefined) ?? {} as Record<string, number>,
     [pointSelectionne, panierParPoint],
   );
 
+  const nbArticles = Object.keys(panierActif).length;
+
   const commander = useCallback(async () => {
-    if (!pointActif || panierActif.size === 0) return;
+    if (!pointActif || nbArticles === 0) return;
     setErreurCommande(null);
-    const items = pointActif.produits
-      .filter((p) => panierActif.has(p.ingredientId))
-      .map((p) => ({
-        ingredientId: p.ingredientId,
-        unitId: p.unitId,
-        quantity: p.quantity,
-      }));
+    const items = Object.entries(panierActif).map(([ingredientId, qty]) => {
+      const p = pointActif.produits.find((pr) => pr.ingredientId === ingredientId)!;
+      return { ingredientId, unitId: p.unitId, quantity: qty };
+    });
 
     try {
       const res = await fetch("/api/delivery/orders", {
@@ -121,6 +125,7 @@ export function DeliveryClient({ points }: Props) {
         body: JSON.stringify({
           deliveryPointId: pointActif.id,
           type: choixLivraison,
+          paymentMethod: "cash",
           items,
         }),
       });
@@ -138,13 +143,14 @@ export function DeliveryClient({ points }: Props) {
     } catch (e) {
       setErreurCommande(e instanceof Error ? e.message : "Erreur inconnue");
     }
-  }, [pointActif, panierActif, choixLivraison]);
+  }, [pointActif, panierActif, nbArticles, choixLivraison]);
 
   const totalPanier = useMemo(() => {
     if (!pointActif) return 0;
     let total = 0;
     for (const p of pointActif.produits) {
-      if (panierActif.has(p.ingredientId)) total += p.priceFcfa * p.quantity;
+      const qty = panierActif[p.ingredientId];
+      if (qty) total += p.priceFcfa * qty;
     }
     if (choixLivraison === "delivery") total += pointActif.deliveryFeeFcfa;
     return total;
@@ -332,59 +338,79 @@ export function DeliveryClient({ points }: Props) {
               ) : (
                 pointActif.produits
                   .sort((a, b) => (b.correspondBesoin ? 1 : 0) - (a.correspondBesoin ? 1 : 0))
-                  .map((produit) => (
-                    <button
-                      key={produit.ingredientId}
-                      onClick={() => togglePanier(pointActif.id, produit.ingredientId)}
-                      className={cx(
-                        "flex w-full items-center gap-2.5 rounded-[10px_14px_12px_8px] px-3 py-2 text-left transition-colors",
-                        panierActif.has(produit.ingredientId)
-                          ? "bg-palme/15 ring-1 ring-palme/40"
-                          : "bg-sable/40",
-                        produit.correspondBesoin && !panierActif.has(produit.ingredientId)
-                          ? "ring-1 ring-mangue/50"
-                          : "",
-                      )}
-                    >
+                  .map((produit) => {
+                    const qte = panierActif[produit.ingredientId] ?? 0;
+                    const dansLePanier = qte > 0;
+                    return (
                       <div
+                        key={produit.ingredientId}
                         className={cx(
-                          "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2",
-                          panierActif.has(produit.ingredientId)
-                            ? "border-palme bg-palme text-creme"
-                            : "border-cacao/30 bg-transparent",
+                          "flex w-full items-center gap-2.5 rounded-[10px_14px_12px_8px] px-3 py-2 transition-colors",
+                          dansLePanier
+                            ? "bg-palme/15 ring-1 ring-palme/40"
+                            : "bg-sable/40",
+                          produit.correspondBesoin && !dansLePanier
+                            ? "ring-1 ring-mangue/50"
+                            : "",
                         )}
                       >
-                        {panierActif.has(produit.ingredientId) && <CheckIcon size={12} />}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-baseline justify-between gap-1">
-                          <span className="truncate text-sm font-bold text-foret">
-                            {produit.ingredientName}
-                          </span>
-                          <span className="shrink-0 text-xs font-bold text-cacao">
-                            {fcfa(produit.priceFcfa)}/{produit.unitLabel}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-baseline justify-between gap-1">
+                            <span className="truncate text-sm font-bold text-foret">
+                              {produit.ingredientName}
+                            </span>
+                            <span className="shrink-0 text-xs font-bold text-cacao">
+                              {fcfa(produit.priceFcfa)}/{produit.unitLabel}
+                            </span>
+                          </div>
+                          <span className="text-xs text-canard">
+                            Stock : {produit.quantity} {produit.unitLabel}
                           </span>
                         </div>
-                        <span className="text-xs text-canard">
-                          Stock : {produit.quantity} {produit.unitLabel}
-                        </span>
+                        {produit.correspondBesoin && !dansLePanier && (
+                          <HandNote tilt={-4} className="shrink-0 text-xs text-mangue">
+                            besoin !
+                          </HandNote>
+                        )}
+                        <div className="flex shrink-0 items-center gap-1.5">
+                          {dansLePanier ? (
+                            <>
+                              <button
+                                onClick={() => ajusterQuantite(pointActif.id, produit.ingredientId, -1)}
+                                className="flex h-7 w-7 items-center justify-center rounded-full bg-sable text-sm font-bold text-puce"
+                              >
+                                −
+                              </button>
+                              <span className="w-6 text-center text-sm font-bold text-foret">{qte}</span>
+                              <button
+                                onClick={() => ajusterQuantite(pointActif.id, produit.ingredientId, 1)}
+                                disabled={qte >= produit.quantity}
+                                className="flex h-7 w-7 items-center justify-center rounded-full bg-palme text-sm font-bold text-creme disabled:opacity-40"
+                              >
+                                +
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              onClick={() => ajusterQuantite(pointActif.id, produit.ingredientId, 1)}
+                              className="flex h-8 items-center gap-1 rounded-[10px_14px_12px_8px] bg-palme px-3 text-xs font-bold text-creme"
+                            >
+                              + Ajouter
+                            </button>
+                          )}
+                        </div>
                       </div>
-                      {produit.correspondBesoin && (
-                        <HandNote tilt={-4} className="shrink-0 text-xs text-mangue">
-                          besoin !
-                        </HandNote>
-                      )}
-                    </button>
-                  ))
+                    );
+                  })
               )}
             </div>
 
             {/* Récapitulatif et commande */}
-            {panierActif.size > 0 && (
+            {nbArticles > 0 && (
               <div className="mt-4 rounded-[14px_18px_16px_12px] bg-or/30 px-4 py-3">
                 <div className="flex items-baseline justify-between">
                   <span className="font-display text-sm font-bold text-foret">
-                    {panierActif.size} article{panierActif.size > 1 ? "s" : ""}
+                    {nbArticles} article{nbArticles > 1 ? "s" : ""}
                   </span>
                   <span className="font-display text-lg font-bold text-puce">{fcfa(totalPanier)}</span>
                 </div>
@@ -393,6 +419,7 @@ export function DeliveryClient({ points }: Props) {
                     Dont {fcfa(pointActif.deliveryFeeFcfa)} de livraison
                   </p>
                 )}
+
                 <button
                   onClick={() => startTransition(() => { commander(); })}
                   disabled={isPending}

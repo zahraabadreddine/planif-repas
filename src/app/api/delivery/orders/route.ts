@@ -8,6 +8,7 @@ import { assignerChauffeurAutomatique } from "@/lib/assignation-chauffeur";
 const schemaCommande = z.object({
   deliveryPointId: z.string().min(1),
   type: z.enum(["delivery", "pickup"]),
+  paymentMethod: z.enum(["cash", "wave", "orange_money"]).default("cash"),
   items: z
     .array(
       z.object({
@@ -96,9 +97,10 @@ export async function POST(request: Request) {
           household: { connect: { id: session.householdId! } },
           deliveryPoint: { connect: { id: body.deliveryPointId } },
           type: body.type,
+          paymentMethod: body.paymentMethod,
           deliveryFeeFcfa: fraisLivraison,
           totalFcfa,
-          status: "pending",
+          status: body.type === "pickup" ? "delivered" : "pending",
           items: {
             create: itemsAvecPrix.map((item) => ({
               ingredient: { connect: { id: item.ingredientId } },
@@ -113,18 +115,20 @@ export async function POST(request: Request) {
       return commande;
     });
 
-    try {
-      await assignerChauffeurAutomatique(order.id);
-    } catch (erreur) {
-      console.error(
-        `Assignation automatique échouée pour la commande ${order.id} :`,
-        erreur,
-      );
+    if (body.type !== "pickup") {
+      try {
+        await assignerChauffeurAutomatique(order.id);
+      } catch (erreur) {
+        console.error(
+          `Assignation automatique échouée pour la commande ${order.id} :`,
+          erreur,
+        );
+      }
     }
 
     const commandeFinale = await prisma.deliveryOrder.findUniqueOrThrow({
       where: { id: order.id },
-      select: { id: true, totalFcfa: true, status: true },
+      select: { id: true, totalFcfa: true, status: true, paymentMethod: true },
     });
 
     return NextResponse.json(commandeFinale, { status: 201 });

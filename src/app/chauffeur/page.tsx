@@ -19,7 +19,7 @@ export default async function ChauffeurPage() {
     orderBy: { createdAt: "desc" },
     include: {
       household: { select: { name: true } },
-      deliveryPoint: { select: { name: true, address: true, commune: true, phone: true } },
+      deliveryPoint: { select: { name: true, address: true, commune: true, phone: true, latitude: true, longitude: true } },
       items: {
         include: {
           ingredient: { select: { name: true } },
@@ -33,6 +33,7 @@ export default async function ChauffeurPage() {
     id: c.id,
     status: c.status,
     totalFcfa: c.totalFcfa,
+    paymentMethod: c.paymentMethod,
     createdAt: c.createdAt.toISOString(),
     household: c.household?.name ?? "—",
     point: {
@@ -40,6 +41,8 @@ export default async function ChauffeurPage() {
       address: c.deliveryPoint?.address ?? "",
       commune: c.deliveryPoint?.commune ?? "",
       phone: c.deliveryPoint?.phone ?? null,
+      latitude: c.deliveryPoint?.latitude ?? null,
+      longitude: c.deliveryPoint?.longitude ?? null,
     },
     items: c.items.map((it) => ({
       name: it.ingredient.name,

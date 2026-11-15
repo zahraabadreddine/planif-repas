@@ -2,15 +2,33 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { QRCodeSVG } from "qrcode.react";
 import { fcfa, cx } from "@/lib/format";
 import { TruckIcon, PackageIcon, CheckIcon, MapIcon } from "@/components/icones";
+import dynamic from "next/dynamic";
+
+const CarteItineraire = dynamic(() => import("@/components/carte-itineraire"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-[280px] items-center justify-center rounded-[18px_14px_20px_16px] bg-sable/60">
+      <span className="font-hand text-lg text-puce">Chargement de la carte…</span>
+    </div>
+  ),
+});
+
+const PAIEMENT_LABEL: Record<string, string> = {
+  cash: "Espèces",
+  wave: "Wave",
+  orange_money: "Orange Money",
+};
 
 type Item = { name: string; quantity: number; unit: string; priceFcfa: number };
-type Point = { name: string; address: string; commune: string; phone: string | null };
+type Point = { name: string; address: string; commune: string; phone: string | null; latitude: number | null; longitude: number | null };
 type Commande = {
   id: string;
   status: string;
   totalFcfa: number;
+  paymentMethod: string;
   createdAt: string;
   household: string;
   point: Point;
@@ -230,6 +248,10 @@ function CommandeChauffeur({
   enChargement: boolean;
 }) {
   const action = ACTIONS[c.status];
+  const [voirCarte, setVoirCarte] = useState(false);
+  const [positionChauffeur, setPositionChauffeur] = useState<[number, number] | null>(null);
+  const [erreurGps, setErreurGps] = useState(false);
+  const aCoordonnees = c.point.latitude !== null && c.point.longitude !== null;
 
   return (
     <div className="paper-shadow bg-[#FFFDF7] px-4 py-3.5">
@@ -261,6 +283,14 @@ function CommandeChauffeur({
           >
             {STATUS_LABEL[c.status]}
           </span>
+          <span
+            className={cx(
+              "rounded-full px-2 py-0.5 text-[10px] font-bold",
+              c.paymentMethod === "cash" ? "bg-sable text-cacao" : "bg-palme/20 text-foret",
+            )}
+          >
+            {PAIEMENT_LABEL[c.paymentMethod] ?? c.paymentMethod}
+          </span>
         </div>
       </button>
 
@@ -276,10 +306,73 @@ function CommandeChauffeur({
                 <span className="text-foret">
                   {item.name} — {item.quantity} {item.unit}
                 </span>
-                <span className="font-bold text-cacao">{fcfa(item.priceFcfa * item.quantity)}</span>
+                <span className="font-bold text-cacao">{fcfa(item.priceFcfa)}</span>
               </div>
             ))}
           </div>
+
+          {(c.paymentMethod === "wave" || c.paymentMethod === "orange_money") && (
+            <div className="mt-3 rounded-[10px_14px_12px_8px] border-2 border-palme/30 bg-palme/10 px-4 py-3 text-center">
+              <p className="font-display text-xs font-bold text-foret">
+                Paiement {PAIEMENT_LABEL[c.paymentMethod]}
+              </p>
+              <p className="mt-0.5 text-[11px] text-canard">
+                Montre ce QR code au client pour qu&apos;il scanne avec son appli
+              </p>
+              <div className="mt-2 flex justify-center">
+                <div className="rounded-lg bg-white p-2">
+                  <QRCodeSVG
+                    value={`${c.paymentMethod === "wave" ? "wave" : "orangemoney"}://pay?amount=${c.totalFcfa}&ref=${c.id.slice(0, 8)}`}
+                    size={160}
+                    level="M"
+                  />
+                </div>
+              </div>
+              <p className="mt-2 font-display text-lg font-bold text-puce">{fcfa(c.totalFcfa)}</p>
+            </div>
+          )}
+
+          {aCoordonnees && (
+            <div className="mt-3">
+              <button
+                onClick={() => {
+                  if (voirCarte) {
+                    setVoirCarte(false);
+                    return;
+                  }
+                  setErreurGps(false);
+                  navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                      setPositionChauffeur([pos.coords.latitude, pos.coords.longitude]);
+                      setVoirCarte(true);
+                    },
+                    () => setErreurGps(true),
+                    { enableHighAccuracy: true, timeout: 10000 },
+                  );
+                }}
+                className="flex w-full items-center justify-center gap-2 rounded-[10px_14px_12px_8px] border-2 border-canard/30 bg-lagon/20 px-4 py-2.5 font-display text-sm font-bold text-canard transition-colors"
+              >
+                <MapIcon size={16} />
+                {voirCarte ? "Masquer la carte" : "Voir l'itinéraire"}
+              </button>
+              {erreurGps && (
+                <p className="mt-1 text-center text-xs text-sirop">
+                  Impossible d&apos;obtenir ta position. Active le GPS et réessaie.
+                </p>
+              )}
+              {voirCarte && positionChauffeur && (
+                <div className="mt-2">
+                  <CarteItineraire
+                    depart={positionChauffeur}
+                    arrivee={[c.point.latitude!, c.point.longitude!]}
+                    labelArrivee={c.point.name}
+                    detailArrivee={c.point.address}
+                    className="h-[280px]"
+                  />
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
