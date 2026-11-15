@@ -8,6 +8,8 @@ import { AttiekePlate, Plate } from "@/components/illustrations/assiette";
 import { UrgencyButton } from "@/components/bouton-urgence";
 import type { RecetteDetail } from "@/lib/catalogue/recettes";
 import { cx, fcfa, whatsappLink } from "@/lib/format";
+import { gesteDeLEtape } from "@/lib/catalogue/gestes";
+import { GesteEtape } from "./geste-etape";
 
 /** Couleurs de l'assiette dessinée, selon l'origine de la recette. */
 const ASSIETTES: Record<string, { base: string; top: string }> = {
@@ -36,6 +38,7 @@ export function RecipeView({ recipe }: { recipe: RecetteDetail }) {
   const [tab, setTab] = useState<"steps" | "ingredients">("steps");
   const [step, setStep] = useState(0);
   const current = recipe.etapes[step];
+  const geste = current ? gesteDeLEtape(current.text) : null;
   const last = step === recipe.etapes.length - 1;
   const { cout } = recipe;
 
@@ -166,13 +169,17 @@ export function RecipeView({ recipe }: { recipe: RecetteDetail }) {
                 key={step}
                 className="mt-4 min-h-[196px] animate-slide-in rounded-[22px_28px_24px_20px] bg-white px-[18px] pb-[18px] pt-4"
               >
-                <div className="flex items-baseline justify-between">
+                <div className="flex items-start justify-between gap-2">
                   <span className="font-hand text-[54px] font-bold leading-[0.9] text-sirop">
                     {step + 1}
                   </span>
-                  <span className="font-hand text-xl font-bold text-cacao">
-                    {current.minutes} min
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-hand text-xl font-bold text-cacao">
+                      {current.minutes} min
+                    </span>
+                    {/* Le geste de l'étape, choisi par le code d'après ses mots */}
+                    {geste && <GesteEtape geste={geste} />}
+                  </div>
                 </div>
                 <p className="mt-2 text-lg font-bold leading-relaxed">{current.text}</p>
               </div>
