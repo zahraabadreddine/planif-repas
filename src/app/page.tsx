@@ -2,9 +2,11 @@ import Link from "next/link";
 import { FridgeHero } from "@/components/frigo-anime";
 import { ArrowRight } from "@/components/icones";
 import { UmamiLogo } from "@/components/logo";
+import { CoqueMobile } from "@/components/coque-mobile";
 
 export default function WelcomePage() {
   return (
+    <CoqueMobile>
     <main className="relative flex min-h-dvh flex-col items-center overflow-hidden bg-mangue px-6 pb-8 pt-7 text-foret">
       {/* gribouillis décoratifs */}
       <svg
@@ -86,5 +88,6 @@ export default function WelcomePage() {
         </Link>
       </div>
     </main>
+    </CoqueMobile>
   );
 }

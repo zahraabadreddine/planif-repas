@@ -1,10 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
 import { signOut } from "next-auth/react";
-import { cx } from "@/lib/format";
 import {
   HomeIcon,
   CalendarIcon,
@@ -14,6 +13,7 @@ import {
   MapIcon,
   TruckIcon,
   PackageIcon,
+  MenuIcon,
   CloseIcon,
 } from "@/components/icones";
 import { UmamiLogo } from "@/components/logo";
@@ -31,92 +31,109 @@ const NAV = [
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
+  const [ouvert, setOuvert] = useState(false);
 
   function isActive(href: string, exact?: boolean) {
     if (exact) return pathname === href;
     return pathname === href || pathname.startsWith(href + "/");
   }
 
+  function fermer() {
+    setOuvert(false);
+  }
+
+  const navContent = (
+    <>
+      <div className="flex items-center justify-between border-b-[2.5px] border-foret px-5 py-4">
+        <Link href="/admin" onClick={fermer}>
+          <UmamiLogo width={90} />
+        </Link>
+        <button
+          onClick={fermer}
+          className="lg:hidden rounded-lg p-1.5 text-cacao hover:bg-sable/60"
+          aria-label="Fermer le menu"
+        >
+          <CloseIcon size={20} />
+        </button>
+      </div>
+
+      <div className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4">
+        {NAV.map((item) => {
+          const Icon = item.icon;
+          const active = isActive(item.href, "exact" in item && item.exact);
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={fermer}
+              className={
+                "flex items-center gap-3 rounded-[10px_14px_12px_8px] px-3 py-2.5 text-sm font-bold transition-colors " +
+                (active
+                  ? "bg-foret text-creme shadow-[0_2px_0_#411102]"
+                  : "text-cacao hover:bg-sable/60 hover:text-foret")
+              }
+            >
+              <Icon size={18} />
+              {item.label}
+            </Link>
+          );
+        })}
+      </div>
+
+      <div className="border-t-[2.5px] border-foret px-5 py-3">
+        <p className="text-[11px] font-bold text-cacao">Administration</p>
+        <button
+          onClick={() => signOut({ callbackUrl: "/connexion" })}
+          className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-[10px_14px_12px_8px] bg-carmin/10 px-3 py-2 text-xs font-bold text-carmin transition-colors hover:bg-carmin/20"
+        >
+          Déconnexion
+        </button>
+      </div>
+    </>
+  );
+
   return (
     <div className="min-h-dvh bg-creme">
-      {/* Top bar mobile */}
-      <header className="sticky top-0 z-40 flex items-center justify-between border-b-[2.5px] border-foret bg-[#FFFDF7] px-4 py-3 shadow-sm md:hidden">
+      {/* Barre mobile + tablette */}
+      <header className="sticky top-0 z-40 flex items-center justify-between border-b-[2.5px] border-foret bg-[#FFFDF7] px-4 py-3 lg:hidden">
+        <Link href="/admin">
+          <UmamiLogo width={80} />
+        </Link>
         <button
-          onClick={() => setOpen(true)}
-          className="flex items-center gap-2 text-foret"
+          onClick={() => setOuvert(true)}
+          className="rounded-lg p-2 text-foret hover:bg-sable/60"
           aria-label="Ouvrir le menu"
         >
-          <svg viewBox="0 0 24 24" width={22} height={22} fill="none" stroke="currentColor" strokeWidth={2.3} strokeLinecap="round">
-            <line x1="3" y1="6" x2="21" y2="6" />
-            <line x1="3" y1="12" x2="21" y2="12" />
-            <line x1="3" y1="18" x2="21" y2="18" />
-          </svg>
-          <span className="font-display text-sm font-bold">Admin</span>
+          <MenuIcon size={24} />
         </button>
-        <Link href="/admin"><UmamiLogo width={80} /></Link>
       </header>
 
       {/* Overlay mobile */}
-      {open && (
+      {ouvert && (
         <div
-          className="fixed inset-0 z-50 bg-foret/40 backdrop-blur-sm md:hidden"
-          onClick={() => setOpen(false)}
+          className="fixed inset-0 z-50 bg-cacao/40 lg:hidden"
+          onClick={fermer}
+          aria-hidden="true"
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar mobile (slide) */}
       <nav
-        className={cx(
-          "fixed left-0 top-0 z-50 flex h-dvh w-64 flex-col border-r-[2.5px] border-foret bg-[#FFFDF7] transition-transform duration-200 md:translate-x-0",
-          open ? "translate-x-0" : "-translate-x-full",
-        )}
+        className={
+          "fixed left-0 top-0 z-50 flex h-dvh w-72 flex-col bg-[#FFFDF7] shadow-xl transition-transform duration-200 lg:hidden " +
+          (ouvert ? "translate-x-0" : "-translate-x-full")
+        }
       >
-        <div className="flex items-center justify-between border-b-[2.5px] border-foret px-5 py-4">
-          <Link href="/admin" onClick={() => setOpen(false)}>
-            <UmamiLogo width={90} />
-          </Link>
-          <button onClick={() => setOpen(false)} className="text-cacao md:hidden" aria-label="Fermer">
-            <CloseIcon size={20} />
-          </button>
-        </div>
-
-        <div className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4">
-          {NAV.map((item) => {
-            const Icon = item.icon;
-            const active = isActive(item.href, "exact" in item && item.exact);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setOpen(false)}
-                className={cx(
-                  "flex items-center gap-3 rounded-[10px_14px_12px_8px] px-3 py-2.5 text-sm font-bold transition-colors",
-                  active
-                    ? "bg-foret text-creme shadow-[0_2px_0_#411102]"
-                    : "text-cacao hover:bg-sable/60 hover:text-foret",
-                )}
-              >
-                <Icon size={18} />
-                {item.label}
-              </Link>
-            );
-          })}
-        </div>
-
-        <div className="border-t-[2.5px] border-foret px-5 py-3">
-          <p className="text-[11px] font-bold text-cacao">Administration</p>
-          <button
-            onClick={() => signOut({ callbackUrl: "/connexion" })}
-            className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-[10px_14px_12px_8px] bg-carmin/10 px-3 py-2 text-xs font-bold text-carmin transition-colors hover:bg-carmin/20"
-          >
-            Déconnexion
-          </button>
-        </div>
+        {navContent}
       </nav>
 
-      {/* Main content */}
-      <main className="px-4 pb-10 pt-6 md:ml-64 md:px-8 md:pt-10 md:pb-16 lg:px-12 xl:px-20">
+      {/* Sidebar desktop */}
+      <nav className="hidden lg:fixed lg:left-0 lg:top-0 lg:z-50 lg:flex lg:h-dvh lg:w-64 lg:flex-col lg:border-r-[2.5px] lg:border-foret lg:bg-[#FFFDF7]">
+        {navContent}
+      </nav>
+
+      {/* Contenu principal */}
+      <main className="px-4 pb-16 pt-6 lg:ml-64 lg:px-12 lg:pt-10">
         <div className="mx-auto max-w-7xl">
           {children}
         </div>

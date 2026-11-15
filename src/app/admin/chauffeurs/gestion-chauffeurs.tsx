@@ -134,7 +134,7 @@ export function GestionChauffeurs({ chauffeurs }: { chauffeurs: Chauffeur[] }) {
       )}
 
       {/* Driver list */}
-      <div className="mt-4 grid grid-cols-1 gap-2.5 md:grid-cols-2 md:gap-4">
+      <div className="mt-4 grid grid-cols-1 gap-2.5 lg:grid-cols-2 lg:gap-4">
         {chauffeurs.length === 0 && (
           <p className="py-8 text-center text-sm text-cacao">Aucun chauffeur enregistré.</p>
         )}

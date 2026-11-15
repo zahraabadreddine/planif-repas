@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { exigerSession } from "@/lib/auth/garde";
 import { ErreurApi } from "@/lib/erreurs";
+import { CoqueMobile } from "@/components/coque-mobile";
 import { ChauffeurShell } from "./chauffeur-shell";
 
 export default async function ChauffeurLayout({ children }: { children: React.ReactNode }) {
@@ -11,5 +12,5 @@ export default async function ChauffeurLayout({ children }: { children: React.Re
   if (!session) redirect("/connexion");
   if (session.role !== "driver") redirect("/accueil");
 
-  return <ChauffeurShell>{children}</ChauffeurShell>;
+  return <CoqueMobile><ChauffeurShell>{children}</ChauffeurShell></CoqueMobile>;
 }

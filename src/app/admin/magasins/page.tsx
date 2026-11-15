@@ -50,7 +50,7 @@ export default function AdminMagasinsPage() {
         <p className="mt-6 font-bold text-cacao">Aucun magasin enregistré.</p>
       )}
 
-      <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
+      <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4">
         {items.map((m) => (
           <div
             key={m.id}

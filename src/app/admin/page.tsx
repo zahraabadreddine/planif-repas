@@ -103,7 +103,7 @@ export default async function AdminPage() {
       {/* --- Delivery stats (hero) --- */}
       <section className="mt-5 md:mt-8 lg:mt-10">
         <h2 className="font-display text-base font-bold text-puce md:text-lg lg:text-xl">Livraison</h2>
-        <div className="mt-3 grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-3 lg:gap-5">
+        <div className="mt-3 grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-3 xl:gap-5">
           <StatCard icon={<PackageIcon size={18} />} label="Commandes aujourd'hui" value={String(commandesJour)} accent="foret" />
           <StatCard icon={<ChartIcon size={18} />} label="Revenu du jour" value={fcfa(revJour)} accent="palme" />
           <StatCard icon={<ClockIcon size={18} />} label="En attente" value={String(commandesPending)} accent="sirop" highlight={commandesPending > 0} />
@@ -111,7 +111,7 @@ export default async function AdminPage() {
           <StatCard icon={<CheckIcon size={18} />} label="Livrées (total)" value={String(commandesLivrees)} accent="palme" />
           <StatCard icon={<UserIcon size={18} />} label="Chauffeurs dispo" value={`${chauffeursActifs} / ${chauffeurs}`} accent="foret" />
         </div>
-        <div className="mt-3 grid grid-cols-2 gap-2 md:gap-3 lg:grid-cols-3 lg:gap-4">
+        <div className="mt-3 grid grid-cols-2 gap-2 md:gap-3 xl:grid-cols-3 xl:gap-4">
           <MiniStat label="Semaine" value={String(commandesSemaine)} />
           <MiniStat label="Mois" value={String(commandesMois)} />
           <MiniStat label="Revenu total" value={fcfa(revTotal)} />
@@ -179,7 +179,7 @@ export default async function AdminPage() {
       {/* --- App stats --- */}
       <section className="mt-8 md:mt-10 lg:mt-12">
         <h2 className="font-display text-base font-bold text-cacao md:text-lg lg:text-xl">Application</h2>
-        <div className="mt-3 grid grid-cols-2 gap-2 md:gap-3 lg:grid-cols-3 lg:gap-4">
+        <div className="mt-3 grid grid-cols-2 gap-2 md:gap-3 xl:grid-cols-3 xl:gap-4">
           <MiniStat label="Utilisateurs" value={String(utilisateurs)} />
           <MiniStat label="Foyers" value={String(foyers)} />
           <MiniStat label="Recettes" value={String(recettes)} />
@@ -192,7 +192,7 @@ export default async function AdminPage() {
       {/* --- Management cards --- */}
       <section className="mt-6 pb-4 md:mt-10 md:pb-8 lg:mt-12">
         <h2 className="font-display text-base font-bold text-cacao md:text-lg lg:text-xl">Gestion</h2>
-        <div className="mt-3 grid grid-cols-2 gap-2 md:gap-3 lg:grid-cols-3 lg:gap-4">
+        <div className="mt-3 grid grid-cols-2 gap-2 md:gap-3 xl:grid-cols-3 xl:gap-4">
           {cartes.map((c) => (
             <Link
               key={c.href}

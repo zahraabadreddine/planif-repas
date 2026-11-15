@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { BottomNav } from "@/components/barre-navigation";
 import { UrgencyButton } from "@/components/bouton-urgence";
+import { CoqueMobile } from "@/components/coque-mobile";
 import { auth } from "@/lib/auth/config";
 
 /** Écrans principaux : réservés aux comptes connectés, avec la barre de navigation du bas. */
@@ -9,11 +10,11 @@ export default async function TabsLayout({ children }: { children: React.ReactNo
   if (!session?.user?.id) redirect("/connexion");
 
   return (
-    <>
+    <CoqueMobile>
       <main className="px-5 pb-[190px] pt-6">{children}</main>
       {/* Bouton urgence présent sur tous les écrans de la famille (ENF-09) */}
       <UrgencyButton />
       <BottomNav />
-    </>
+    </CoqueMobile>
   );
 }
