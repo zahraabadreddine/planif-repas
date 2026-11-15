@@ -12,6 +12,7 @@ const { prisma, exigerSession, exigerEcriture, chargerRecettes, listerMembres, g
         deleteMany: vi.fn(),
         create: vi.fn(),
         findFirst: vi.fn(),
+        findMany: vi.fn(),
         updateMany: vi.fn(),
         update: vi.fn(),
       },
@@ -206,6 +207,14 @@ describe("GET /api/meal-plans/current", () => {
   });
 
   it("renvoie le menu actif du foyer de la session", async () => {
+    prisma.mealPlan.findMany.mockResolvedValueOnce([
+      {
+        id: MENU,
+        weekStart: new Date(`${LUNDI}T00:00:00.000Z`),
+        status: "active",
+        createdAt: new Date(),
+      },
+    ]);
     prisma.mealPlan.findFirst.mockResolvedValueOnce(planLu("active"));
     const reponse = await courant();
     expect(reponse.status).toBe(200);
@@ -214,12 +223,18 @@ describe("GET /api/meal-plans/current", () => {
       weekStart: LUNDI,
       status: "active",
     });
-    expect(prisma.mealPlan.findFirst.mock.calls[0][0].where.householdId).toBe("f1");
+    // Le foyer vient de la session, à la recherche comme au chargement (règle 4)
+    expect(prisma.mealPlan.findMany.mock.calls[0][0].where.householdId).toBe("f1");
+    expect(prisma.mealPlan.findFirst.mock.calls[0][0].where).toEqual({
+      id: MENU,
+      householdId: "f1",
+    });
   });
 
   it("renvoie null sans menu", async () => {
-    prisma.mealPlan.findFirst.mockResolvedValue(null);
+    prisma.mealPlan.findMany.mockResolvedValueOnce([]);
     expect((await (await courant()).json()).plan).toBeNull();
+    expect(prisma.mealPlan.findFirst).not.toHaveBeenCalled();
   });
 });
 

@@ -12,6 +12,7 @@ import { couleursAssiette } from "@/lib/couleurs-assiette";
 import type { MenuEnregistre, RepasEnregistre } from "@/lib/planificateur/generation";
 import type { MealSlot, Recipe } from "@/lib/types";
 import { BoutonCuisine } from "./bouton-cuisine";
+import { libelleSemaine } from "@/lib/planificateur/semaines";
 import { CATEGORIESPLAT } from "@/lib/validation/plat-foyer";
 
 // Menu interactif (EF-06) : affiche le menu réel, permet de changer les recettes.
@@ -20,6 +21,12 @@ type Props = {
   menu: MenuEnregistre;
   weeklyBudgetFcfa: number;
   peutModifier: boolean;
+  // « C'est cuisiné » reste possible sur une semaine passée (un dîner de dimanche oublié)
+  peutCuisiner: boolean;
+  // Semaine terminée : la liste de courses du moment est celle d'une autre semaine
+  passee: boolean;
+  // Le calendrier : semaine précédente, suivante, retour à la semaine en cours
+  navigation: React.ReactNode;
 };
 
 type JourDuMenu = {
@@ -48,18 +55,6 @@ const MOIS = [
   "nov.",
   "déc.",
 ];
-
-function labelSemaine(weekStart: string): string {
-  const debut = new Date(weekStart + "T00:00:00Z");
-  const fin = new Date(debut);
-  fin.setUTCDate(fin.getUTCDate() + 6);
-  const dj = debut.getUTCDate();
-  const fj = fin.getUTCDate();
-  const dm = MOIS[debut.getUTCMonth()];
-  const fm = MOIS[fin.getUTCMonth()];
-  if (dm === fm) return `${dj} → ${fj} ${fm}`;
-  return `${dj} ${dm} → ${fj} ${fm}`;
-}
 
 function jourDuMenu(date: string): { short: string; label: string } {
   const d = new Date(date + "T00:00:00Z");
@@ -114,7 +109,14 @@ function aujourdhui(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-export function MenuInteractif({ menu, weeklyBudgetFcfa, peutModifier }: Props) {
+export function MenuInteractif({
+  menu,
+  weeklyBudgetFcfa,
+  peutModifier,
+  peutCuisiner,
+  passee,
+  navigation,
+}: Props) {
   const router = useRouter();
   const jours = grouperParJour(menu.meals);
   const today = aujourdhui();
@@ -136,7 +138,7 @@ export function MenuInteractif({ menu, weeklyBudgetFcfa, peutModifier }: Props) 
   const dayTotal = day.meals.reduce((sum, m) => sum + m.recipe.coutFcfa, 0);
 
   const shareText =
-    `Menu de la semaine (${labelSemaine(menu.weekStart)})\n` +
+    `Menu de la semaine (${libelleSemaine(menu.weekStart)})\n` +
     jours.map((j) => `${j.label} : ${j.meals.map((m) => m.recipe.title).join(" / ")}`).join("\n");
 
   async function ouvrirChoix(repas: RepasEnregistre) {
@@ -217,9 +219,11 @@ export function MenuInteractif({ menu, weeklyBudgetFcfa, peutModifier }: Props) 
       <header className="flex items-center justify-between gap-3">
         <div className="flex items-baseline gap-2.5">
           <h1 className="retro text-[30px] leading-[1.3]">La semaine</h1>
-          <HandNote className="text-[21px] text-carmin" tilt={-4}>
-            {labelSemaine(menu.weekStart)}
-          </HandNote>
+          {estBrouillon && (
+            <HandNote className="text-[21px] text-carmin" tilt={-4}>
+              brouillon
+            </HandNote>
+          )}
         </div>
         <a
           href={whatsappLink(shareText)}
@@ -231,6 +235,8 @@ export function MenuInteractif({ menu, weeklyBudgetFcfa, peutModifier }: Props) 
           <ShareIcon />
         </a>
       </header>
+
+      {navigation}
 
       <Link
         href="/recettes"
@@ -297,7 +303,7 @@ export function MenuInteractif({ menu, weeklyBudgetFcfa, peutModifier }: Props) 
               onChanger={peutModifier && !repas.course ? () => ouvrirChoix(repas) : undefined}
             />
             {/* Un menu validé : cuisiner retire les ingrédients du stock (un reste ne retire rien) */}
-            {!estBrouillon && peutModifier && !repas.leftoverFromId && (
+            {!estBrouillon && peutCuisiner && !repas.leftoverFromId && (
               <div className="pl-1">
                 <BoutonCuisine
                   repasId={repas.id}
@@ -336,7 +342,7 @@ export function MenuInteractif({ menu, weeklyBudgetFcfa, peutModifier }: Props) 
           <CheckIcon size={18} strokeWidth={3} className="text-or" />
           {activation ? "Validation…" : "C'est bon, on fait les courses"}
         </button>
-      ) : !estBrouillon ? (
+      ) : !estBrouillon && !passee ? (
         <Link
           href="/courses"
           className="press fixed bottom-[104px] left-[max(20px,calc(50%-195px))] z-40 flex h-[50px] items-center gap-2 rounded-[16px_20px_18px_14px] bg-palme px-[18px] text-sm font-extrabold text-creme"

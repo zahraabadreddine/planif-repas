@@ -17,6 +17,7 @@ import { composerMenu, type ParametresComposition } from "./composition";
 import { equipementManquant, incompatibilites, restrictionsDuFoyer } from "./filtres";
 import { classer, ingredientPrincipal, JOURSVARIETE, type RecetteANoter } from "./score";
 import { verifierMenu, type RecetteAVerifier } from "./verification";
+import { lundiCourant, menuCourant, menuDeLaSemaine } from "./semaines";
 
 // Menu de la semaine (EF-06) : filtres durs, notation, composition, vérification, puis brouillon.
 // Le foyer vient toujours de la session (règle 4) ; tous les calculs sont faits ici (règle 3).
@@ -300,24 +301,45 @@ async function enrichirAvecCout(menu: MenuEnregistre): Promise<MenuEnregistre> {
 }
 
 /** Menu actif du foyer, sinon le dernier brouillon, sinon null. */
-export async function lireMenuCourant(session: SessionVerifiee): Promise<MenuEnregistre | null> {
-  if (!session.householdId) return null;
-  const { householdId } = session;
-  const actif = await prisma.mealPlan.findFirst({
-    where: { householdId, status: "active" },
-    include: avecRepas,
-    orderBy: { weekStart: "desc" },
+/** Les menus validés et brouillons du foyer de la session, sans leurs repas. */
+async function candidatsDuFoyer(householdId: string, weekStart?: string) {
+  const menus = await prisma.mealPlan.findMany({
+    where: {
+      householdId,
+      status: { in: ["active", "draft"] },
+      ...(weekStart ? { weekStart: new Date(`${weekStart}T00:00:00Z`) } : {}),
+    },
+    select: { id: true, weekStart: true, status: true, createdAt: true },
   });
-  const menu =
-    actif ??
-    (await prisma.mealPlan.findFirst({
-      where: { householdId, status: "draft" },
-      include: avecRepas,
-      orderBy: { createdAt: "desc" },
-    }));
+  return menus.map((m) => ({ ...m, weekStart: jourIso(m.weekStart) }));
+}
+
+/** Un menu du foyer avec ses repas, leur coût et une note lisible. */
+async function chargerMenu(householdId: string, id: string): Promise<MenuEnregistre | null> {
+  const menu = await prisma.mealPlan.findFirst({ where: { id, householdId }, include: avecRepas });
   if (!menu) return null;
   const lu = await enrichirAvecCout(versMenu(menu));
   return { ...lu, generationNotes: await noteLisible(lu.generationNotes) };
+}
+
+/**
+ * Le menu courant (accueil, Umi, « C'est cuisiné ») : celui de la semaine en cours à Abidjan,
+ * sinon le prochain à venir. Un menu préparé pour la semaine prochaine ne cache plus celle-ci.
+ */
+export async function lireMenuCourant(session: SessionVerifiee): Promise<MenuEnregistre | null> {
+  if (!session.householdId) return null;
+  const choisi = menuCourant(await candidatsDuFoyer(session.householdId), lundiCourant());
+  return choisi ? chargerMenu(session.householdId, choisi.id) : null;
+}
+
+/** Le menu d'une semaine (le lundi AAAA-MM-JJ) : validé s'il existe, sinon le brouillon le plus récent. */
+export async function lireMenuDeLaSemaine(
+  session: SessionVerifiee,
+  lundi: string,
+): Promise<MenuEnregistre | null> {
+  if (!session.householdId) return null;
+  const choisi = menuDeLaSemaine(await candidatsDuFoyer(session.householdId, lundi), lundi);
+  return choisi ? chargerMenu(session.householdId, choisi.id) : null;
 }
 
 /** Valide un menu : il devient le seul actif du foyer et sa liste de courses est calculée. */
