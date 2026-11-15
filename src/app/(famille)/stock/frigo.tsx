@@ -7,7 +7,7 @@ import { ArrowRight } from "@/components/icones";
 import { StockIllustration } from "@/components/illustrations/aliments";
 import { pluriel } from "@/lib/catalogue/quantites";
 import { cx, expiryLabel } from "@/lib/format";
-import type { StockIcon } from "@/lib/types";
+import { iconeAliment } from "@/lib/stock/icone-aliment";
 
 type ArticleStock = {
   id: string;
@@ -44,52 +44,6 @@ const LOCATIONS = [
   { value: "freezer", label: "Congélateur" },
   { value: "pantry", label: "Placard" },
 ] as const;
-
-const ICONPARNOM: Record<string, StockIcon> = {
-  riz: "riz",
-  "riz basmati": "riz",
-  "riz paddy": "riz",
-  attiéké: "riz",
-  semoule: "riz",
-  fonio: "riz",
-  huile: "huile",
-  "huile de palme": "huile",
-  "huile d'arachide": "huile",
-  "huile de coco": "huile",
-  oignon: "oignon",
-  "oignon vert": "oignon",
-  échalote: "oignon",
-  œuf: "oeuf",
-  œufs: "oeuf",
-  tomate: "tomate",
-  "tomate fraîche": "tomate",
-  "concentré de tomates": "tomate",
-  piment: "piment",
-  "piment frais": "piment",
-  gombo: "gombo",
-  aubergine: "aubergine",
-  "aubergine africaine": "aubergine",
-};
-
-const ICONPARCATEGORIE: Partial<Record<string, StockIcon>> = {
-  poisson: "poisson",
-  "fruits de mer": "poisson",
-  féculent: "riz",
-  huile: "huile",
-  œufs: "oeuf",
-  légume: "tomate",
-  condiment: "piment",
-  épice: "piment",
-};
-
-function iconePour(name: string, category: string): StockIcon {
-  const cle = name.toLowerCase().trim();
-  if (ICONPARNOM[cle]) return ICONPARNOM[cle];
-  for (const [prefix, icon] of Object.entries(ICONPARNOM)) {
-    if (cle.startsWith(prefix)) return icon;
-  }
-  return ICONPARCATEGORIE[category] ?? "tomate";
-}
 
 function joursAvantExpiration(expiresAt: string | null): number | undefined {
   if (!expiresAt) return undefined;
@@ -384,7 +338,7 @@ export function FridgePage({ lectureSeule }: { lectureSeule: boolean }) {
                     <Pin color={p.pin} />
                     <span className="flex h-10 items-center">
                       <StockIllustration
-                        icon={iconePour(s.ingredientName, s.category)}
+                        icon={iconeAliment(s.ingredientName, s.category)}
                         size={36}
                         className="animate-shake"
                       />
@@ -417,7 +371,7 @@ export function FridgePage({ lectureSeule }: { lectureSeule: boolean }) {
                 {row.map((s) => (
                   <StockIllustration
                     key={s.id}
-                    icon={iconePour(s.ingredientName, s.category)}
+                    icon={iconeAliment(s.ingredientName, s.category)}
                     size={34}
                   />
                 ))}
