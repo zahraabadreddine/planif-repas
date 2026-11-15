@@ -16,6 +16,7 @@ import { CarteFete } from "./carte-fete";
 import type { MenuFete } from "@/lib/planificateur/fete";
 import { texteAvecPhoto } from "@/lib/agent/photo";
 import { reduirePhoto, type PhotoReduite } from "./reduire-photo";
+import { BoutonVocal } from "./bouton-vocal";
 import type { AgentProposal, ChatMessage } from "@/lib/types";
 
 // Une idée d'Umi vérifiée par le code, montrée sans rien enregistrer
@@ -87,6 +88,8 @@ export default function AssistantPage() {
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [photo, setPhoto] = useState<PhotoReduite | null>(null);
   const [erreurPhoto, setErreurPhoto] = useState<string | null>(null);
+  const [statutVocal, setStatutVocal] = useState<string | null>(null);
+  const [erreurVocal, setErreurVocal] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   async function choisirPhoto(fichier: File | undefined) {
@@ -469,8 +472,18 @@ export default function AssistantPage() {
             {erreurPhoto}
           </p>
         )}
+        {statutVocal && (
+          <p className="mb-2 px-1 font-hand text-[17px] font-bold text-carmin" aria-live="polite">
+            {statutVocal}
+          </p>
+        )}
+        {erreurVocal && (
+          <p className="mb-2 px-1 text-xs font-bold text-carmin" role="alert">
+            {erreurVocal}
+          </p>
+        )}
         <form
-          className="flex items-center gap-2"
+          className="flex items-center gap-1.5"
           onSubmit={(e) => {
             e.preventDefault();
             send(draft);
@@ -479,7 +492,7 @@ export default function AssistantPage() {
           {/* Sur téléphone : appareil photo ou galerie */}
           <label
             className={cx(
-              "press blob flex h-[54px] w-[54px] shrink-0 cursor-pointer items-center justify-center bg-rose text-puce",
+              "press blob flex h-12 w-12 shrink-0 cursor-pointer items-center justify-center bg-rose text-puce",
               (typing || chargement) && "pointer-events-none opacity-60",
             )}
           >
@@ -497,6 +510,15 @@ export default function AssistantPage() {
               }}
             />
           </label>
+          {/* Le texte du vocal arrive dans le champ : la famille le relit avant d'envoyer */}
+          <BoutonVocal
+            desactive={typing || chargement}
+            onTexte={(texte) =>
+              setDraft((avant) => (avant.trim() ? `${avant.trim()} ${texte}` : texte))
+            }
+            onStatut={setStatutVocal}
+            onErreur={setErreurVocal}
+          />
           <label htmlFor="chat-input" className="sr-only">
             Écris ton message
           </label>
@@ -507,7 +529,7 @@ export default function AssistantPage() {
             placeholder={photo ? "Une question sur la photo ?" : "Dis-moi ce qui se passe…"}
             autoComplete="off"
             disabled={typing || chargement}
-            className="h-[54px] min-w-0 flex-1 rounded-[16px_20px_18px_14px] border-2 border-foret bg-white px-4 text-[15px] font-semibold placeholder:text-cacao/60 disabled:opacity-60"
+            className="h-[54px] min-w-0 flex-1 rounded-[16px_20px_18px_14px] border-2 border-foret bg-white px-3 text-[15px] font-semibold placeholder:text-cacao/60 disabled:opacity-60"
           />
           <button
             type="submit"
