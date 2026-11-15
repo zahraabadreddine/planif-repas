@@ -66,7 +66,31 @@ export type ShoppingBlock = {
 };
 
 export type StockIcon =
-  "riz" | "huile" | "oignon" | "oeuf" | "tomate" | "piment" | "poisson" | "aubergine" | "gombo";
+  | "riz"
+  | "huile"
+  | "oignon"
+  | "oeuf"
+  | "tomate"
+  | "piment"
+  | "poisson"
+  | "crevette"
+  | "gingembre"
+  | "aubergine"
+  | "gombo"
+  | "poulet"
+  | "viande"
+  | "feuilles"
+  | "carotte"
+  | "tubercule"
+  | "plantain"
+  | "citron"
+  | "poivron"
+  | "ail"
+  | "lait"
+  | "grains"
+  | "pain"
+  | "conserve"
+  | "sachet";
 
 export type StockItem = {
   id: string;
