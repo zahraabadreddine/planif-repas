@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ErreurApi } from "@/lib/erreurs";
 
 const { prisma, exigerEcriture, chargerRecettes, listerMembres, genererListe } = vi.hoisted(() => {
@@ -139,8 +139,16 @@ const misesAJour = () =>
     return { id: arg.where.id, ...arg.data };
   });
 
+afterEach(() => {
+  vi.useRealTimers();
+});
+
 beforeEach(() => {
   vi.clearAllMocks();
+  // Le menu testé est celui de la semaine en cours : on se place au mardi de cette semaine
+  // (une semaine terminée ne se modifie plus, ce refus est testé dans audit-semaines.test.ts)
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date(`2026-10-27T10:00:00Z`));
   exigerEcriture.mockResolvedValue(SESSION);
   listerMembres.mockResolvedValue(AMINATA);
   chargerRecettes.mockResolvedValue(Array.from({ length: 10 }, (_, i) => recette(i + 1)));

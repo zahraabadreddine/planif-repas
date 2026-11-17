@@ -42,6 +42,7 @@ import { dateSansHeure } from "@/lib/validation/menu";
 import type { MealSlot } from "@prisma/client";
 import { JOURSSEMAINE } from "./composition";
 import { MOMENTS, creneauDuMoment } from "./moment";
+import { lundiCourant } from "./semaines";
 
 // Remplacement d'un repas du menu (EF-06). L'utilisatrice choisit, le code revérifie
 // allergies, régimes, créneau, temps et budget avant d'enregistrer (règles 1 et 2).
@@ -179,7 +180,9 @@ export async function remplacerRepas(
   });
   if (!cible) throw new ErreurApi("INTROUVABLE");
   const plan = cible.mealPlan;
-  if (plan.status === "archived") throw new ErreurApi("MENUARCHIVE");
+  if (plan.status === "archived" || semaineTerminee(plan.weekStart)) {
+    throw new ErreurApi("MENUARCHIVE");
+  }
   if (cible.status && cible.status !== "planned") {
     throw new ErreurApi("REPASINCOMPATIBLE", "Un repas déjà cuisiné ne peut plus être remplacé.");
   }
@@ -290,7 +293,9 @@ function versPlaces(plan: PlanAModifier): RepasPlace[] {
 /** Ce qu'il faut pour revérifier une semaine modifiée : catalogue, restrictions, budget. */
 async function chargerPourModifier(session: SessionVerifiee, plan: PlanAModifier) {
   const householdId = exigerFoyer(session);
-  if (plan.status === "archived") throw new ErreurApi("MENUARCHIVE");
+  if (plan.status === "archived" || semaineTerminee(plan.weekStart)) {
+    throw new ErreurApi("MENUARCHIVE");
+  }
   const [catalogue, membres, contexte] = await Promise.all([
     chargerRecettes(),
     listerMembres(session),
@@ -525,15 +530,29 @@ export async function reorganiserUrgence(
   }
 }
 
-/** Menu actif du foyer, avec ses repas et leurs recettes. */
+/** Une semaine finie avant la semaine en cours : ses repas ne changent plus (l'écran le cache aussi). */
+export function semaineTerminee(weekStart: Date, maintenant = new Date()): boolean {
+  return weekStart.toISOString().slice(0, 10) < lundiCourant(maintenant);
+}
+
+/**
+ * Menu validé de la semaine en cours à Abidjan, avec ses repas et leurs recettes. Jamais le plus
+ * récent : un menu déjà validé pour la semaine prochaine ne doit pas recevoir l'urgence de ce soir.
+ */
 async function menuActif(householdId: string) {
   const actif = await prisma.mealPlan.findFirst({
-    where: { householdId, status: "active" },
+    where: {
+      householdId,
+      status: "active",
+      weekStart: new Date(`${lundiCourant()}T00:00:00Z`),
+    },
     include: { meals: { include: { recipe: { select: { title: true } } } } },
-    orderBy: { weekStart: "desc" },
   });
   if (!actif) {
-    throw new ErreurApi("DONNEESINVALIDES", "Aucun menu actif. Génère d'abord un menu.");
+    throw new ErreurApi(
+      "DONNEESINVALIDES",
+      "Aucun menu validé cette semaine. Demande d'abord un menu à Umi.",
+    );
   }
   return actif;
 }

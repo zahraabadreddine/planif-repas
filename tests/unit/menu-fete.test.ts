@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Menu de fête : plusieurs plats au même repas, coût et budget calculés par le code,
 // vérifiés à nouveau quand la famille l'ajoute à son menu (règles 1, 2, 3 et 4).
@@ -92,8 +92,15 @@ const demande = (extra: Partial<DemandeFete> = {}): DemandeFete => ({
   ...extra,
 });
 
+afterEach(() => {
+  vi.useRealTimers();
+});
+
 beforeEach(() => {
   vi.clearAllMocks();
+  // Le menu testé est celui de la semaine en cours : on se place au mardi de cette semaine
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date("2026-11-10T10:00:00Z"));
   mocks.recipeFindMany.mockResolvedValue([recette(HOUMOUS, "Houmous"), recette(KEBBE, "Kebbé")]);
   mocks.householdFindUnique.mockResolvedValue({ equipment: [] });
   mocks.listerMembres.mockResolvedValue([]);
@@ -310,7 +317,12 @@ describe("la semaine ordinaire met les plats de fête de côté", () => {
       id: "plat-fete",
       status: "planned",
       course: "entrée",
-      mealPlan: { id: "menu-1", status: "active", meals: [] },
+      mealPlan: {
+        id: "menu-1",
+        status: "active",
+        weekStart: new Date("2026-11-09T00:00:00Z"),
+        meals: [],
+      },
     });
     await expect(remplacerRepas(SESSION, "plat-fete", HOUMOUS)).rejects.toThrow("menu de fête");
   });
